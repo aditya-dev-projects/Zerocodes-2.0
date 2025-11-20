@@ -7,7 +7,6 @@ const AuthPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  // FIX 1: Corrected the state setter name from 'ybPfError' to 'setError'
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -35,7 +34,6 @@ const AuthPage: React.FC = () => {
     } catch (err: any) {
       setError(err.message);
     } finally {
-      // FIX 2: Removed the random 'qs' characters before 'finally'
       setLoading(false);
     }
   };
