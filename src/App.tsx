@@ -1,13 +1,18 @@
-
-import React, { useState, useEffect, useRef } from 'react';
-import { Play, Save, Code2, Blocks, Settings, FileJson, BookOpen, Bug, LayoutTemplate, Type } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Save, Code2, Blocks, Settings, FileJson, BookOpen, Bug, LayoutTemplate, Type, UserCircle } from 'lucide-react';
 import { Language, ExecutionStatus, ToolMode, type BlockInstance } from './types';
 import { BlockSidebar, BlockCanvas, BLOCK_DEFINITIONS } from './components/BlockComponents';
 import CodeEditor from './components/CodeEditor';
 import TerminalPanel from './components/TerminalPanel';
 import { streamGeminiResponse, CodeExecutor } from './services/gemini';
+// --- Auth Imports ---
+import { supabase } from './services/supabase';
+// import { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
+import AuthPage from './components/AuthPage';
+import UserProfile from './components/UserProfile';
 
-// --- Code Generator Helper ---
+// ... [Keep the generateCodeFromBlocks function exactly as it was] ...
 const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string => {
   if (blocks.length === 0) return "";
 
@@ -48,21 +53,39 @@ const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string
 };
 
 const App: React.FC = () => {
+  // --- Auth State ---
+  const [session, setSession] = useState<Session | null>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
+
+  // --- Existing IDE State ---
   const [language, setLanguage] = useState<Language>(Language.C);
   const [blocks, setBlocks] = useState<BlockInstance[]>([]);
   const [generatedCode, setGeneratedCode] = useState<string>("");
-  
-  // New state for switching views
   const [viewMode, setViewMode] = useState<'blocks' | 'code'>('blocks');
-  
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [status, setStatus] = useState<ExecutionStatus>(ExecutionStatus.IDLE);
   const [output, setOutput] = useState("");
-  
-  // Interactive Execution State
   const [executor, setExecutor] = useState<CodeExecutor | null>(null);
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
 
+  // --- Auth Side Effect ---
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoadingAuth(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // ... [Keep the IDE useEffects and Handlers exactly as they were] ...
   // Auto-generate code when blocks or language changes (Only in Block Mode)
   useEffect(() => {
     if (viewMode === 'blocks') {
@@ -201,11 +224,22 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+
+  // --- Render Logic ---
+
+  if (loadingAuth) {
+    return <div className="flex h-screen items-center justify-center bg-[#1e1e1e] text-gray-500">Loading environment...</div>;
+  }
+
+  if (!session) {
+    return <AuthPage />;
+  }
+
   return (
     <div className="flex h-screen w-screen bg-[#1e1e1e] text-gray-300 overflow-hidden font-sans">
       
       {/* Activity Bar (Far Left) */}
-      <div className="w-12 flex flex-col items-center py-4 bg-[#333333] border-r border-[#2b2b2b] z-20">
+      <div className="w-12 flex flex-col items-center py-4 bg-[#333333] border-r border-[#2b2b2b] z-20 relative">
         <div 
           onClick={() => setViewMode('blocks')}
           className={`mb-6 cursor-pointer transition-colors border-l-2 pl-3 ml-[-2px] ${viewMode === 'blocks' ? 'text-white border-white' : 'text-gray-500 border-transparent hover:text-white'}`}
@@ -220,9 +254,28 @@ const App: React.FC = () => {
         >
           <Code2 className="w-6 h-6" />
         </div>
-        <div className="mt-auto cursor-pointer text-gray-500 hover:text-white">
-          <Settings className="w-6 h-6" />
+        
+        {/* User Profile Trigger */}
+        <div className="mt-auto">
+           <div 
+             onClick={() => setShowProfile(!showProfile)}
+             className={`cursor-pointer mb-4 transition-colors ${showProfile ? 'text-blue-400' : 'text-gray-500 hover:text-white'}`}
+             title="User Profile"
+           >
+             <UserCircle className="w-6 h-6" />
+           </div>
+           <div className="cursor-pointer text-gray-500 hover:text-white">
+             <Settings className="w-6 h-6" />
+           </div>
         </div>
+
+        {/* Profile Modal Popup */}
+        {showProfile && (
+          <UserProfile 
+            userEmail={session.user.email} 
+            onClose={() => setShowProfile(false)} 
+          />
+        )}
       </div>
 
       {/* Primary Sidebar (Toolbox) - Only visible in Block Mode */}
@@ -249,7 +302,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content Area */}
+      {/* Main Content Area - [Same as before, no changes needed here for logic] */}
       <div className="flex-1 flex flex-col min-w-0 bg-[#1e1e1e]">
         
         {/* Top Bar */}
