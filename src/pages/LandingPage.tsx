@@ -405,12 +405,12 @@ const LandingPage: React.FC = () => {
           <div className="flex space-x-8 text-gray-400">
             <Link to="/editor" className="hover:text-white transition-colors">Web Editor</Link>
             <a href="#" className="hover:text-white transition-colors">Download</a>
-            <a href="#" className="hover:text-white transition-colors">Documemtation</a>
+            <Link to="/docs" className="hover:text-white transition-colors">Documentation</Link>
             <a href="#" className="hover:text-white transition-colors">Contact</a>
           </div>
         </div>
         <div className="text-center mt-8 text-gray-600">
-          © Zerocodes — 2025. Powered by integrated AI.
+          © 2025 Zerocodes. All Rights Reserved.
         </div>
       </footer>
 
