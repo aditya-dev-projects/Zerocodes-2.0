@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Code2, Download, Globe, Terminal, Zap, Cpu, ChevronRight, Layout, 
+  Download, Globe, Terminal, ChevronRight, Layout, 
   PlayCircle, FileCode, Sparkles, X, Plus, Check
 } from 'lucide-react';
+
+// Paste your copied GitHub link inside the quotes below
+const DOWNLOAD_LINK = "https://github.com/YOUR_USERNAME/YOUR_REPO/releases/download/v2.0.0/Zerocodes-Setup-2.0.0.exe";
 
 const LandingPage: React.FC = () => {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
@@ -19,12 +22,14 @@ const LandingPage: React.FC = () => {
       <nav className="fixed top-0 w-full z-50 border-b border-gray-800 bg-[#0d1117]/90 backdrop-blur-md transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-2 group cursor-pointer">
-              <div className="bg-blue-600 p-1.5 rounded-lg group-hover:bg-blue-500 transition-colors">
-                <Code2 className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors">Zerocodes</span>
+            {/* Logo - Now just the image */}
+            <div className="flex items-center cursor-pointer">
+              {/* Custom SVG Logo - Increased size and removed text */}
+              <img 
+                src="logo.svg" 
+                alt="Zerocodes" 
+                className="h-10 w-auto hover:opacity-90 transition-opacity"
+              />
             </div>
             
             {/* Desktop Menu */}
@@ -44,7 +49,7 @@ const LandingPage: React.FC = () => {
                 <span>Web Editor</span>
               </Link>
               <a 
-                href="#download" 
+                href={DOWNLOAD_LINK}
                 className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-md text-sm font-bold transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-900/40 hover:-translate-y-0.5"
               >
                 Download App
@@ -86,10 +91,13 @@ const LandingPage: React.FC = () => {
               <Globe className="w-5 h-5" />
               <span>Try Web Editor (Free)</span>
             </Link>
-            <button className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-[#21262d] hover:bg-[#30363d] text-white px-8 py-4 rounded-xl text-lg font-semibold border border-gray-700 transition-all hover:border-gray-500">
+            <a 
+              href={DOWNLOAD_LINK} 
+              className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-[#21262d] hover:bg-[#30363d] text-white px-8 py-4 rounded-xl text-lg font-semibold border border-gray-700 transition-all hover:border-gray-500"
+            >
               <Download className="w-5 h-5 text-blue-400" />
               <span>Download Desktop App</span>
-            </button>
+            </a>
           </div>
 
           <div className="mt-8 flex items-center justify-center space-x-8 text-sm text-gray-500 font-medium">
@@ -345,7 +353,7 @@ const LandingPage: React.FC = () => {
              <Link to="/editor" className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-lg shadow-lg transition-all">
                Try Web Editor
              </Link>
-             <a href="#download" className="px-8 py-4 bg-[#21262d] hover:bg-[#30363d] text-white font-bold rounded-xl text-lg border border-gray-700 transition-all">
+             <a href={DOWNLOAD_LINK} className="px-8 py-4 bg-[#21262d] hover:bg-[#30363d] text-white font-bold rounded-xl text-lg border border-gray-700 transition-all">
                Download Desktop App
              </a>
           </div>
@@ -387,8 +395,9 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start space-x-2 mb-2">
-              <Code2 className="w-5 h-5 text-blue-500" />
-              <span className="font-bold text-white text-lg">Zerocodes</span>
+              {/* Replaced Code2 icon with the logo in footer as well for consistency */}
+              <img src="logo.svg" alt="Zerocodes Logo" className="h-6 w-auto" />
+              <span className="font-bold text-white text-lg ml-2">Zerocodes</span>
             </div>
             <p className="text-gray-500">Learn visually. Build confidently.</p>
           </div>

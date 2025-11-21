@@ -48,7 +48,7 @@
     "productName": "Zerocodes",
     "win": {
       "target": "nsis",
-      "icon": "public/vite.svg"
+      "icon": "public/icon.ico"
     },
     "nsis": {
       "oneClick": false,

@@ -1,6 +1,5 @@
-
 import React, { useEffect, useRef, useState } from 'react';
-import { Terminal as TerminalIcon, X, Trash2, Maximize2 } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 import { ExecutionStatus } from '../types';
 
 interface TerminalProps {
