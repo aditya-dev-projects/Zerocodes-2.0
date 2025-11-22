@@ -8,6 +8,8 @@ function createWindow() {
     width: 1280,
     height: 800,
     backgroundColor: '#1e1e1e',
+    // ADD THIS LINE BELOW to set the window icon
+    icon: path.join(__dirname, '../public/icon.ico'), 
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -18,11 +20,10 @@ function createWindow() {
   // In dev, load localhost. In prod, load the built index.html
   if (isDev) {
     win.loadURL('http://localhost:5173');
-    // Open DevTools explicitly if you want to see console errors
     // win.webContents.openDevTools();
   } else {
     win.loadFile(path.join(__dirname, '../dist/index.html'));
-    win.setMenu(null); // Hide default menu in prod
+    win.setMenu(null); 
   }
 }
 
