@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Type, PlayCircle, Plus, X, GripVertical, FileCode, Braces, Calculator, Repeat, ArrowRight, Trash2 } from 'lucide-react';
+import { Box, Type, PlayCircle, Plus, X, GripVertical, FileCode, Braces, Calculator, Repeat, ArrowRight,  } from 'lucide-react';
 import { type BlockDefinition, type BlockInstance, type BlockCategory, Language } from '../types';
 
 // --- Constants ---

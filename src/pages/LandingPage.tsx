@@ -2,13 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Download, ChevronDown, ChevronRight, Layout, 
-  Code2, Check, ArrowRight, Terminal, Sparkles, Bug,
+  Code2, Check, ArrowRight, Terminal, Bug,
   BookOpen, LifeBuoy, Monitor, Cpu,
   GraduationCap, Users, Wrench,
   Instagram, Youtube, Linkedin, Mail
 } from 'lucide-react';
 
-const DOWNLOAD_LINK = "https://github.com/YOUR_USERNAME/YOUR_REPO/releases/download/v2.0.0/Zerocodes-Setup-2.0.0.exe";
+const DOWNLOAD_LINK = "https://github.com/aditya-dev-projects/Zerocodes-2.0/releases/download/v2.0.0/Zerocodes.Setup.2.0.0.exe";
 
 // --- FEATURE DATA ---
 const FEATURES = [
@@ -274,7 +274,7 @@ const LandingPage: React.FC = () => {
         
         <div className="max-w-5xl mx-auto text-center relative z-10 mb-24">
           <h1 className="text-6xl sm:text-7xl md:text-8xl font-medium text-gray-900 tracking-tighter mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            Experience liftoff <br />
+            Elevate your craft<br />
             <span className="text-gray-400">with the next-gen IDE</span>
           </h1>
           
