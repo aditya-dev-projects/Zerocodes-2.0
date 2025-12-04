@@ -17,10 +17,35 @@ const COLOR_THEMES: Record<string, string> = {
   'block-extension': 'text-gray-600 border-gray-500 bg-gray-50',
 };
 
-export const BLOCK_DEFINITIONS: BlockDefinition[] = [
-  // --- C Language Blocks ---
+// ==================================================================================
+// 🧱 BLOCK DEFINITIONS (Where you add new blocks)
+// ==================================================================================
 
-  // Variables & Data Types
+export const BLOCK_DEFINITIONS: BlockDefinition[] = [
+  
+  // --------------------------------------------------------------------------------
+  // 📍 QUICK COPY TEMPLATE (Uncomment and fill to add new block)
+  // --------------------------------------------------------------------------------
+  /*
+  {
+    id: 'unique-id-here',       // e.g., 'py-power'
+    category: 'operators',      // variables, conditionals, loops, functions, io
+    label: 'Label on Block',    // e.g., 'Power'
+    code: { python: 'code' },   // e.g., { python: '{a} ** {b}' } or { c: '...' }
+    inputs: [
+      { name: 'var1', placeholder: 'x', defaultValue: '1' },
+      { name: 'var2', placeholder: 'y', defaultValue: '1' }
+    ],
+    language: 'python',         // c, python, or java
+    color: 'block-operators'    // Pick a color theme from above
+  },
+  */
+
+  // ==============================================================================
+  // 🟢 C LANGUAGE BLOCKS
+  // ==============================================================================
+
+  // --- C Variables ---
   {
     id: 'c-int-declare',
     category: 'variables',
@@ -94,7 +119,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-variables'
   },
 
-  // Conditional Statements
+  // --- C Conditionals ---
   {
     id: 'c-if',
     category: 'conditionals',
@@ -124,8 +149,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-control',
     hasChildren: true
   },
-  
-  // --- UPDATED SWITCH FOR C ---
   {
     id: 'c-switch',
     category: 'conditionals',
@@ -164,8 +187,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-control'
   },
 
-
-  // Loops
+  // --- C Loops ---
   {
     id: 'c-for-loop',
     category: 'loops',
@@ -200,7 +222,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-motion'
   },
 
-  // Functions
+  // --- C Functions ---
   {
     id: 'c-function-declare',
     category: 'functions',
@@ -237,7 +259,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-events'
   },
 
-  // Includes & Main (Existing + New)
+  // --- C Includes & Main ---
   {
     id: 'c-include-stdio',
     category: 'includes',
@@ -264,7 +286,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-extension'
   },
 
-  // I/O
+  // --- C Input/Output ---
   {
     id: 'c-printf',
     category: 'io',
@@ -321,10 +343,11 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
   },
 
 
-  // --- Python Blocks ---
-  // (Kept same as before, Python uses if/elif/else usually, but we can add match/case if needed later)
+  // ==============================================================================
+  // 🐍 PYTHON BLOCKS
+  // ==============================================================================
 
-  // Variables
+  // --- Python Variables ---
   {
     id: 'py-var-declare',
     category: 'variables',
@@ -362,7 +385,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-variables'
   },
 
-  // Conditionals
+  // --- Python Conditionals ---
   {
     id: 'py-if',
     category: 'conditionals',
@@ -393,7 +416,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     hasChildren: true
   },
 
-  // Loops
+  // --- Python Loops ---
   {
     id: 'py-for-seq',
     category: 'loops',
@@ -431,7 +454,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     hasChildren: true
   },
 
-  // Functions
+  // --- Python Functions ---
   {
     id: 'py-func-def',
     category: 'functions',
@@ -455,7 +478,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-events'
   },
 
-  // I/O
+  // --- Python I/O ---
   {
     id: 'py-print',
     category: 'io',
@@ -503,9 +526,11 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
   },
 
 
-  // --- Java Blocks ---
+  // ==============================================================================
+  // ☕ JAVA BLOCKS
+  // ==============================================================================
 
-  // Variables
+  // --- Java Variables ---
   {
     id: 'java-int-declare',
     category: 'variables',
@@ -579,7 +604,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-variables'
   },
 
-  // Conditionals
+  // --- Java Conditionals ---
   {
     id: 'java-if',
     category: 'conditionals',
@@ -609,8 +634,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-control',
     hasChildren: true
   },
-  
-  // --- UPDATED SWITCH FOR JAVA ---
   {
     id: 'java-switch',
     category: 'conditionals',
@@ -653,7 +676,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-control'
   },
 
-  // Loops
+  // --- Java Loops ---
   {
     id: 'java-for',
     category: 'loops',
@@ -702,7 +725,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-motion'
   },
 
-  // Methods
+  // --- Java Methods ---
   {
     id: 'java-method-def',
     category: 'functions',
@@ -739,7 +762,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-events'
   },
 
-  // Boilerplate
+  // --- Java Boilerplate ---
   {
     id: 'java-main-class',
     category: 'includes',
@@ -775,7 +798,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-variables'
   },
 
-  // I/O
+  // --- Java I/O ---
   {
     id: 'java-print',
     category: 'io',
@@ -839,6 +862,11 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-sound'
   }
 ];
+
+// ==================================================================================
+// 🛑 END OF BLOCK DEFINITIONS
+// ==================================================================================
+
 
 const CATEGORIES: { id: BlockCategory; label: string; icon: any }[] = [
   { id: 'includes', label: 'Includes', icon: FileCode },
