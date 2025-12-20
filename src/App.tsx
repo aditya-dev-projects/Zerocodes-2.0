@@ -1,75 +1,52 @@
-import React from 'react';
-import { HashRouter, BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { supabase } from './services/supabase';
 import LandingPage from './pages/LandingPage';
 import EditorPage from './pages/EditorPage';
 import DocumentationPage from './pages/DocumentationPage';
 import SetupPage from './pages/SetupPage';
+import AuthPage from './components/AuthPage';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsConditions from './pages/TermsConditions';
 
-// Helper to detect if running in Electron
-const isDesktopApp = () => {
-  return navigator.userAgent.toLowerCase().includes('electron');
-};
+function App() {
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-// 1. DYNAMIC ROUTER SELECTION
-// Use HashRouter for Desktop App (file:// support)
-// Use BrowserRouter for Web (Clean URLs)
-const Router = isDesktopApp() ? HashRouter : BrowserRouter;
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
 
-// Protected Route Component
-const RequireSetup: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-  const location = useLocation();
-  const isSetupComplete = localStorage.getItem('zerocodes_setup_complete') === 'true';
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
 
-  if (isDesktopApp() && !isSetupComplete) {
-    return <Navigate to="/setup" state={{ from: location }} replace />;
-  }
+    return () => subscription.unsubscribe();
+  }, []);
 
-  return children;
-};
+  if (loading) return null;
 
-// 2. SMART HOME COMPONENT
-const HomeRoute = () => {
-  // A. If running as Desktop App
-  if (isDesktopApp()) {
-    const isSetupComplete = localStorage.getItem('zerocodes_setup_complete') === 'true';
-    
-    // If user hasn't finished setup -> Go to Setup
-    if (!isSetupComplete) {
-      return <Navigate to="/setup" replace />;
-    }
-    
-    // If user finished setup -> Go straight to Editor
-    return <Navigate to="/editor" replace />;
-  }
-
-  // B. If running on Web -> Show Landing Page
-  return <LandingPage />;
-};
-
-const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        {/* This "HomeRoute" decides whether to show Landing Page or App Logic */}
-        <Route path="/" element={<HomeRoute />} />
-        
-        <Route path="/setup" element={<SetupPage />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/docs" element={<DocumentationPage />} />
-
+        <Route path="/setup" element={<SetupPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsConditions />} />
+        <Route 
+          path="/auth" 
+          element={!session ? <AuthPage /> : <Navigate to="/editor" />} 
+        />
         <Route 
           path="/editor" 
-          element={
-            <RequireSetup>
-              <EditorPage />
-            </RequireSetup>
-          } 
+          element={session ? <EditorPage /> : <Navigate to="/auth" />} 
         />
-
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
-};
+}
 
 export default App;

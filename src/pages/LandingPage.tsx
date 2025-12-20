@@ -10,7 +10,6 @@ import {
 
 const DOWNLOAD_LINK = "https://github.com/aditya-dev-projects/Zerocodes-2.0/releases/download/v2.0.0/Zerocodes.Setup.2.0.0.exe";
 
-// --- FEATURE DATA ---
 const FEATURES = [
   {
     id: 'blocks',
@@ -49,42 +48,28 @@ const FEATURES = [
   }
 ];
 
-// --- 1. Antigravity Particle Component ---
 const ParticleBackground: React.FC<{ density?: number, speed?: number }> = ({ density = 60, speed = 1 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     let animationFrameId: number;
     let width = window.innerWidth;
     let height = window.innerHeight;
-
     const handleResize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
       canvas.width = width;
       canvas.height = height;
     };
-    
     window.addEventListener('resize', handleResize);
     handleResize();
-
     const particles: any[] = [];
     const colors = ['#4285F4', '#34A853', '#FBBC05', '#EA4335', '#A0C3FF']; 
-
     class Particle {
-      x: number;
-      y: number;
-      size: number;
-      speedY: number;
-      speedX: number;
-      color: string;
-      opacity: number;
-
+      x: number; y: number; size: number; speedY: number; speedX: number; color: string; opacity: number;
       constructor() {
         this.x = Math.random() * width;
         this.y = Math.random() * height + height;
@@ -94,7 +79,6 @@ const ParticleBackground: React.FC<{ density?: number, speed?: number }> = ({ de
         this.color = colors[Math.floor(Math.random() * colors.length)];
         this.opacity = Math.random() * 0.6 + 0.2;
       }
-
       update() {
         this.y -= this.speedY;
         this.x += this.speedX;
@@ -103,7 +87,6 @@ const ParticleBackground: React.FC<{ density?: number, speed?: number }> = ({ de
           this.x = Math.random() * width;
         }
       }
-
       draw() {
         if (!ctx) return;
         ctx.beginPath();
@@ -114,80 +97,45 @@ const ParticleBackground: React.FC<{ density?: number, speed?: number }> = ({ de
         ctx.globalAlpha = 1;
       }
     }
-
     for (let i = 0; i < density; i++) {
       particles.push(new Particle());
       particles[i].y = Math.random() * height;
     }
-
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
-      particles.forEach(p => {
-        p.update();
-        p.draw();
-      });
+      particles.forEach(p => { p.update(); p.draw(); });
       animationFrameId = requestAnimationFrame(animate);
     };
-
     animate();
-
     return () => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
   }, [density, speed]);
-
   return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-0" />;
 };
 
-// --- 2. Nav Dropdown Component ---
-interface DropdownItem {
-  label: string;
-  icon: any;
-  targetId?: string;
-  to?: string;
-}
-
+interface DropdownItem { label: string; icon: any; targetId?: string; to?: string; }
 const NavDropdown: React.FC<{ label: string; items: DropdownItem[]; onItemClick: (id: string) => void }> = ({ label, items, onItemClick }) => {
   const [isOpen, setIsOpen] = useState(false);
-
   return (
-    <div 
-      className="relative group z-50"
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
-    >
+    <div className="relative group z-50" onMouseEnter={() => setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
       <button className="flex items-center gap-1 hover:text-gray-900 transition-colors py-2 font-medium text-[15px]">
         {label}
         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      
       <div className={`absolute top-full left-0 w-64 pt-2 transition-all duration-200 ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-2 invisible'}`}>
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 overflow-hidden">
           {items.map((item, idx) => (
-            <div 
-              key={idx}
-              onClick={(e) => {
-                if (item.targetId) {
-                  e.preventDefault();
-                  onItemClick(item.targetId);
-                  setIsOpen(false);
-                }
-              }}
-              className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group/item cursor-pointer"
-            >
+            <div key={idx} onClick={(e) => { if (item.targetId) { e.preventDefault(); onItemClick(item.targetId); setIsOpen(false); } }} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group/item cursor-pointer">
               {item.to ? (
                 <Link to={item.to} className="flex items-center gap-3 w-full">
-                   <div className="p-2 bg-gray-100 rounded-lg group-hover/item:bg-blue-50 group-hover/item:text-blue-600 transition-colors">
-                    {React.cloneElement(item.icon, { size: 18 })}
-                  </div>
+                   <div className="p-2 bg-gray-100 rounded-lg group-hover/item:bg-blue-50 group-hover/item:text-blue-600 transition-colors">{React.cloneElement(item.icon, { size: 18 })}</div>
                   <span className="text-sm font-medium text-gray-700 group-hover/item:text-gray-900">{item.label}</span>
                 </Link>
               ) : (
                 <>
-                  <div className="p-2 bg-gray-100 rounded-lg group-hover/item:bg-blue-50 group-hover/item:text-blue-600 transition-colors">
-                    {React.cloneElement(item.icon, { size: 18 })}
-                  </div>
+                  <div className="p-2 bg-gray-100 rounded-lg group-hover/item:bg-blue-50 group-hover/item:text-blue-600 transition-colors">{React.cloneElement(item.icon, { size: 18 })}</div>
                   <span className="text-sm font-medium text-gray-700 group-hover/item:text-gray-900">{item.label}</span>
                 </>
               )}
@@ -199,7 +147,6 @@ const NavDropdown: React.FC<{ label: string; items: DropdownItem[]; onItemClick:
   );
 };
 
-// --- Main Page Component ---
 const LandingPage: React.FC = () => {
   const [activeUseCase, setActiveUseCase] = useState<string>('students');
   const [activeFeatureIndex, setActiveFeatureIndex] = useState<number>(0);
@@ -215,51 +162,22 @@ const LandingPage: React.FC = () => {
 
   return (
     <div ref={scrollContainerRef} className="h-screen overflow-y-auto overflow-x-hidden bg-white text-gray-600 font-sans selection:bg-blue-100 selection:text-blue-900 scroll-smooth">
-      
-      {/* --- Navigation Bar --- */}
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl transition-all duration-300 border-b border-transparent">
         <div className="max-w-[1400px] mx-auto px-6">
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center gap-10">
               <Link to="/" onClick={() => scrollToSection('product')} className="flex items-center gap-3 group select-none">
-                <img 
-                  src="/logo.svg" 
-                  alt="Zerocodes Logo" 
-                  className="h-8 w-auto object-contain"
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }} 
-                />
+                <img src="/logo.svg" alt="Zekodes Logo" className="h-8 w-auto object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
               </Link>
-
               <div className="hidden lg:flex items-center space-x-8">
                 <button onClick={() => scrollToSection('product')} className="hover:text-gray-900 transition-colors font-medium text-[15px]">Product</button>
-                
-                <NavDropdown 
-                  label="Use Cases" 
-                  onItemClick={scrollToSection}
-                  items={[
-                    { label: 'For Students', icon: <GraduationCap />, targetId: 'students' },
-                    { label: 'For Teachers', icon: <Users />, targetId: 'teachers' },
-                    { label: 'For Hobbyists', icon: <Wrench />, targetId: 'hobbyists' },
-                  ]} 
-                />
-                
+                <NavDropdown label="Use Cases" onItemClick={scrollToSection} items={[{ label: 'For Students', icon: <GraduationCap />, targetId: 'students' }, { label: 'For Teachers', icon: <Users />, targetId: 'teachers' }, { label: 'For Hobbyists', icon: <Wrench />, targetId: 'hobbyists' }]} />
                 <button onClick={() => scrollToSection('pricing')} className="hover:text-gray-900 transition-colors font-medium text-[15px]">Pricing</button>
-                
-                <NavDropdown 
-                  label="Resources"
-                  onItemClick={scrollToSection}
-                  items={[
-                    { label: 'Documentation', icon: <BookOpen />, to: '/docs' },
-                    { label: 'Support', icon: <LifeBuoy />, targetId: 'support' }, 
-                  ]} 
-                />
+                <NavDropdown label="Resources" onItemClick={scrollToSection} items={[{ label: 'Documentation', icon: <BookOpen />, to: '/docs' }, { label: 'Support', icon: <LifeBuoy />, targetId: 'support' }]} />
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <a 
-                href={DOWNLOAD_LINK}
-                className="bg-[#1a1a1a] hover:bg-black text-white px-6 py-2.5 rounded-full text-[14px] font-medium transition-all hover:scale-105 flex items-center gap-2 shadow-lg shadow-gray-200 group"
-              >
+              <a href={DOWNLOAD_LINK} className="bg-[#1a1a1a] hover:bg-black text-white px-6 py-2.5 rounded-full text-[14px] font-medium transition-all hover:scale-105 flex items-center gap-2 shadow-lg shadow-gray-200 group">
                 <span>Download</span>
                 <Download size={16} className="group-hover:translate-y-0.5 transition-transform" />
               </a>
@@ -268,101 +186,45 @@ const LandingPage: React.FC = () => {
         </div>
       </nav>
 
-      {/* --- Hero Section --- */}
       <section id="product" className="relative pt-44 pb-20 px-6 overflow-hidden scroll-mt-20">
         <ParticleBackground density={80} />
-        
         <div className="max-w-5xl mx-auto text-center relative z-10 mb-24">
-          <h1 className="text-6xl sm:text-7xl md:text-8xl font-medium text-gray-900 tracking-tighter mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            Elevate your craft<br />
-            <span className="text-gray-400">with the next-gen IDE</span>
-          </h1>
-          
-          <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-12 leading-relaxed font-light animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
-            Visual blocks meet professional code. Built-in AI assistance. <br className="hidden sm:block"/>
-            Zero configuration required.
-          </p>
-          
+          <h1 className="text-6xl sm:text-7xl md:text-8xl font-medium text-gray-900 tracking-tighter mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-1000">Elevate your craft<br /><span className="text-gray-400">with the next-gen IDE</span></h1>
+          <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-12 leading-relaxed font-light animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">Visual blocks meet professional code. Built-in AI assistance. <br className="hidden sm:block"/>Zero configuration required.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in zoom-in duration-1000 delay-300">
-            <a href={DOWNLOAD_LINK} className="group h-14 px-8 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center gap-3 text-lg font-medium transition-all hover:bg-black hover:scale-105 shadow-xl shadow-gray-200">
-              <Download className="w-5 h-5" />
-              Download for Windows
-            </a>
-            <Link to="/editor" className="group h-14 px-8 rounded-full bg-white border border-gray-200 text-gray-900 flex items-center justify-center gap-3 text-lg font-medium transition-all hover:bg-gray-50 hover:border-gray-300 hover:scale-105">
-              Try Web Editor
-              <ArrowRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <a href={DOWNLOAD_LINK} className="group h-14 px-8 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center gap-3 text-lg font-medium transition-all hover:bg-black hover:scale-105 shadow-xl shadow-gray-200"><Download className="w-5 h-5" />Download for Windows</a>
+            <Link to="/editor" className="group h-14 px-8 rounded-full bg-white border border-gray-200 text-gray-900 flex items-center justify-center gap-3 text-lg font-medium transition-all hover:bg-gray-50 hover:border-gray-300 hover:scale-105">Try Web Editor<ArrowRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" /></Link>
           </div>
         </div>
 
-        {/* --- INTERACTIVE FEATURES SECTION (Toggle Tabs) --- */}
         <div className="max-w-7xl mx-auto px-6 relative z-20 pb-20">
-           
-           {/* Header for Features */}
            <div className="text-center mb-12">
               <span className="text-sm font-bold text-blue-600 uppercase tracking-wider">Features Overview</span>
-              <h2 className="text-4xl font-medium text-gray-900 mt-2">What all Zerocodes has</h2>
+              <h2 className="text-4xl font-medium text-gray-900 mt-2">What all Zekodes has</h2>
            </div>
-
-           {/* Tab Navigation */}
            <div className="flex flex-wrap justify-center gap-3 mb-8">
               {FEATURES.map((feature, index) => (
-                <button
-                  key={feature.id}
-                  onClick={() => setActiveFeatureIndex(index)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 border ${
-                    activeFeatureIndex === index
-                      ? 'bg-gray-900 text-white border-gray-900 shadow-lg scale-105'
-                      : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {/* Icon */}
-                  {React.cloneElement(feature.icon, { 
-                     className: `w-4 h-4 ${activeFeatureIndex === index ? 'text-white' : 'text-gray-500'}` 
-                  })}
-                  {feature.title}
+                <button key={feature.id} onClick={() => setActiveFeatureIndex(index)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 border ${activeFeatureIndex === index ? 'bg-gray-900 text-white border-gray-900 shadow-lg scale-105' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}>
+                  {React.cloneElement(feature.icon, { className: `w-4 h-4 ${activeFeatureIndex === index ? 'text-white' : 'text-gray-500'}` })}{feature.title}
                 </button>
               ))}
            </div>
-
-           {/* Description Fade */}
            <div className="text-center mb-8 max-w-2xl mx-auto h-20">
-             <h3 className="text-2xl font-medium text-gray-900 mb-2 transition-all duration-300 key={activeFeatureIndex}">
-               {FEATURES[activeFeatureIndex].title}
-             </h3>
-             <p className="text-gray-500 transition-all duration-300 key={activeFeatureIndex}">
-               {FEATURES[activeFeatureIndex].desc}
-             </p>
+             <h3 className="text-2xl font-medium text-gray-900 mb-2">{FEATURES[activeFeatureIndex].title}</h3>
+             <p className="text-gray-500">{FEATURES[activeFeatureIndex].desc}</p>
            </div>
-
-           {/* Feature Window */}
            <div className="max-w-6xl mx-auto">
                <div className="bg-gray-100/50 rounded-[2.5rem] p-2 sm:p-4 border border-gray-200 shadow-2xl">
                   <div className="bg-white rounded-[2rem] border border-gray-200 overflow-hidden shadow-sm flex flex-col">
-                     {/* Window Header */}
                      <div className="border-b border-gray-100 px-6 py-4 flex items-center justify-between bg-white">
-                        <div className="flex items-center gap-2">
-                           <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                           <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                           <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                        </div>
-                        <div className="text-xs text-gray-400 font-mono uppercase tracking-wider">
-                           Zerocodes Preview
-                        </div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-400"></div><div className="w-3 h-3 rounded-full bg-yellow-400"></div><div className="w-3 h-3 rounded-full bg-green-400"></div></div>
+                        <div className="text-xs text-gray-400 font-mono uppercase tracking-wider">Zekodes Preview</div>
                         <div className="w-12"></div> 
                      </div>
-
-                     {/* Image Container */}
                      <div className="relative bg-[#1e1e1e] w-full aspect-[16/10] overflow-hidden group">
                         {FEATURES.map((feature, index) => (
-                           <img 
-                             key={feature.id}
-                             src={feature.img} 
-                             alt={feature.title}
-                             className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ease-in-out ${activeFeatureIndex === index ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-                           />
+                           <img key={feature.id} src={feature.img} alt={feature.title} className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ease-in-out ${activeFeatureIndex === index ? 'opacity-100 z-10' : 'opacity-0 z-0'}`} />
                         ))}
-                        {/* Overlay Gradient */}
                         <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e]/50 via-transparent to-transparent pointer-events-none z-20"></div>
                      </div>
                   </div>
@@ -371,273 +233,102 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* --- Use Case Detail Section --- */}
       <section id="use-cases" className="py-24 bg-white relative border-t border-gray-100">
         <div className="max-w-[1300px] mx-auto px-6">
-           
            <div className="flex flex-col lg:flex-row gap-16">
-              
-              {/* Left Sidebar Navigation */}
               <div className="hidden lg:flex flex-col w-1/4 space-y-2 sticky top-32 h-fit">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 pl-4">Use Cases</p>
-                
                 <button onClick={() => scrollToSection('students')} className={`text-left pl-4 py-3 text-lg font-medium rounded-r-xl transition-all border-l-[3px] ${activeUseCase === 'students' ? 'text-gray-900 border-pink-500 bg-pink-50/50' : 'text-gray-500 border-transparent hover:bg-gray-50'}`}>For Students</button>
                 <button onClick={() => scrollToSection('teachers')} className={`text-left pl-4 py-3 text-lg font-medium rounded-r-xl transition-all border-l-[3px] ${activeUseCase === 'teachers' ? 'text-gray-900 border-blue-500 bg-blue-50/50' : 'text-gray-500 border-transparent hover:bg-gray-50'}`}>For Teachers</button>
                 <button onClick={() => scrollToSection('hobbyists')} className={`text-left pl-4 py-3 text-lg font-medium rounded-r-xl transition-all border-l-[3px] ${activeUseCase === 'hobbyists' ? 'text-gray-900 border-green-500 bg-green-50/50' : 'text-gray-500 border-transparent hover:bg-gray-50'}`}>For Hobbyists</button>
               </div>
-
-              {/* Right Content Area */}
               <div className="lg:w-3/4 space-y-32">
                  <div id="students" className="scroll-mt-32 group">
                     <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-xs font-bold uppercase tracking-wider mb-4"><GraduationCap className="w-3 h-3" /> Student Focused</span>
                     <h2 className="text-4xl font-medium text-gray-900 mb-6 leading-tight">Don't let syntax errors <br/> kill your momentum.</h2>
-                    <p className="text-xl text-gray-500 leading-relaxed mb-10 max-w-2xl">Learning to code is hard when you are fighting missing semicolons. Zerocodes lets you build logic visually with drag-and-drop blocks, and instantly shows you the real C, Python, or Java code.</p>
-                    <div className="bg-gray-50 p-2 rounded-[2rem] border border-gray-200 shadow-sm group-hover:shadow-xl transition-all duration-500">
-                       <div className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 flex flex-col md:flex-row aspect-auto md:aspect-[21/9]">
-                          <div className="md:w-1/2 bg-[radial-gradient(#fdf2f8_1px,transparent_1px)] [background-size:20px_20px] p-8 flex flex-col justify-center items-center border-b md:border-b-0 md:border-r border-gray-100">
-                             <div className="bg-white p-4 rounded-xl shadow-lg border border-pink-100 w-3/4 space-y-2">
-                                <div className="h-8 bg-pink-500/10 rounded w-full border border-pink-200"></div>
-                                <div className="h-8 bg-pink-500/10 rounded w-2/3 border border-pink-200 ml-4"></div>
-                             </div>
-                             <p className="mt-4 text-sm font-medium text-pink-400">Visual Logic Blocks</p>
-                          </div>
-                          <div className="md:w-1/2 bg-[#1e1e1e] p-8 font-mono text-xs leading-relaxed text-gray-300 flex flex-col justify-center">
-                             <p><span className="text-purple-400">def</span> <span className="text-yellow-300">main</span>():</p>
-                             <p className="pl-4"><span className="text-blue-400">if</span> score {'>'} <span className="text-green-300">90</span>:</p>
-                             <p className="pl-8"><span className="text-yellow-300">print</span>(<span className="text-green-300">"Grade: A"</span>)</p>
-                          </div>
-                       </div>
-                    </div>
+                    <p className="text-xl text-gray-500 leading-relaxed mb-10 max-w-2xl">Learning to code is hard when you are fighting missing semicolons. Zekodes lets you build logic visually with drag-and-drop blocks, and instantly shows you the real C, Python, or Java code.</p>
                  </div>
-
                  <div id="teachers" className="scroll-mt-32 group">
                     <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-wider mb-4"><Users className="w-3 h-3" /> For Educators</span>
                     <h2 className="text-4xl font-medium text-gray-900 mb-6 leading-tight">A consistent environment <br/> for every student.</h2>
-                    <p className="text-xl text-gray-500 leading-relaxed mb-10 max-w-2xl">No more "it works on my machine" excuses. Zerocodes runs entirely in the browser with a built-in cloud compiler.</p>
-                     <div className="bg-gray-50 p-2 rounded-[2rem] border border-gray-200 shadow-sm group-hover:shadow-xl transition-all duration-500">
-                       <div className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 flex aspect-auto md:aspect-[21/9] relative items-center justify-center bg-[radial-gradient(#eff6ff_1px,transparent_1px)] [background-size:20px_20px]">
-                          <div className="grid grid-cols-3 gap-4 relative z-10 w-3/4">
-                             <div className="bg-white p-4 rounded-xl shadow-lg border border-blue-100 flex flex-col items-center text-center">
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-2"><Monitor size={16}/></div>
-                                <div className="text-xs font-bold text-gray-700">Zero Setup</div>
-                             </div>
-                             <div className="bg-white p-4 rounded-xl shadow-lg border border-blue-100 flex flex-col items-center text-center transform -translate-y-4">
-                                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-2"><Cpu size={16}/></div>
-                                <div className="text-xs font-bold text-gray-700">Cloud Compile</div>
-                             </div>
-                             <div className="bg-white p-4 rounded-xl shadow-lg border border-blue-100 flex flex-col items-center text-center">
-                                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-2"><Check size={16}/></div>
-                                <div className="text-xs font-bold text-gray-700">Standardized</div>
-                             </div>
-                          </div>
-                       </div>
-                    </div>
+                    <p className="text-xl text-gray-500 leading-relaxed mb-10 max-w-2xl">No more "it works on my machine" excuses. Zekodes runs entirely in the browser with a built-in cloud compiler.</p>
                  </div>
-
                  <div id="hobbyists" className="scroll-mt-32 group">
                     <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-600 text-xs font-bold uppercase tracking-wider mb-4"><Wrench className="w-3 h-3" /> For Makers</span>
                     <h2 className="text-4xl font-medium text-gray-900 mb-6 leading-tight">Prototyping at the <br/>speed of thought.</h2>
                     <p className="text-xl text-gray-500 leading-relaxed mb-10 max-w-2xl">Sketch out logic visually to verify it works, then export clean code for your main project. AI fixes logic errors in seconds.</p>
-                     <div className="bg-gray-50 p-2 rounded-[2rem] border border-gray-200 shadow-sm group-hover:shadow-xl transition-all duration-500">
-                       <div className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 flex aspect-auto md:aspect-[21/9] relative">
-                          <div className="w-2/3 p-8 space-y-4 flex flex-col justify-center">
-                             <div className="h-3 bg-green-100 rounded w-full animate-pulse"></div>
-                             <div className="h-3 bg-gray-100 rounded w-5/6 animate-pulse"></div>
-                             <div className="flex gap-2 mt-4">
-                                <span className="px-2 py-1 bg-gray-100 text-xs rounded text-gray-500 font-mono">.c</span>
-                                <span className="px-2 py-1 bg-gray-100 text-xs rounded text-gray-500 font-mono">.py</span>
-                                <span className="px-2 py-1 bg-gray-100 text-xs rounded text-gray-500 font-mono">.java</span>
-                             </div>
-                          </div>
-                          <div className="w-1/3 bg-green-50 border-l border-green-100 p-6 flex flex-col justify-center gap-4">
-                              <div className="flex items-center gap-3 text-green-800 text-sm font-medium"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> Rapid Logic</div>
-                              <div className="flex items-center gap-3 text-green-800 text-sm font-medium"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> AI Fixes</div>
-                          </div>
-                       </div>
-                    </div>
                  </div>
               </div>
            </div>
         </div>
       </section>
 
-      {/* --- Pricing Section --- */}
       <section id="pricing" className="py-32 relative overflow-hidden scroll-mt-16">
         <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:40px_40px] opacity-50"></div>
         <ParticleBackground density={40} speed={0.5} />
-
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl font-medium text-gray-900 mb-6 tracking-tight">
-              Choose the perfect plan <br/> for your journey
-            </h2>
-            <div className="flex items-center justify-center gap-2 text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
-              <span>Zerocodes v2.0 is now available!</span>
-              <ChevronDown className="w-4 h-4 -rotate-90" />
-            </div>
+            <h2 className="text-5xl md:text-6xl font-medium text-gray-900 mb-6 tracking-tight">Choose the perfect plan <br/> for your journey</h2>
+            <div className="flex items-center justify-center gap-2 text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"><span>Zekodes v2.0 is now available!</span><ChevronDown className="w-4 h-4 -rotate-90" /></div>
           </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Pricing Cards */}
             <div className="bg-[#f8f9fa] p-8 rounded-[2rem] flex flex-col h-full hover:bg-white hover:shadow-2xl transition-all duration-300 border border-transparent hover:border-gray-100 relative group">
-              <div className="mb-8">
-                <span className="inline-block bg-white border border-gray-200 rounded-md px-3 py-1 text-[11px] font-bold text-blue-600 uppercase tracking-wide mb-4">Public Beta</span>
-                <h3 className="text-3xl font-medium text-gray-900 mb-1">Free Plan</h3>
-                <div className="text-2xl font-medium text-gray-900 mt-2">$0<span className="text-gray-500 text-lg font-normal">/month</span></div>
-              </div>
+              <div className="mb-8"><span className="inline-block bg-white border border-gray-200 rounded-md px-3 py-1 text-[11px] font-bold text-blue-600 uppercase tracking-wide mb-4">Public Beta</span><h3 className="text-3xl font-medium text-gray-900 mb-1">Free Plan</h3><div className="text-2xl font-medium text-gray-900 mt-2">$0<span className="text-gray-500 text-lg font-normal">/month</span></div></div>
               <p className="text-gray-600 mb-8">Perfect for students and hobbyists starting their coding journey.</p>
               <a href={DOWNLOAD_LINK} className="w-full block bg-[#1a1a1a] hover:bg-black text-white text-center py-3.5 rounded-full font-medium transition-transform active:scale-95 shadow-lg">Download Now</a>
-              <div className="mt-10 space-y-4">
-                <PricingCheck text="Visual Block & Code Editors" />
-                <PricingCheck text="Unlimited Cloud Compiles" />
-                <PricingCheck text="AI Assistant (Fix & Explain)" />
-                <PricingCheck text="Community Support" />
-              </div>
+              <div className="mt-10 space-y-4"><PricingCheck text="Visual Block & Code Editors" /><PricingCheck text="Unlimited Cloud Compiles" /><PricingCheck text="AI Assistant (Fix & Explain)" /><PricingCheck text="Community Support" /></div>
             </div>
-
             <div className="bg-[#f8f9fa] p-8 rounded-[2rem] flex flex-col h-full border border-transparent opacity-80 hover:opacity-100 transition-opacity">
-              <div className="mb-8">
-                <span className="inline-block bg-gray-200/50 border border-gray-200 rounded-md px-3 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-4">Coming soon</span>
-                <h3 className="text-2xl font-medium text-gray-900 mb-1">Classroom Plan</h3>
-              </div>
+              <div className="mb-8"><span className="inline-block bg-gray-200/50 border border-gray-200 rounded-md px-3 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-4">Coming soon</span><h3 className="text-2xl font-medium text-gray-900 mb-1">Classroom Plan</h3></div>
               <p className="text-gray-600 mb-8">For schools and coding bootcamps to manage student progress.</p>
               <button disabled className="w-full block bg-gray-200 text-gray-500 text-center py-3.5 rounded-full font-medium cursor-not-allowed">Notify me</button>
-              <div className="mt-10 space-y-4 opacity-50 text-sm">
-                <PricingCheck text="Real-time collaboration" />
-                <PricingCheck text="Teacher Dashboard" />
-                <PricingCheck text="Plagiarism Detection" />
-              </div>
             </div>
-
             <div className="bg-[#f8f9fa] p-8 rounded-[2rem] flex flex-col h-full border border-transparent opacity-80 hover:opacity-100 transition-opacity">
-              <div className="mb-8">
-                <span className="inline-block bg-gray-200/50 border border-gray-200 rounded-md px-3 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-4">Coming soon</span>
-                <h3 className="text-2xl font-medium text-gray-900 mb-1">Institution Plan</h3>
-              </div>
+              <div className="mb-8"><span className="inline-block bg-gray-200/50 border border-gray-200 rounded-md px-3 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-4">Coming soon</span><h3 className="text-2xl font-medium text-gray-900 mb-1">Institution Plan</h3></div>
               <p className="text-gray-600 mb-8">For universities requiring SSO, advanced security, and custom integrations.</p>
               <button disabled className="w-full block bg-gray-200 text-gray-500 text-center py-3.5 rounded-full font-medium cursor-not-allowed">Notify me</button>
-              <div className="mt-10 space-y-4 opacity-50 text-sm">
-                <PricingCheck text="Single Sign-On (SSO)" />
-                <PricingCheck text="On-premise deployment" />
-                <PricingCheck text="Priority Support" />
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* --- Support Section --- */}
       <section id="support" className="py-32 bg-white scroll-mt-16 border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl font-medium text-gray-900 mb-8 tracking-tight leading-tight">
-              Find answers in our docs <br/> or go to our community
-            </h2>
-            <Link to="/docs" className="inline-block px-8 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium transition-colors">
-              View docs
-            </Link>
+            <h2 className="text-5xl md:text-6xl font-medium text-gray-900 mb-8 tracking-tight leading-tight">Find answers in our docs <br/> or go to our community</h2>
+            <Link to="/docs" className="inline-block px-8 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium transition-colors">View docs</Link>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-             {/* Instagram */}
-             <SupportCard 
-                icon={<Instagram size={28} />} 
-                title="Instagram" 
-                desc="Follow us for updates & tips" 
-                link="https://www.instagram.com/zerocodes_official?igsh=dXFkZGwxYzFsdzEy" 
-                label="Visit"
-             />
-             {/* YouTube */}
-             <SupportCard 
-                icon={<Youtube size={28} />} 
-                title="YouTube" 
-                desc="Watch tutorials (Coming Soon)" 
-                link="#" 
-                label="Visit"
-                disabled
-             />
-             {/* LinkedIn */}
-             <SupportCard 
-                icon={<Linkedin size={28} />} 
-                title="LinkedIn" 
-                desc="Connect with us (Coming Soon)" 
-                link="#" 
-                label="Visit"
-                disabled
-             />
-             {/* Gmail */}
-             <SupportCard 
-                icon={<Mail size={28} />} 
-                title="Email Support" 
-                desc="issues.zerocodes@gmail.com" 
-                link="mailto:issues.zerocodes@gmail.com" 
-                label="Send Email"
-             />
+             <SupportCard icon={<Instagram size={28} />} title="Instagram" desc="Follow us for updates & tips" link="https://www.instagram.com/zerocodes_official?igsh=dXFkZGwxYzFsdzEy" label="Visit" />
+             <SupportCard icon={<Youtube size={28} />} title="YouTube" desc="Watch tutorials (Coming Soon)" link="#" label="Visit" disabled />
+             <SupportCard icon={<Linkedin size={28} />} title="LinkedIn" desc="Connect with us (Coming Soon)" link="#" label="Visit" disabled />
+             <SupportCard icon={<Mail size={28} />} title="Email Support" desc="issues.zekodes@gmail.com" link="mailto:issues.zekodes@gmail.com" label="Send Email" />
           </div>
         </div>
       </section>
 
-      {/* --- Footer --- */}
       <footer className="py-12 bg-white border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-3">
-            {/* LOGO IN FOOTER */}
-            <img 
-              src="/logo.svg" 
-              alt="Zerocodes" 
-              className="h-6 w-auto object-contain opacity-80 grayscale hover:grayscale-0 transition-all"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }} 
-            />
-          </div>
-          <div className="text-sm text-gray-500">
-            © 2025 Zerocodes Inc. All rights reserved.
-          </div>
+          <div className="flex items-center gap-3"><img src="/logo.svg" alt="Zekodes" className="h-6 w-auto object-contain opacity-80 grayscale hover:grayscale-0 transition-all" /></div>
+          <div className="text-sm text-gray-500">© 2025 Zekodes Inc. All rights reserved.</div>
           <div className="flex gap-6 text-sm font-medium text-gray-600">
-            <a href="#" className="hover:text-blue-600">Privacy</a>
-            <a href="#" className="hover:text-blue-600">Terms</a>
+            <Link to="/privacy" className="hover:text-blue-600">Privacy</Link>
+            <Link to="/terms" className="hover:text-blue-600">Terms</Link>
             <a href="#" className="hover:text-blue-600">Twitter</a>
           </div>
         </div>
       </footer>
-
     </div>
   );
 };
 
-// --- Helper Components ---
-
-const PricingCheck = ({ text }: { text: string }) => (
-  <div className="flex items-start gap-3 text-sm text-gray-600">
-    <Check className="w-4 h-4 text-gray-900 mt-0.5 shrink-0" />
-    <span>{text}</span>
-  </div>
-);
-
-interface SupportCardProps {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-  link: string;
-  label: string;
-  disabled?: boolean;
-}
-
-const SupportCard: React.FC<SupportCardProps> = ({ icon, title, desc, link, label, disabled }) => (
-  <a 
-    href={link} 
-    target={link.startsWith('#') ? '_self' : '_blank'}
-    rel="noopener noreferrer"
-    className={`bg-[#f8f9fa] p-8 rounded-[2rem] flex flex-col h-full transition-all duration-300 border border-transparent group ${disabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-white hover:shadow-xl hover:border-gray-100'}`}
-    onClick={(e) => disabled && e.preventDefault()}
-  >
-     <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-8 text-gray-900 group-hover:scale-110 transition-transform">
-        {icon}
-     </div>
+const PricingCheck = ({ text }: { text: string }) => (<div className="flex items-start gap-3 text-sm text-gray-600"><Check className="w-4 h-4 text-gray-900 mt-0.5 shrink-0" /><span>{text}</span></div>);
+const SupportCard: React.FC<any> = ({ icon, title, desc, link, label, disabled }) => (
+  <a href={link} target={link.startsWith('#') ? '_self' : '_blank'} rel="noopener noreferrer" className={`bg-[#f8f9fa] p-8 rounded-[2rem] flex flex-col h-full transition-all duration-300 border border-transparent group ${disabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-white hover:shadow-xl hover:border-gray-100'}`} onClick={(e) => disabled && e.preventDefault()}>
+     <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-8 text-gray-900 group-hover:scale-110 transition-transform">{icon}</div>
      <h3 className="text-xl font-medium text-gray-900 mb-2">{title}</h3>
      <p className="text-gray-500 mb-8 flex-1 text-sm">{desc}</p>
-     <div className={`flex items-center font-medium text-gray-900 ${!disabled ? 'group-hover:translate-x-2' : ''} transition-transform`}>
-        {label} <ChevronRight className="w-4 h-4 ml-1" />
-     </div>
+     <div className={`flex items-center font-medium text-gray-900 ${!disabled ? 'group-hover:translate-x-2' : ''} transition-transform`}>{label} <ChevronRight className="w-4 h-4 ml-1" /></div>
   </a>
 );
 
