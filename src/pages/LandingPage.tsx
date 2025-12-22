@@ -5,11 +5,12 @@ import {
   Code2, Check, ArrowRight, Terminal, Bug,
   BookOpen, LifeBuoy, Monitor, Cpu,
   GraduationCap, Users, Wrench,
-  Instagram, Youtube, Linkedin, Mail
+  Instagram, Youtube, Linkedin, Mail, Rocket
 } from 'lucide-react';
 
 const DOWNLOAD_LINK = "https://github.com/aditya-dev-projects/Zerocodes-2.0/releases/download/v2.0.0/Zerocodes.Setup.2.0.0.exe";
 
+// Updated FEATURES to include Academy
 const FEATURES = [
   {
     id: 'blocks',
@@ -33,18 +34,11 @@ const FEATURES = [
     img: '/editor-terminal.png'
   },
   {
-    id: 'explain',
-    title: 'AI Code Explanation',
-    desc: 'Confused by a complex loop? Just click "Explain". Our AI analyzes your logic and breaks it down into simple, human-readable English.',
-    icon: <BookOpen className="w-5 h-5" />,
-    img: '/editor-explain.png'
-  },
-  {
-    id: 'fix',
-    title: 'One-Click AI Debugging',
-    desc: 'Stuck on an error? The "Fix Code" agent scans your program, identifies logic flaws, and proposes a corrected solution automatically.',
-    icon: <Bug className="w-5 h-5" />,
-    img: '/editor-fix.png'
+    id: 'academy',
+    title: 'Zekodes Academy',
+    desc: 'Master the platform with high-quality video tutorials. Access the "Learn From Here" gallery directly from your workspace.',
+    icon: <Rocket className="w-5 h-5" />,
+    img: '/academy-preview.png'
   }
 ];
 
@@ -173,7 +167,11 @@ const LandingPage: React.FC = () => {
                 <button onClick={() => scrollToSection('product')} className="hover:text-gray-900 transition-colors font-medium text-[15px]">Product</button>
                 <NavDropdown label="Use Cases" onItemClick={scrollToSection} items={[{ label: 'For Students', icon: <GraduationCap />, targetId: 'students' }, { label: 'For Teachers', icon: <Users />, targetId: 'teachers' }, { label: 'For Hobbyists', icon: <Wrench />, targetId: 'hobbyists' }]} />
                 <button onClick={() => scrollToSection('pricing')} className="hover:text-gray-900 transition-colors font-medium text-[15px]">Pricing</button>
-                <NavDropdown label="Resources" onItemClick={scrollToSection} items={[{ label: 'Documentation', icon: <BookOpen />, to: '/docs' }, { label: 'Support', icon: <LifeBuoy />, targetId: 'support' }]} />
+                <NavDropdown label="Resources" onItemClick={scrollToSection} items={[
+                  { label: 'Documentation', icon: <BookOpen />, to: '/docs' },
+                  { label: 'Academy (New)', icon: <Rocket />, to: '/tutorial' }, // Added Academy link
+                  { label: 'Support', icon: <LifeBuoy />, targetId: 'support' }
+                ]} />
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -274,9 +272,9 @@ const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="bg-[#f8f9fa] p-8 rounded-[2rem] flex flex-col h-full hover:bg-white hover:shadow-2xl transition-all duration-300 border border-transparent hover:border-gray-100 relative group">
               <div className="mb-8"><span className="inline-block bg-white border border-gray-200 rounded-md px-3 py-1 text-[11px] font-bold text-blue-600 uppercase tracking-wide mb-4">Public Beta</span><h3 className="text-3xl font-medium text-gray-900 mb-1">Free Plan</h3><div className="text-2xl font-medium text-gray-900 mt-2">$0<span className="text-gray-500 text-lg font-normal">/month</span></div></div>
-              <p className="text-gray-600 mb-8">Perfect for students and hobbyists starting their coding journey.</p>
+              <p className="text-gray-600 mb-8">Perfect for students and hobbyists starting their coding journey. Access the Academy for high-quality tutorials.</p>
               <a href={DOWNLOAD_LINK} className="w-full block bg-[#1a1a1a] hover:bg-black text-white text-center py-3.5 rounded-full font-medium transition-transform active:scale-95 shadow-lg">Download Now</a>
-              <div className="mt-10 space-y-4"><PricingCheck text="Visual Block & Code Editors" /><PricingCheck text="Unlimited Cloud Compiles" /><PricingCheck text="AI Assistant (Fix & Explain)" /><PricingCheck text="Community Support" /></div>
+              <div className="mt-10 space-y-4"><PricingCheck text="Visual Block & Code Editors" /><PricingCheck text="Unlimited Cloud Compiles" /><PricingCheck text="AI Assistant (Fix & Explain)" /><PricingCheck text="Zekodes Academy Tutorials" /></div>
             </div>
             <div className="bg-[#f8f9fa] p-8 rounded-[2rem] flex flex-col h-full border border-transparent opacity-80 hover:opacity-100 transition-opacity">
               <div className="mb-8"><span className="inline-block bg-gray-200/50 border border-gray-200 rounded-md px-3 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-4">Coming soon</span><h3 className="text-2xl font-medium text-gray-900 mb-1">Classroom Plan</h3></div>
@@ -300,7 +298,7 @@ const LandingPage: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
              <SupportCard icon={<Instagram size={28} />} title="Instagram" desc="Follow us for updates & tips" link="https://www.instagram.com/zerocodes_official?igsh=dXFkZGwxYzFsdzEy" label="Visit" />
-             <SupportCard icon={<Youtube size={28} />} title="YouTube" desc="Watch tutorials (Coming Soon)" link="#" label="Visit" disabled />
+             <SupportCard icon={<Rocket size={28} />} title="Academy" desc="Watch tutorials and learn" link="/tutorial" label="Visit Academy" isAcademy={true} />
              <SupportCard icon={<Linkedin size={28} />} title="LinkedIn" desc="Connect with us (Coming Soon)" link="#" label="Visit" disabled />
              <SupportCard icon={<Mail size={28} />} title="Email Support" desc="issues.zekodes@gmail.com" link="mailto:issues.zekodes@gmail.com" label="Send Email" />
           </div>
@@ -323,13 +321,19 @@ const LandingPage: React.FC = () => {
 };
 
 const PricingCheck = ({ text }: { text: string }) => (<div className="flex items-start gap-3 text-sm text-gray-600"><Check className="w-4 h-4 text-gray-900 mt-0.5 shrink-0" /><span>{text}</span></div>);
-const SupportCard: React.FC<any> = ({ icon, title, desc, link, label, disabled }) => (
-  <a href={link} target={link.startsWith('#') ? '_self' : '_blank'} rel="noopener noreferrer" className={`bg-[#f8f9fa] p-8 rounded-[2rem] flex flex-col h-full transition-all duration-300 border border-transparent group ${disabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-white hover:shadow-xl hover:border-gray-100'}`} onClick={(e) => disabled && e.preventDefault()}>
-     <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-8 text-gray-900 group-hover:scale-110 transition-transform">{icon}</div>
-     <h3 className="text-xl font-medium text-gray-900 mb-2">{title}</h3>
-     <p className="text-gray-500 mb-8 flex-1 text-sm">{desc}</p>
-     <div className={`flex items-center font-medium text-gray-900 ${!disabled ? 'group-hover:translate-x-2' : ''} transition-transform`}>{label} <ChevronRight className="w-4 h-4 ml-1" /></div>
-  </a>
-);
+const SupportCard: React.FC<any> = ({ icon, title, desc, link, label, disabled, isAcademy }) => {
+  const CardContent = (
+    <div className={`bg-[#f8f9fa] p-8 rounded-[2rem] flex flex-col h-full transition-all duration-300 border border-transparent group ${disabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-white hover:shadow-xl hover:border-gray-100'}`}>
+       <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-8 text-gray-900 group-hover:scale-110 transition-transform">{icon}</div>
+       <h3 className="text-xl font-medium text-gray-900 mb-2">{title}</h3>
+       <p className="text-gray-500 mb-8 flex-1 text-sm">{desc}</p>
+       <div className={`flex items-center font-medium text-gray-900 ${!disabled ? 'group-hover:translate-x-2' : ''} transition-transform`}>{label} <ChevronRight className="w-4 h-4 ml-1" /></div>
+    </div>
+  );
+
+  if (disabled) return <div className="cursor-not-allowed">{CardContent}</div>;
+  if (isAcademy) return <Link to={link}>{CardContent}</Link>;
+  return <a href={link} target={link.startsWith('mailto') ? '_self' : '_blank'} rel="noopener noreferrer">{CardContent}</a>;
+};
 
 export default LandingPage;

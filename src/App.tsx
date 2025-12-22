@@ -1,52 +1,63 @@
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { supabase } from './services/supabase';
+import React from 'react';
+import { HashRouter, BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import EditorPage from './pages/EditorPage';
 import DocumentationPage from './pages/DocumentationPage';
 import SetupPage from './pages/SetupPage';
-import AuthPage from './components/AuthPage';
+import TutorialPage from './pages/TutorialPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
+import AuthPage from './components/AuthPage';
 
-function App() {
-  const [session, setSession] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+const isDesktopApp = () => {
+  return navigator.userAgent.toLowerCase().includes('electron');
+};
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+const Router = isDesktopApp() ? HashRouter : BrowserRouter;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+const RequireSetup: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+  const location = useLocation();
+  const isSetupComplete = localStorage.getItem('zekodes_setup_complete') === 'true';
 
-    return () => subscription.unsubscribe();
-  }, []);
+  if (isDesktopApp() && !isSetupComplete) {
+    return <Navigate to="/setup" state={{ from: location }} replace />;
+  }
 
-  if (loading) return null;
+  return children;
+};
 
+const HomeRoute = () => {
+  if (isDesktopApp()) {
+    const isSetupComplete = localStorage.getItem('zekodes_setup_complete') === 'true';
+    if (!isSetupComplete) return <Navigate to="/setup" replace />;
+    return <Navigate to="/editor" replace />;
+  }
+  return <LandingPage />;
+};
+
+const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/docs" element={<DocumentationPage />} />
+        <Route path="/" element={<HomeRoute />} />
         <Route path="/setup" element={<SetupPage />} />
+        <Route path="/docs" element={<DocumentationPage />} />
+        <Route path="/tutorial" element={<TutorialPage />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsConditions />} />
-        <Route 
-          path="/auth" 
-          element={!session ? <AuthPage /> : <Navigate to="/editor" />} 
-        />
+        <Route path="/auth" element={<AuthPage />} />
         <Route 
           path="/editor" 
-          element={session ? <EditorPage /> : <Navigate to="/auth" />} 
+          element={
+            <RequireSetup>
+              <EditorPage />
+            </RequireSetup>
+          } 
         />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
-}
+};
 
 export default App;
