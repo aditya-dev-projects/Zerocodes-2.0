@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   ShieldCheck, Lock, Eye, Server, Cpu, Globe, 
-  Trash2, UserCheck, Scale, ArrowLeft, Mail, 
+   UserCheck, Scale, ArrowLeft, Mail, 
   Clock, FileText, Database, Play, Sparkles
 } from 'lucide-react';
 import { Link } from 'react-router-dom';

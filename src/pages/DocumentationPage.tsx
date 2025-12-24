@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+// import React, { useState } from 'react';
 import { 
-  Book, FileText, ShieldAlert, Globe, BookOpen, Bug, Sparkles,
-  Layers, Cpu, Code2, Terminal, Info, ChevronRight, Lightbulb, 
-  Zap, Settings, Database, MousePointer2, MonitorPlay, 
-  GraduationCap, Rocket, ArrowLeft, ShieldCheck, Clock, Scale
+  Book,  Globe, MonitorPlay, 
+  ArrowLeft
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   X, Rocket, Play, ArrowLeft, GraduationCap, 
-  MonitorPlay, Zap, Code2, Clock, Sparkles 
+  MonitorPlay, Clock, Sparkles 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import FeedbackPopup from '../components/FeedbackPopup'; // Import feedback component

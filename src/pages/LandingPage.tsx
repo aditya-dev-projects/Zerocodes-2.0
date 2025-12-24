@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Download, ChevronDown, ChevronRight, Layout, 
-  Code2, Check, ArrowRight, Terminal, Bug,
-  BookOpen, LifeBuoy, Monitor, Cpu,
+  Code2, Check, ArrowRight, Terminal, 
+  BookOpen, LifeBuoy,
   GraduationCap, Users, Wrench,
-  Instagram, Youtube, Linkedin, Mail, Rocket
+  Instagram, Linkedin, Mail, Rocket
 } from 'lucide-react';
 import { supabase } from '../services/supabase'; // Ensure this import exists to check session
 import type { Session } from '@supabase/supabase-js';

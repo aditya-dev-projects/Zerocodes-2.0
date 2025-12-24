@@ -3,7 +3,7 @@ import {
   Scale, ShieldAlert, UserCheck, Zap, Server, 
   Sparkles, FileCode, Landmark, AlertCircle, 
   Ban, Gavel, RefreshCw, Mail, ArrowLeft,
-  ShieldCheck, Rocket
+  ShieldCheck
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

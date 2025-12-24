@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Play, Save, Code2, Blocks, Settings, FileJson, 
-  BookOpen, Bug, UserCircle, ArrowLeft, Trash2, Book, Rocket,
+  BookOpen, Bug, UserCircle, ArrowLeft, Book, Rocket,
   ChevronDown
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
