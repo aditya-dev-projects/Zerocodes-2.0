@@ -315,7 +315,7 @@ const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
              <SupportCard icon={<Instagram size={28} />} title="Instagram" desc="Follow us for updates & tips" link="https://www.instagram.com/zerocodes_official?igsh=dXFkZGwxYzFsdzEy" label="Visit" />
              <SupportCard icon={<Rocket size={28} />} title="Academy" desc="Watch tutorials and learn" link="/tutorial" label="Visit Academy" isAcademy={true} />
-             <SupportCard icon={<Linkedin size={28} />} title="LinkedIn" desc="Connect with us (Coming Soon)" link="#" label="Visit" disabled />
+             <SupportCard icon={<Linkedin size={28} />} title="LinkedIn" desc="Follow us on linkedin" link="https://www.linkedin.com/company/zekodes/?viewAsMember=true" label="Visit"  />
              <SupportCard icon={<Mail size={28} />} title="Email Support" desc="issues.zekodes@gmail.com" link="mailto:issues.zekodes@gmail.com" label="Send Email" />
           </div>
         </div>
