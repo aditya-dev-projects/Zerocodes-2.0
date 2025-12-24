@@ -16,6 +16,7 @@ import AuthPage from '../components/AuthPage';
 import UserProfile from '../components/UserProfile';
 import DocumentationPage from './DocumentationPage';
 import OnboardingTour from '../components/OnboardingTour';
+import FeedbackPopup from '../components/FeedbackPopup'; // Added Feedback Component
 
 const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string => {
   if (blocks.length === 0) return "";
@@ -56,6 +57,9 @@ const EditorPage: React.FC = () => {
   const [executor, setExecutor] = useState<CodeExecutor | null>(null);
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  
+  // Added Feedback State
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const isDesktop = navigator.userAgent.toLowerCase().includes('electron');
 
@@ -115,7 +119,17 @@ const EditorPage: React.FC = () => {
             setOutput(prev => prev + text);
           }
         });
-        if (!inputRequested) setStatus(ExecutionStatus.SUCCESS);
+        
+        if (!inputRequested) {
+          setStatus(ExecutionStatus.SUCCESS);
+          
+          // TRIGGER: Show feedback popup ONLY on the first successful program run
+          const alreadyPrompted = localStorage.getItem('zekodes_first_run_feedback');
+          if (!alreadyPrompted) {
+            setShowFeedback(true);
+            localStorage.setItem('zekodes_first_run_feedback', 'true');
+          }
+        }
       } catch (e) {
         setStatus(ExecutionStatus.ERROR);
       }
@@ -236,7 +250,7 @@ const EditorPage: React.FC = () => {
           )}
 
           <div className="flex-1 flex flex-col min-w-0 bg-[#1e1e1e]">
-            {/* --- UPDATED TOP TOOLBAR --- */}
+            {/* --- TOP TOOLBAR --- */}
             <div className="h-10 flex items-center justify-between px-4 bg-[#1e1e1e] border-b border-[#2b2b2b]">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2 text-sm">
@@ -245,7 +259,7 @@ const EditorPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Action Buttons and NEW Language Selector Placement */}
+              {/* Action Buttons and Language Selector */}
               <div className="flex items-center space-x-3">
                 
                 {/* Language Selector in Top Bar */}
@@ -312,8 +326,31 @@ const EditorPage: React.FC = () => {
       )}
 
       {showTutorial && <OnboardingTour onComplete={handleOnboardingComplete} />}
+      
+      {/* FEEDBACK POPUP */}
+      {showFeedback && (
+        <FeedbackPopup 
+          message="🎉 You just ran your first program!" 
+          onClose={() => setShowFeedback(false)} 
+        />
+      )}
     </div>
   );
 };
 
 export default EditorPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

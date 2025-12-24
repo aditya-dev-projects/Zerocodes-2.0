@@ -7,10 +7,11 @@ import {
   GraduationCap, Users, Wrench,
   Instagram, Youtube, Linkedin, Mail, Rocket
 } from 'lucide-react';
+import { supabase } from '../services/supabase'; // Ensure this import exists to check session
+import type { Session } from '@supabase/supabase-js';
 
 const DOWNLOAD_LINK = "https://github.com/aditya-dev-projects/Zerocodes-2.0/releases/download/v2.0.0/Zerocodes.Setup.2.0.0.exe";
 
-// Updated FEATURES to include Academy
 const FEATURES = [
   {
     id: 'blocks',
@@ -142,9 +143,16 @@ const NavDropdown: React.FC<{ label: string; items: DropdownItem[]; onItemClick:
 };
 
 const LandingPage: React.FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
   const [activeUseCase, setActiveUseCase] = useState<string>('students');
   const [activeFeatureIndex, setActiveFeatureIndex] = useState<number>(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+  }, []);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -167,11 +175,19 @@ const LandingPage: React.FC = () => {
                 <button onClick={() => scrollToSection('product')} className="hover:text-gray-900 transition-colors font-medium text-[15px]">Product</button>
                 <NavDropdown label="Use Cases" onItemClick={scrollToSection} items={[{ label: 'For Students', icon: <GraduationCap />, targetId: 'students' }, { label: 'For Teachers', icon: <Users />, targetId: 'teachers' }, { label: 'For Hobbyists', icon: <Wrench />, targetId: 'hobbyists' }]} />
                 <button onClick={() => scrollToSection('pricing')} className="hover:text-gray-900 transition-colors font-medium text-[15px]">Pricing</button>
-                <NavDropdown label="Resources" onItemClick={scrollToSection} items={[
-                  { label: 'Documentation', icon: <BookOpen />, to: '/docs' },
-                  { label: 'Academy (New)', icon: <Rocket />, to: '/tutorial' }, // Added Academy link
-                  { label: 'Support', icon: <LifeBuoy />, targetId: 'support' }
-                ]} />
+                <NavDropdown label="Resources" onItemClick={scrollToSection} items={[{ label: 'Documentation', icon: <BookOpen />, to: '/docs' }, { label: 'Academy (New)', icon: <Rocket />, to: '/tutorial' }, { label: 'Support', icon: <LifeBuoy />, targetId: 'support' }]} />
+                
+                {/* Feedback Button - Only for logged in users */}
+                {session && (
+                  <a 
+                    href="https://forms.gle/xz9LQQ3wrvWKUCJC7" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-blue-600 hover:text-blue-700 font-bold text-[15px] transition-colors"
+                  >
+                    Feedback
+                  </a>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4">

@@ -1,201 +1,216 @@
 import React from 'react';
 import { 
-  FileText, Scale, Code, AlertTriangle, UserCheck, 
-  ShieldAlert, Globe, Gavel, ScrollText, HardDrive, 
-  UserMinus, MessageSquare, Copyright, Zap
+  Scale, ShieldAlert, UserCheck, Zap, Server, 
+  Sparkles, FileCode, Landmark, AlertCircle, 
+  Ban, Gavel, RefreshCw, Mail, ArrowLeft,
+  ShieldCheck, Rocket
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const TermsConditions: React.FC = () => {
   
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
   return (
     <div className="flex h-screen bg-[#0d1117] text-gray-300 font-sans overflow-hidden">
       
-      {/* --- Functional Sidebar --- */}
+      {/* --- Sidebar Navigation --- */}
       <aside className="w-80 flex-shrink-0 bg-[#161b22] border-r border-gray-800 overflow-y-auto hidden lg:block">
         <div className="p-6 border-b border-gray-800 sticky top-0 bg-[#161b22] z-10">
-           <div className="flex items-center space-x-2">
-             <Gavel className="w-6 h-6 text-blue-500" />
-             <span className="font-bold text-white text-lg">Terms of Service</span>
+           <div className="flex items-center justify-between">
+             <div className="flex items-center space-x-2">
+               <Scale className="w-6 h-6 text-blue-500" />
+               <span className="font-bold text-white text-lg tracking-tight">Terms & Conditions</span>
+             </div>
+             <Link to="/editor" className="text-gray-500 hover:text-white transition-colors" title="Back to Editor">
+               <ArrowLeft size={18} />
+             </Link>
            </div>
-           <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">User Agreement v1.0.4</p>
         </div>
 
-        <nav className="p-4 space-y-6 text-sm">
-          {/* Section: Introduction */}
-          <div>
-            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">01. Acceptance</p>
-            <div className="space-y-1">
-                <NavButton label="Agreement to Terms" id="agreement" onClick={scrollToSection} />
-                <NavButton label="Eligibility & Registration" id="eligibility" onClick={scrollToSection} />
-                <NavButton label="Early Access (Beta) Terms" id="beta-terms" onClick={scrollToSection} />
-            </div>
-          </div>
-
-          {/* Section: Use of Service */}
-          <div>
-            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">02. Platform Usage</p>
-            <div className="space-y-1">
-                <NavButton label="Prohibited Activities" id="prohibited" onClick={scrollToSection} />
-                <NavButton label="Cloud Resource Fair Use" id="fair-use" onClick={scrollToSection} />
-                <NavButton label="AI Interaction Rules" id="ai-usage" onClick={scrollToSection} />
-            </div>
-          </div>
-
-          {/* Section: Property Rights */}
-          <div>
-            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">03. Ownership</p>
-            <div className="space-y-1">
-                <NavButton label="User Content Ownership" id="user-content" onClick={scrollToSection} />
-                <NavButton label="Zekodes IP Rights" id="zekodes-ip" onClick={scrollToSection} />
-                <NavButton label="Open Source Attributions" id="open-source" onClick={scrollToSection} />
-            </div>
-          </div>
-
-          {/* Section: Liability */}
-          <div>
-            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">04. Legal Boundaries</p>
-            <div className="space-y-1">
-                <NavButton label="Disclaimer of Warranties" id="disclaimer" onClick={scrollToSection} />
-                <NavButton label="Limitation of Liability" id="liability" onClick={scrollToSection} />
-                <NavButton label="Account Termination" id="termination" onClick={scrollToSection} />
-            </div>
-          </div>
-
-          {/* Section: Support */}
-          <div>
-            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">05. Support</p>
-            <div className="space-y-1">
-                <NavButton label="Support & Arbitration" id="contact-legal" onClick={scrollToSection} />
-            </div>
-          </div>
+        <nav className="p-4 space-y-4 text-sm">
+          <NavButton label="1. Acceptance of Terms" id="acceptance" onClick={scrollToSection} />
+          <NavButton label="2. Eligibility & Registration" id="eligibility" onClick={scrollToSection} />
+          <NavButton label="3. Beta Services" id="beta" onClick={scrollToSection} />
+          <NavButton label="4. Acceptable Use" id="acceptable-use" onClick={scrollToSection} />
+          <NavButton label="5. Cloud Fair Use" id="fair-use" onClick={scrollToSection} />
+          <NavButton label="6. AI Features Disclaimer" id="ai-disclaimer" onClick={scrollToSection} />
+          <NavButton label="7. User Content Ownership" id="ownership" onClick={scrollToSection} />
+          <NavButton label="8. Intellectual Property" id="ip" onClick={scrollToSection} />
+          <NavButton label="9. Warranty Disclaimer" id="warranty" onClick={scrollToSection} />
+          <NavButton label="10. Limitation of Liability" id="liability" onClick={scrollToSection} />
+          <NavButton label="11. Termination" id="termination" onClick={scrollToSection} />
+          <NavButton label="12. Governing Law" id="law" onClick={scrollToSection} />
+          <NavButton label="13. Changes to Terms" id="changes" onClick={scrollToSection} />
+          <NavButton label="14. Contact Information" id="contact" onClick={scrollToSection} />
         </nav>
       </aside>
 
-      {/* --- Scrollable Content Canvas --- */}
+      {/* --- Main Content Area --- */}
       <main className="flex-1 overflow-y-auto scroll-smooth bg-[#0d1117]">
-        <div className="max-w-4xl mx-auto px-10 py-16 space-y-32 pb-60">
+        <div className="max-w-4xl mx-auto px-10 py-16 space-y-16 pb-40">
           
           {/* Header */}
-          <div className="border-b border-gray-800 pb-12">
-            <h1 className="text-5xl font-black text-white mb-4">Terms & Conditions</h1>
-            <p className="text-gray-500 text-lg leading-relaxed">
-              This agreement governs your use of Zekodes. By using our cloud-powered IDE, you agree to the rules and legal boundaries defined below.
-            </p>
-          </div>
-
-          {/* --- 01. ACCEPTANCE --- */}
-          <section id="agreement" className="scroll-mt-20">
-            <ChapterHeader num="01" title="Agreement to Terms" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Zekodes provides an Integrated Development Environment (IDE) that converts visual logic into code. By accessing our website, web editor, or desktop application, you confirm that you have read, understood, and agreed to be bound by these Terms and Conditions.</p>
-              <p>If you do not agree with any part of these terms, you must immediately cease use of the Zekodes platform. These terms constitute a legally binding agreement between you and Zekodes Inc.</p>
+          <section id="top">
+            <h1 className="text-5xl font-black text-white mb-4">Zekodes Terms and Conditions</h1>
+            <p className="text-blue-500 font-mono text-sm uppercase tracking-widest mb-8">Last updated: 2025</p>
+            <div className="prose prose-invert max-w-none text-gray-400 text-lg leading-relaxed">
+              <p>These Terms and Conditions ("Terms") govern your access to and use of the Zekodes platform, including the Zekodes website, web-based editor, desktop application, cloud compilation services, and AI-assisted features (collectively, the "Services").</p>
+              <p className="text-base mt-4 font-semibold text-gray-300">By accessing or using Zekodes, you agree to be legally bound by these Terms. If you do not agree to these Terms, you must not access or use the Services.</p>
             </div>
           </section>
 
+          {/* 1. Acceptance */}
+          <section id="acceptance" className="scroll-mt-20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><ShieldAlert size={24}/></div>
+              <h2 className="text-2xl font-bold text-white">1. Acceptance of Terms</h2>
+            </div>
+            <p className="text-gray-400 leading-relaxed">Zekodes provides a Logic-First integrated development environment (IDE) that enables users to construct programs visually and generate professional source code. By creating an account, accessing the platform, or using any Zekodes Services, you acknowledge that you have read, understood, and agreed to these Terms.</p>
+          </section>
+
+          {/* 2. Eligibility */}
           <section id="eligibility" className="scroll-mt-20">
-            <ChapterHeader num="02" title="Eligibility & Registration" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>You must be at least 13 years old to create an account. Users under 18 must have parental or guardian consent to use the service. You are responsible for providing accurate registration information via Supabase and maintaining the security of your password.</p>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-green-500/10 rounded-lg text-green-500"><UserCheck size={24}/></div>
+              <h2 className="text-2xl font-bold text-white">2. Eligibility and Account Registration</h2>
+            </div>
+            <div className="text-gray-400 space-y-4">
+              <p>To use Zekodes, you must:</p>
+              <ul className="list-disc pl-6 space-y-2 text-sm text-gray-400">
+                <li>Be at least 13 years of age</li>
+                <li>Have parental or legal guardian consent if you are under 18 years of age</li>
+              </ul>
+              <p className="text-sm">Account authentication and management are handled through Supabase. You are solely responsible for maintaining the confidentiality of your login credentials.</p>
             </div>
           </section>
 
-          <section id="beta-terms" className="scroll-mt-20">
-            <ChapterHeader num="03" title="Early Access (Beta) Terms" />
-            <div className="bg-blue-900/10 border-l-4 border-blue-500 p-8 rounded-r-2xl space-y-4">
-              <h4 className="text-white font-bold flex items-center gap-2">
-                <Zap className="text-blue-500" size={18} /> Public Beta Notice
-              </h4>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Zekodes v2.0 is currently in its "Early Access" phase. You acknowledge that the service may contain bugs, experience downtime, or undergo significant architectural changes without prior notice. We do not guarantee 100% uptime for cloud compilation during this phase.
-              </p>
+          {/* 3. Beta Services */}
+          <section id="beta" className="scroll-mt-20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500"><Zap size={24}/></div>
+              <h2 className="text-2xl font-bold text-white">3. Early Access and Beta Services</h2>
+            </div>
+            <div className="bg-[#161b22] p-6 rounded-2xl border border-gray-800 space-y-4">
+              <p className="text-sm font-bold text-purple-400 uppercase tracking-wider">3.1 Beta Status</p>
+              <p className="text-sm text-gray-400">You acknowledge that Beta features may contain defects, functionality may change or be discontinued at any time, and service availability is not guaranteed.</p>
             </div>
           </section>
 
-          {/* --- 02. PLATFORM USAGE --- */}
-          <section id="prohibited" className="scroll-mt-20">
-            <ChapterHeader num="04" title="Prohibited Activities" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>You agree not to use Zekodes for any illegal or harmful activities, including but not limited to:</p>
-              <ul className="list-disc list-inside space-y-2">
-                <li>Developing malware, viruses, or any code designed to disrupt system integrity.</li>
-                <li>Attempting to bypass our cloud compiler sandboxing or reverse-engineering the Zekodes platform.</li>
-                <li>Using automated scripts to overwhelm our cloud resources (DDoS attacks).</li>
-                <li>Submitting code that violates intellectual property or privacy laws of others.</li>
+          {/* 4. Acceptable Use */}
+          <section id="acceptable-use" className="scroll-mt-20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-red-500/10 rounded-lg text-red-500"><Ban size={24}/></div>
+              <h2 className="text-2xl font-bold text-white">4. Acceptable Use Policy</h2>
+            </div>
+            <div className="text-gray-400 space-y-4">
+              <p>Prohibited activities include:</p>
+              <ul className="list-disc pl-6 space-y-2 text-sm text-gray-400">
+                <li>Developing or executing malware or malicious code</li>
+                <li>Attempting to bypass security mechanisms or sandboxing</li>
+                <li>Reverse-engineering the platform components</li>
+                <li>Launching automated DoS attacks or infringing intellectual property</li>
               </ul>
             </div>
           </section>
 
+          {/* 5. Fair Use */}
           <section id="fair-use" className="scroll-mt-20">
-            <ChapterHeader num="05" title="Cloud Resource Fair Use" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Our cloud compilation cluster is a shared resource. To ensure performance for all users, we enforce "Fair Use" limits. Accounts found to be running resource-heavy infinite loops or cryptocurrency miners will be automatically throttled or suspended.</p>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500"><Server size={24}/></div>
+              <h2 className="text-2xl font-bold text-white">5. Cloud Resource Fair Use</h2>
+            </div>
+            <p className="text-gray-400 text-sm leading-relaxed">Zekodes provides shared cloud resources. Resource usage is subject to reasonable limits. Abusive usage, such as cryptocurrency mining or infinite loops, may result in throttling or suspension.</p>
+          </section>
+
+          {/* 6. AI Features */}
+          <section id="ai-disclaimer" className="scroll-mt-20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-500"><Sparkles size={24}/></div>
+              <h2 className="text-2xl font-bold text-white">6. AI-Assisted Features Disclaimer</h2>
+            </div>
+            <div className="p-6 bg-[#161b22] rounded-2xl border border-gray-800 text-gray-400 space-y-4">
+              <p className="text-sm">You acknowledge that AI-generated suggestions may be inaccurate. You are solely responsible for reviewing and securing any code generated or modified by AI.</p>
             </div>
           </section>
 
-          <section id="ai-usage" className="scroll-mt-20">
-            <ChapterHeader num="06" title="AI Interaction Rules" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>AI features (Explain, Fix, Optimize) are provided to assist in learning. While highly accurate, AI-generated content may occasionally be incorrect. You agree to take full responsibility for the logic and security of code that has been modified or generated by Zekodes AI.</p>
+          {/* 7. Ownership */}
+          <section id="ownership" className="scroll-mt-20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-green-500/10 rounded-lg text-green-500"><FileCode size={24}/></div>
+              <h2 className="text-2xl font-bold text-white">7. User Content and Ownership</h2>
             </div>
+            <p className="text-gray-400 leading-relaxed text-sm">You retain full ownership of all software, source code, and logic blocks you create using Zekodes. Zekodes grants a limited license to store and process your content solely to provide the Services.</p>
           </section>
 
-          {/* --- 03. OWNERSHIP --- */}
-          <section id="user-content" className="scroll-mt-20">
-            <ChapterHeader num="07" title="User Content Ownership" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p><strong>You own your logic.</strong> All source code (.c, .py, .java) and block configurations created by you remain your intellectual property. Zekodes does not claim any ownership over the software you build using our tools.</p>
+          {/* 8. IP */}
+          <section id="ip" className="scroll-mt-20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><Landmark size={24}/></div>
+              <h2 className="text-2xl font-bold text-white">8. Zekodes Intellectual Property</h2>
             </div>
+            <p className="text-gray-400 text-sm leading-relaxed">All rights, title, and interest in and to the Zekodes platform remain the exclusive property of Zekodes Inc., including translation engines and UI elements.</p>
           </section>
 
-          <section id="zekodes-ip" className="scroll-mt-20">
-            <ChapterHeader num="08" title="Zekodes IP Rights" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Zekodes Inc. retains all rights, title, and interest in the Zekodes IDE, including visual block designs, user interface elements, the underlying translation engine, and our branding. You may not use Zekodes branding for commercial purposes without written consent.</p>
+          {/* 9 & 10. Disclaimers */}
+          <section id="warranty" className="scroll-mt-20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-gray-500/10 rounded-lg text-gray-500"><AlertCircle size={24}/></div>
+              <h2 className="text-2xl font-bold text-white">9. Disclaimer of Warranties</h2>
             </div>
-          </section>
-
-          {/* --- 04. LEGAL BOUNDARIES --- */}
-          <section id="disclaimer" className="scroll-mt-20">
-            <ChapterHeader num="09" title="Disclaimer of Warranties" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Zekodes is provided "AS IS" and "AS AVAILABLE". We disclaim all warranties, whether express or implied, regarding the accuracy of AI explanations, the stability of the cloud compiler, or the suitability of the IDE for any particular purpose.</p>
-            </div>
+            <p className="text-gray-400 text-sm italic">Services are provided "AS IS" and "AS AVAILABLE" without warranties of any kind.</p>
           </section>
 
           <section id="liability" className="scroll-mt-20">
-            <ChapterHeader num="10" title="Limitation of Liability" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>To the maximum extent permitted by law, Zekodes Inc. shall not be liable for any indirect, incidental, or consequential damages resulting from your use of the platform, including data loss or loss of logic files due to beta system updates.</p>
-            </div>
+            <h2 className="text-2xl font-bold text-white mb-6">10. Limitation of Liability</h2>
+            <p className="text-gray-400 text-sm leading-relaxed">Zekodes Inc. shall not be liable for indirect, incidental, or consequential damages, including loss of data or business opportunities.</p>
           </section>
 
-          {/* --- 05. SUPPORT --- */}
-          <section id="contact-legal" className="scroll-mt-20">
-            <ChapterHeader num="11" title="Support & Arbitration" />
-            <div className="p-8 bg-blue-600/10 border border-blue-500/20 rounded-3xl">
-              <h4 className="text-white font-bold mb-2 flex items-center gap-2">
-                <Globe size={18} className="text-blue-400" /> Legal Inquiries
-              </h4>
-              <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                Any disputes arising from these terms shall be resolved through binding arbitration. For support requests or to report violations of these terms, please contact our team.
-              </p>
-              <a href="mailto:issues.zekodes@gmail.com" className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all inline-block">
-                Contact Legal Support
-              </a>
+          {/* 11 & 12. Legal Logic */}
+          <section id="termination" className="scroll-mt-20">
+            <h2 className="text-2xl font-bold text-white mb-6">11. Suspension and Termination</h2>
+            <p className="text-gray-400 text-sm">We reserve the right to suspend access if you violate these Terms or pose a security risk.</p>
+          </section>
+
+          <section id="law" className="scroll-mt-20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><Gavel size={24}/></div>
+              <h2 className="text-2xl font-bold text-white">12. Governing Law</h2>
+            </div>
+            <p className="text-gray-400 text-sm">These Terms shall be governed by applicable laws and disputes resolved through binding arbitration.</p>
+          </section>
+
+          {/* 13. Changes */}
+          <section id="changes" className="scroll-mt-20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><RefreshCw size={24}/></div>
+              <h2 className="text-2xl font-bold text-white">13. Changes to These Terms</h2>
+            </div>
+            <p className="text-gray-400 text-sm">Material changes will be communicated via email or in-app notice.</p>
+          </section>
+
+          {/* 14. Contact */}
+          <section id="contact" className="scroll-mt-20">
+            <div className="p-10 bg-gradient-to-br from-[#161b22] to-[#0d1117] border border-gray-800 rounded-[2.5rem] text-center">
+              <Mail className="text-blue-500 mx-auto mb-4" size={40} />
+              <h2 className="text-2xl font-black text-white mb-4">Contact Legal Team</h2>
+              <p className="text-gray-500 mb-6">For legal inquiries or to report violations, please contact:</p>
+              <a href="mailto:issues.zekodes@gmail.com" className="text-blue-500 font-mono text-lg font-bold">issues.zekodes@gmail.com</a>
             </div>
           </section>
 
           {/* Footer Branding */}
-          <div className="mt-32 pt-10 border-t border-gray-800 flex flex-col items-center opacity-30">
-            <span className="font-black text-xl tracking-tighter uppercase text-white">Zekodes Terms</span>
-            <p className="text-[10px] mt-2 tracking-[0.4em]">COMPLIANCE · SECURITY · LOGIC</p>
+          <div className="mt-32 pt-10 border-t border-gray-800 flex flex-col items-center opacity-50">
+            <div className="flex items-center space-x-2 mb-2">
+                <ShieldCheck size={24}/>
+                <span className="font-black text-xl tracking-tighter uppercase">Zekodes</span>
+            </div>
+            <p className="text-xs uppercase tracking-widest text-gray-500">Compliance · Security · Logic</p>
           </div>
 
         </div>
@@ -204,7 +219,7 @@ const TermsConditions: React.FC = () => {
   );
 };
 
-// --- Helper Components ---
+// --- Helpers ---
 
 const NavButton: React.FC<{ label: string; id: string; onClick: (id: string) => void }> = ({ label, id, onClick }) => (
     <button 
@@ -214,16 +229,6 @@ const NavButton: React.FC<{ label: string; id: string; onClick: (id: string) => 
         <div className="w-1 h-1 rounded-full bg-gray-600 group-hover:bg-blue-500 transition-colors"></div>
         {label}
     </button>
-);
-
-const ChapterHeader: React.FC<{ num: string; title: string }> = ({ num, title }) => (
-    <div className="mb-10">
-        <div className="flex items-center gap-4 mb-2">
-            <span className="text-[10px] font-mono text-blue-500 border border-blue-500/30 px-2 py-0.5 rounded uppercase tracking-widest">Section {num}</span>
-            <div className="h-[1px] flex-1 bg-gray-800"></div>
-        </div>
-        <h2 className="text-3xl font-black text-white">{title}</h2>
-    </div>
 );
 
 export default TermsConditions;

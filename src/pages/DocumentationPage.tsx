@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
-  Book, FileText, 
-  ShieldAlert, Globe, BookOpen, Bug, Sparkles,
-  Layers, Cpu, Code2, Terminal, Info, 
-  ChevronRight, Lightbulb, Zap, Settings, Database, MousePointer2,
-  MonitorPlay, GraduationCap, Rocket, ArrowLeft
+  Book, FileText, ShieldAlert, Globe, BookOpen, Bug, Sparkles,
+  Layers, Cpu, Code2, Terminal, Info, ChevronRight, Lightbulb, 
+  Zap, Settings, Database, MousePointer2, MonitorPlay, 
+  GraduationCap, Rocket, ArrowLeft, ShieldCheck, Clock, Scale
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -13,77 +12,109 @@ const DocumentationPage: React.FC = () => {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
   return (
     <div className="flex h-screen bg-[#0d1117] text-gray-300 font-sans overflow-hidden">
       
-      {/* --- Sidebar Navigation --- */}
+      {/* --- Sidebar Navigation (Based on ref image) --- */}
       <aside className="w-80 flex-shrink-0 bg-[#161b22] border-r border-gray-800 overflow-y-auto hidden lg:block">
         <div className="p-6 border-b border-gray-800 sticky top-0 bg-[#161b22] z-10">
            <div className="flex items-center justify-between">
              <div className="flex items-center space-x-2">
                <Book className="w-6 h-6 text-blue-500" />
-               <span className="font-bold text-white text-lg">Zekodes Mastery</span>
+               <span className="font-bold text-white text-lg">Zekodes Docs</span>
              </div>
-             <Link to="/editor" className="text-gray-500 hover:text-white transition-colors">
+             <Link to="/editor" className="text-gray-500 hover:text-white transition-colors" title="Back to Editor">
                <ArrowLeft size={18} />
              </Link>
            </div>
-           <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Comprehensive Learning System</p>
         </div>
 
         <nav className="p-4 space-y-6 text-sm">
-          {/* Section: Foundation */}
+          {/* Foundation */}
           <div>
-            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">01. Foundation</p>
+            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Foundation
+            </p>
             <div className="space-y-1">
-                <NavButton label="Introduction to Zekodes" id="intro" onClick={scrollToSection} />
-                <NavButton label="Zekodes Academy (New)" id="academy" onClick={scrollToSection} />
-                <NavButton label="The Psychology of Blocks" id="psychology" onClick={scrollToSection} />
-                <NavButton label="Installation & Requirements" id="getting-started" onClick={scrollToSection} />
+                <NavButton label="Introduction to Zekodes" id="overview" onClick={scrollToSection} />
+                <NavButton label="Design Philosophy" id="philosophy" onClick={scrollToSection} />
+                <NavButton label="Platform & Requirements" id="platform" onClick={scrollToSection} />
+                <NavButton label="Onboarding Experience" id="onboarding" onClick={scrollToSection} />
+                <NavButton label="Zekodes Academy" id="academy" onClick={scrollToSection} />
             </div>
           </div>
 
-          {/* Section: Core Mechanics */}
+          {/* Workspace & Interface */}
           <div>
-            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">02. Core Mechanics</p>
+            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> Workspace & Interface
+            </p>
             <div className="space-y-1">
-                <NavButton label="Interface Deep-Dive" id="interface" onClick={scrollToSection} />
-                <NavButton label="Cloud Compiler Workflow" id="execution" onClick={scrollToSection} />
+                <NavButton label="Dual-Pane Workspace" id="dual-pane" onClick={scrollToSection} />
+                <NavButton label="Navigation and Controls" id="nav-controls" onClick={scrollToSection} />
             </div>
           </div>
 
-          {/* Section: Visual Programming */}
+          {/* Core Programming Concepts */}
           <div>
-            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">03. Programming with Blocks</p>
+            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-yellow-500"></div> Programming Concepts
+            </p>
             <div className="space-y-1">
-                <NavButton label="Data Types & Variables" id="variables" onClick={scrollToSection} />
-                <NavButton label="Control Flow (Logic)" id="logic" onClick={scrollToSection} />
+                <NavButton label="Data Types & Variables" id="data-types" onClick={scrollToSection} />
+                <NavButton label="Control Flow" id="control-flow" onClick={scrollToSection} />
                 <NavButton label="Loops & Iteration" id="loops" onClick={scrollToSection} />
                 <NavButton label="Functions & Scope" id="functions" onClick={scrollToSection} />
-                <NavButton label="Nesting & Child-Logic" id="nesting" onClick={scrollToSection} />
+                <NavButton label="Nesting & Child Logic" id="nesting" onClick={scrollToSection} />
             </div>
           </div>
 
-          {/* Section: Advanced AI */}
+          {/* Execution & Compilation */}
           <div>
-            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">04. AI Intelligence</p>
+            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Execution & Compilation
+            </p>
             <div className="space-y-1">
-                <NavButton label="Automated Debugging" id="ai-fix" onClick={scrollToSection} />
+                <NavButton label="Cloud Compiler Workflow" id="compiler" onClick={scrollToSection} />
+            </div>
+          </div>
+
+          {/* AI Intelligence */}
+          <div>
+            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div> AI Intelligence
+            </p>
+            <div className="space-y-1">
+                <NavButton label="Automated Debugging" id="ai-debug" onClick={scrollToSection} />
                 <NavButton label="Logic Explanation Engine" id="ai-explain" onClick={scrollToSection} />
-                <NavButton label="Code Optimization Tips" id="ai-opt" onClick={scrollToSection} />
+                <NavButton label="Code Optimization Advisor" id="ai-opt" onClick={scrollToSection} />
             </div>
           </div>
 
-          {/* Section: Troubleshooting */}
+          {/* Error Handling */}
           <div>
-            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">05. Appendices</p>
+            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> Error Handling
+            </p>
             <div className="space-y-1">
-                <NavButton label="Common Error Codes" id="errors" onClick={scrollToSection} />
-                <NavButton label="Support & Roadmap" id="support" onClick={scrollToSection} />
+                <NavButton label="Common Runtime Errors" id="errors" onClick={scrollToSection} />
+            </div>
+          </div>
+
+          {/* Final Sections */}
+          <div>
+            <p className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div> Legal & Community
+            </p>
+            <div className="space-y-1">
+                <NavButton label="Security & Privacy" id="security" onClick={scrollToSection} />
+                <NavButton label="Support & Community" id="support" onClick={scrollToSection} />
+                <NavButton label="Product Roadmap" id="roadmap" onClick={scrollToSection} />
+                <NavButton label="Legal & Licensing" id="legal" onClick={scrollToSection} />
             </div>
           </div>
         </nav>
@@ -91,166 +122,226 @@ const DocumentationPage: React.FC = () => {
 
       {/* --- Main Content Area --- */}
       <main className="flex-1 overflow-y-auto scroll-smooth bg-[#0d1117]">
-        <div className="max-w-5xl mx-auto px-10 py-16 space-y-32 pb-40">
+        <div className="max-w-4xl mx-auto px-10 py-16 space-y-24 pb-40">
           
-          {/* --- FOUNDATION --- */}
-          <section id="intro" className="scroll-mt-20">
-            <ChapterHeader num="01" title="Introduction to Zekodes" />
+          {/* 1. Introduction */}
+          <section id="overview" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">1. Introduction</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Overview</h1>
             <div className="prose prose-invert max-w-none text-gray-400 space-y-6 leading-relaxed">
-              <p>Zekodes is a revolutionary integrated development environment (IDE) designed to bridge the gap between visual thinking and professional coding. For decades, the barrier to entry in computer science has been the steep learning curve of syntax—the specific rules about where to put semicolons, brackets, and keywords. Zekodes removes this barrier by allowing you to build logic visually while seeing the high-level professional code update in real-time.</p>
-              <p>The core mission of Zekodes is "Logic First." We believe that anyone can learn to think like an engineer if they aren't bogged down by spelling errors in their code. By using a sophisticated translation engine, Zekodes converts drag-and-drop blocks into clean, industry-standard C, Python, and Java code.</p>
+              <p>Zekodes is a hybrid, Logic-First integrated development environment (IDE) designed to make programming more accessible without compromising professional standards. It enables users to construct programs visually using structured logic blocks while simultaneously generating clean, readable, and industry-standard source code.</p>
+              <p>Traditional programming environments require beginners to manage logic, syntax, and environment configuration at the same time. This often results in frustration and early abandonment. Zekodes addresses this challenge by separating logical reasoning from syntactic expression, allowing users to focus on problem-solving while the system handles syntax generation automatically.</p>
+              <p>Zekodes supports real-time code generation for C, Python, and Java, ensuring that users learn transferable programming skills rather than simplified abstractions.</p>
             </div>
           </section>
 
-          {/* NEW SECTION: ACADEMY */}
-          <section id="academy" className="scroll-mt-20">
-            <ChapterHeader num="02" title="Zekodes Academy" />
+          {/* 1.2 Design Philosophy */}
+          <section id="philosophy" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">1.2 Design Philosophy</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Logic First</h1>
             <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>To ensure every user can harness the full power of the platform, we have introduced the Zekodes Academy—a centralized learning hub featuring high-quality video tutorials. Learning is now visual, following our "Watch and Build" philosophy.</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                <div className="p-6 bg-[#161b22] border border-gray-800 rounded-2xl">
-                  <MonitorPlay className="text-blue-500 mb-3" />
-                  <h4 className="text-white font-bold mb-1 text-sm uppercase">Learn From Here</h4>
-                  <p className="text-xs text-gray-500 leading-relaxed">Access our YouTube-style tutorial gallery directly from the sidebar. These videos cover everything from basic block-dragging to complex algorithm syncing.</p>
-                </div>
-                <div className="p-6 bg-[#161b22] border border-gray-800 rounded-2xl">
-                  <Rocket className="text-purple-500 mb-3" />
-                  <h4 className="text-white font-bold mb-1 text-sm uppercase">Smart Onboarding</h4>
-                  <p className="text-xs text-gray-500 leading-relaxed">First-time users are greeted with an automated interactive video guide, explaining the "Drag, Sync, and Run" workflow instantly upon signup.</p>
-                </div>
+              <p className="text-xl italic text-gray-300 font-serif border-l-4 border-blue-500 pl-6 my-8">Logic First. Syntax Follows.</p>
+              <p>Programming is fundamentally about reasoning, decision-making, and structure. Zekodes prioritizes these aspects by allowing users to design logic visually before engaging with textual code. Syntax is not hidden; instead, it is revealed progressively through real-time synchronization with the code editor.</p>
+              <p>This approach reduces cognitive load, accelerates learning, and creates a smoother transition from visual logic building to professional software development.</p>
+            </div>
+          </section>
+
+          {/* 2. Platform Availability */}
+          <section id="platform" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">2. Platform</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Availability & Requirements</h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div className="p-6 bg-[#161b22] rounded-2xl border border-gray-800">
+                <h4 className="text-white font-bold mb-3 flex items-center gap-2"><MonitorPlay size={18} className="text-blue-500" /> Windows Desktop</h4>
+                <p className="text-sm text-gray-400">Native desktop application optimized for performance and extended development sessions (Windows 10/11).</p>
+              </div>
+              <div className="p-6 bg-[#161b22] rounded-2xl border border-gray-800">
+                <h4 className="text-white font-bold mb-3 flex items-center gap-2"><Globe size={18} className="text-green-500" /> Web Editor</h4>
+                <p className="text-sm text-gray-400">Fully featured browser-based version compatible with macOS, Linux, and ChromeOS. No installation required.</p>
               </div>
             </div>
-          </section>
-
-          <section id="psychology" className="scroll-mt-20">
-            <ChapterHeader num="03" title="The Psychology of Blocks" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Why do blocks work better for beginners than text? The answer lies in cognitive load. When you type code, your brain has to manage logic, spelling, and structural rules simultaneously. Zekodes blocks use "Physical Constraints" to guide your thinking.</p>
-              <p>Think of it like LEGO bricks. A circular peg will not fit into a square hole. Similarly, a Zekodes "Value" block cannot be snapped into a "Command" slot where a decision is required.</p>
-            </div>
-          </section>
-
-          <section id="getting-started" className="scroll-mt-20">
-            <ChapterHeader num="04" title="Installation & Requirements" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Zekodes is built to be accessible everywhere. Our primary application is a native Windows 10/11 executable that offers the fastest performance for local logic building. For users on macOS, Linux, or ChromeOS, the Zekodes Web Editor provides an identical experience directly in the browser with zero installation required.</p>
-            </div>
-          </section>
-
-          {/* --- CORE MECHANICS --- */}
-          <section id="interface" className="scroll-mt-20">
-            <ChapterHeader num="05" title="Interface Deep-Dive" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>The Zekodes workspace is a dual-pane environment designed for "Side-by-Side Learning." On the left is your Canvas—the infinite grid where you snap blocks together. On the right is the Code Editor, which displays the live translation of your blocks into your chosen language.</p>
-              <p>The far-left vertical bar is the Activity Bar, where you can switch between the visual editor, your user profile, and global settings. The top Header Toolbar contains your most important actions: the Language Selector, the Green "Run" button, and the AI assistance tools.</p>
-            </div>
-          </section>
-
-          <section id="execution" className="scroll-mt-20">
-            <ChapterHeader num="06" title="Cloud Compiler Workflow" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Zekodes removes the "it works on my machine" problem. When you press "Run," your code is serialized and sent to our secure cloud cluster. Our servers compile the code in a standardized environment and stream the output back to your terminal in real-time.</p>
-            </div>
-          </section>
-
-          {/* --- PROGRAMMING WITH BLOCKS --- */}
-          <section id="variables" className="scroll-mt-20">
-            <ChapterHeader num="07" title="Data Types & Variables" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Variables are the "memory" of your program. In Zekodes, you use the Orange Data blocks to store information. We support three primary types: Integers (whole numbers), Floats (decimals), and Strings (text).</p>
-            </div>
-          </section>
-
-          <section id="logic" className="scroll-mt-20">
-            <ChapterHeader num="08" title="Control Flow (Logic)" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Logic is how your program makes decisions. The Green "Control" blocks allow you to create paths. The most common is the `If-Then-Else` block. If a condition is true (e.g., "Score  50"), the program follows one path; otherwise, it follows the "Else" path.</p>
-            </div>
-          </section>
-
-          <section id="loops" className="scroll-mt-20">
-            <ChapterHeader num="09" title="Loops & Iteration" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Computers are great at doing repetitive tasks. Loops allow you to run the same block of code many times. Zekodes provides `For` loops for counting (e.g., "Do this 10 times") and `While` loops for waiting (e.g., "Do this while the user is still playing").</p>
-            </div>
-          </section>
-
-          <section id="functions" className="scroll-mt-20">
-            <ChapterHeader num="10" title="Functions & Scope" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>As your projects grow, you'll want to reuse logic. Functions allow you to group blocks together under a single name. You can define a function like "Calculate Grade" once and then call it from many different places in your program.</p>
-            </div>
-          </section>
-
-          <section id="nesting" className="scroll-mt-20">
-            <ChapterHeader num="11" title="Nesting & Child-Logic" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Nesting is the act of putting one block inside another. For example, you might put an `If` block inside a `For` loop to check every item in a list. Zekodes handles the complex "Indentation" required by languages like Python automatically when you nest blocks.</p>
-            </div>
-          </section>
-
-          {/* --- AI INTELLIGENCE --- */}
-          <section id="ai-fix" className="scroll-mt-20">
-            <ChapterHeader num="12" title="Automated Debugging" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Everyone makes mistakes. In traditional coding, a single typo can stop your program for hours. Zekodes includes an "AI Fix" agent that scans your program for logical and syntax flaws.</p>
-            </div>
-          </section>
-
-          <section id="ai-explain" className="scroll-mt-20">
-            <ChapterHeader num="13" title="Logic Explanation Engine" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Sometimes you build a complex algorithm but forget how it works a week later. Or maybe you're looking at a project from another user. The "AI Explain" tool acts as a personal tutor.</p>
-            </div>
-          </section>
-
-          <section id="ai-opt" className="scroll-mt-20">
-            <ChapterHeader num="14" title="Code Optimization Tips" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Working code isn't always good code. As you become a better developer, you'll want your programs to be faster and cleaner. The AI Optimization agent reviews your working logic and suggests improvements.</p>
-            </div>
-          </section>
-
-          {/* --- APPENDICES --- */}
-          <section id="errors" className="scroll-mt-20">
-            <ChapterHeader num="15" title="Common Error Codes" />
-            <div className="prose prose-invert max-w-none text-gray-400 space-y-6">
-              <p>Even with blocks, logic errors can occur. Here are the most common messages you might see in the terminal:</p>
-              <ul className="list-disc list-inside space-y-2">
-                <li><strong>Segmentation Fault (C):</strong> Your program tried to access memory it doesn't own.</li>
-                <li><strong>IndexError (Python):</strong> You tried to look at an item in a list that doesn't exist.</li>
-                <li><strong>NullPointerException (Java):</strong> You tried to use a variable that hasn't been given a value yet.</li>
+            <div className="space-y-4 text-gray-400 text-sm">
+              <h4 className="text-white font-bold">System Requirements</h4>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Modern web browser (Chrome, Edge, Firefox, or Safari)</li>
+                <li>Stable internet connection for cloud compilation</li>
+                <li>Recommended: 8 GB RAM for optimal desktop performance</li>
               </ul>
             </div>
           </section>
 
-          <section id="support" className="scroll-mt-20">
-            <ChapterHeader num="16" title="Support & Roadmap" />
+          {/* 3. Getting Started */}
+          <section id="onboarding" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">3. Getting Started</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Onboarding Experience</h1>
+            <div className="prose prose-invert max-w-none text-gray-400">
+              <p>Zekodes includes an automated onboarding workflow for first-time users. Upon initial launch, users are guided through the core interaction model of the platform: <strong className="text-white">Drag → Sync → Run</strong></p>
+              <p className="mt-4">This onboarding process explains how visual blocks, generated code, and execution are connected, enabling users to start building programs with minimal setup or prior experience.</p>
+            </div>
+          </section>
+
+          <section id="academy" className="scroll-mt-20">
+            <h1 className="text-4xl font-black text-white mb-8">Zekodes Academy</h1>
+            <div className="prose prose-invert max-w-none text-gray-400 space-y-4">
+              <p>Zekodes Academy is a centralized learning system designed to support users at different skill levels. It provides structured educational content directly integrated into the IDE.</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>High-quality video tutorials</li>
+                <li>Step-by-step logic-building demonstrations</li>
+                <li>Coverage of both visual programming and generated code</li>
+                <li>Progressive learning paths from fundamentals to advanced topics</li>
+              </ul>
+              <p>The Academy follows a <strong className="text-white">Watch and Build</strong> approach, encouraging active learning alongside instruction.</p>
+            </div>
+          </section>
+
+          {/* 4. Workspace */}
+          <section id="dual-pane" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">4. Workspace</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Dual-Pane Workspace</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="p-8 bg-[#161b22] rounded-2xl border border-gray-800">
-                <h3 className="text-white font-bold mb-4 flex items-center gap-2"><ShieldAlert size={20} className="text-red-500" /> Reporting Issues</h3>
-                <p className="text-sm text-gray-400 mb-6">If you encounter a technical bug or compiler error, please email our engineering team.</p>
-                <a href="mailto:issues.zekodes@gmail.com" className="text-blue-500 font-mono font-bold underline">issues.zekodes@gmail.com</a>
+              <div>
+                <h4 className="text-white font-bold mb-2">Visual Canvas</h4>
+                <p className="text-sm text-gray-400">An infinite grid where users assemble programs using drag-and-drop logic blocks. The canvas enforces structural correctness through block constraints.</p>
               </div>
-              <div className="p-8 bg-[#161b22] rounded-2xl border border-gray-800">
-                <h3 className="text-white font-bold mb-4 flex items-center gap-2"><Globe size={20} className="text-green-500" /> Community</h3>
-                <p className="text-sm text-gray-400 mb-6">Follow us for updates on new tutorial videos arriving in the "Learn From Here" academy.</p>
-                <div className="space-y-2 text-sm text-gray-400">
-                  <p>Instagram: @zekodes_official</p>
-                  <p>X / Twitter: @ZekodesApp</p>
-                </div>
+              <div>
+                <h4 className="text-white font-bold mb-2">Code Editor</h4>
+                <p className="text-sm text-gray-400">A professional-grade text editor that displays the live translation of visual logic into the selected programming language.</p>
               </div>
             </div>
           </section>
 
-          {/* Footer Branding */}
-          <div className="mt-32 pt-10 border-t border-gray-800 flex flex-col items-center opacity-50">
-            <div className="flex items-center space-x-2 mb-2">
-                <Code2 size={24}/>
-                <span className="font-black text-xl tracking-tighter uppercase">Zekodes</span>
+          <section id="nav-controls" className="scroll-mt-20">
+            <h1 className="text-4xl font-black text-white mb-8">Navigation and Controls</h1>
+            <div className="space-y-6">
+              <p className="text-gray-400"><strong className="text-white">Activity Bar:</strong> Provides access to the editor, academy content, user profile, and global settings.</p>
+              <p className="text-gray-400"><strong className="text-white">Header Toolbar:</strong> Contains frequently used actions such as language selection, program execution, and AI assistance tools.</p>
             </div>
-            <p className="text-xs">© 2025 Zekodes Inc. All Rights Reserved.</p>
-          </div>
+          </section>
+
+          {/* 5. Core Concepts */}
+          <section id="data-types" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">5. Core Programming Concepts</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Data Types & Variables</h1>
+            <div className="prose prose-invert max-w-none text-gray-400">
+              <p>Variables represent memory locations used to store data during program execution. Zekodes supports the following primary data types: <strong className="text-white">Integers, Floating-point numbers, and Strings.</strong></p>
+              <p className="mt-4">Each data type is represented by visually distinct blocks, helping users develop an understanding of type systems and data modeling.</p>
+            </div>
+          </section>
+
+          <section id="control-flow" className="scroll-mt-20">
+            <h1 className="text-4xl font-black text-white mb-8">Control Flow</h1>
+            <p className="text-gray-400 leading-relaxed">Control flow determines how a program makes decisions and chooses execution paths. Zekodes provides structured logic blocks such as conditional statements and logical operators. The most common structure is the If–Else block, which allows programs to execute different logic based on evaluated conditions. Block constraints ensure that conditions and actions are placed correctly.</p>
+          </section>
+
+          <section id="loops" className="scroll-mt-20">
+            <h1 className="text-4xl font-black text-white mb-8">Loops & Iteration</h1>
+            <p className="text-gray-400 leading-relaxed">Loops enable repeated execution of logic blocks. Zekodes supports <strong className="text-white">For Loops</strong> for fixed iterations and <strong className="text-white">While Loops</strong> for condition-based repetition. Visual nesting ensures correct scoping and indentation across all supported languages.</p>
+          </section>
+
+          <section id="functions" className="scroll-mt-20">
+            <h1 className="text-4xl font-black text-white mb-8">Functions & Scope</h1>
+            <p className="text-gray-400 leading-relaxed">Functions allow users to encapsulate reusable logic into named units. Zekodes enables users to define, call, and reuse functions across projects. The platform automatically manages scope rules, parameter passing, and language-specific function syntax.</p>
+          </section>
+
+          <section id="nesting" className="scroll-mt-20">
+            <h1 className="text-4xl font-black text-white mb-8">Nesting & Child Logic</h1>
+            <p className="text-gray-400 leading-relaxed">Nesting allows complex logic structures by placing blocks within other blocks. Zekodes enforces valid nesting through physical block constraints, preventing structurally invalid programs. This approach mirrors professional indentation and scoping rules without requiring users to manage formatting manually.</p>
+          </section>
+
+          {/* 6. Execution */}
+          <section id="compiler" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">6. Execution & Compilation</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Cloud Compiler Workflow</h1>
+            <div className="p-6 bg-blue-500/5 rounded-2xl border border-blue-500/20 text-gray-400 space-y-4">
+              <p>Zekodes removes the need for local compiler installation and configuration. When a user executes a program:</p>
+              <ol className="list-decimal pl-5 space-y-1">
+                <li>The generated code is serialized</li>
+                <li>Sent to a secure cloud execution environment</li>
+                <li>Compiled in a standardized runtime</li>
+                <li>Output is streamed back to the integrated terminal in real time</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* 7. AI Intelligence */}
+          <section id="ai-debug" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">7. AI Intelligence</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Automated Debugging</h1>
+            <p className="text-gray-400 leading-relaxed">The automated debugging system analyzes programs to detect syntax issues, logical inconsistencies, and structural errors. Suggested fixes are presented clearly, allowing users to understand and correct mistakes efficiently.</p>
+          </section>
+
+          <section id="ai-explain" className="scroll-mt-20">
+            <h1 className="text-4xl font-black text-white mb-8">Logic Explanation Engine</h1>
+            <p className="text-gray-400 leading-relaxed">The logic explanation engine converts programs into human-readable explanations. This feature is useful for reviewing complex logic, understanding shared projects, and reinforcing learning outcomes.</p>
+          </section>
+
+          <section id="ai-opt" className="scroll-mt-20">
+            <h1 className="text-4xl font-black text-white mb-8">Code Optimization Advisor</h1>
+            <p className="text-gray-400 leading-relaxed">The optimization advisor reviews working programs and provides recommendations for improving performance, readability, and maintainability while preserving original logic.</p>
+          </section>
+
+          {/* 8. Error Handling */}
+          <section id="errors" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">8. Error Handling & Diagnostics</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Common Runtime Errors</h1>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-xl">
+                <span className="text-red-500 font-mono text-xs">Segmentation Fault</span>
+                <p className="text-gray-500 text-[11px] mt-2">(C) Memory access error.</p>
+              </div>
+              <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-xl">
+                <span className="text-red-500 font-mono text-xs">IndexError</span>
+                <p className="text-gray-500 text-[11px] mt-2">(Python) List index out of range.</p>
+              </div>
+              <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-xl">
+                <span className="text-red-500 font-mono text-xs">NullPointerException</span>
+                <p className="text-gray-500 text-[11px] mt-2">(Java) Uninitialized reference.</p>
+              </div>
+            </div>
+          </section>
+
+          {/* 9. Security */}
+          <section id="security" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">9. Security & Privacy</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Isolation & Privacy</h1>
+            <ul className="list-disc pl-5 text-gray-400 space-y-2">
+              <li>Cloud execution environments are sandboxed</li>
+              <li>User projects are private by default</li>
+              <li>Authentication and data storage are securely managed</li>
+              <li>No user code is shared without explicit permission</li>
+            </ul>
+          </section>
+
+          {/* 10. Support */}
+          <section id="support" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">10. Support & Community</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Community Channels</h1>
+            <div className="p-8 bg-[#161b22] rounded-2xl border border-gray-800 space-y-4">
+              <p className="text-gray-400">Report issues: <span className="text-blue-500 font-mono">issues.zekodes@gmail.com</span></p>
+              <div className="flex gap-4">
+                <span className="text-gray-500 text-sm italic">Instagram: @zekodes_official</span>
+                <span className="text-gray-500 text-sm italic">X (Twitter): @ZekodesApp</span>
+              </div>
+            </div>
+          </section>
+
+          {/* 11. Roadmap */}
+          <section id="roadmap" className="scroll-mt-20">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">11. Roadmap</h2>
+            <h1 className="text-4xl font-black text-white mb-8">Future Enhancements</h1>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 border border-gray-800 rounded-xl text-gray-500 text-sm">Classroom tools</div>
+              <div className="p-4 border border-gray-800 rounded-xl text-gray-500 text-sm">Offline compilation</div>
+              <div className="p-4 border border-gray-800 rounded-xl text-gray-500 text-sm">New languages</div>
+              <div className="p-4 border border-gray-800 rounded-xl text-gray-500 text-sm">Plugin ecosystem</div>
+            </div>
+          </section>
+
+          {/* 12. Legal */}
+          <section id="legal" className="scroll-mt-20 border-t border-gray-800 pt-10">
+            <h2 className="text-sm font-black text-blue-500 uppercase tracking-[0.2em] mb-4">12. Legal</h2>
+            <p className="text-gray-500 text-xs">© 2025 Zekodes Inc. All rights reserved.</p>
+          </section>
 
         </div>
       </main>
@@ -268,16 +359,6 @@ const NavButton: React.FC<{ label: string; id: string; onClick: (id: string) => 
         <div className="w-1 h-1 rounded-full bg-gray-600 group-hover:bg-blue-500 transition-colors"></div>
         {label}
     </button>
-);
-
-const ChapterHeader: React.FC<{ num: string; title: string; id?: string }> = ({ num, title, id }) => (
-    <div className="mb-12" id={id}>
-        <div className="flex items-center gap-4 mb-2">
-            <span className="text-[10px] font-mono text-blue-500 border border-blue-500/30 px-2 py-0.5 rounded uppercase tracking-widest">Chapter {num}</span>
-            <div className="h-[1px] flex-1 bg-gray-800"></div>
-        </div>
-        <h2 className="text-4xl font-black text-white">{title}</h2>
-    </div>
 );
 
 export default DocumentationPage;

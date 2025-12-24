@@ -4,10 +4,12 @@ import {
   MonitorPlay, Zap, Code2, Clock, Sparkles 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import FeedbackPopup from '../components/FeedbackPopup'; // Import feedback component
 
 const TutorialPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
+  const [showFeedback, setShowFeedback] = useState(false); // Feedback state
 
   const tutorials = [
     {
@@ -52,9 +54,21 @@ const TutorialPage: React.FC = () => {
               <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Zekodes Mastery Academy</p>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-600/10 border border-blue-500/20 rounded-full">
-            <GraduationCap className="text-blue-500" size={18} />
-            <span className="text-sm font-bold text-blue-400">Academy Enrollment Active</span>
+          
+          <div className="flex items-center gap-4">
+            {/* Added Give Feedback Button in Header */}
+            <a 
+              href="https://forms.gle/xz9LQQ3wrvWKUCJC7"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-gray-400 hover:text-white border border-gray-700 px-4 py-2 rounded-lg transition-all"
+            >
+              Give Feedback
+            </a>
+            <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-600/10 border border-blue-500/20 rounded-full">
+              <GraduationCap className="text-blue-500" size={18} />
+              <span className="text-sm font-bold text-blue-400">Academy Enrollment Active</span>
+            </div>
           </div>
         </div>
       </header>
@@ -141,6 +155,7 @@ const TutorialPage: React.FC = () => {
                 controls 
                 autoPlay 
                 src={selectedVideo.videoSrc} 
+                onEnded={() => setShowFeedback(true)} // Trigger feedback when tutorial completes
               />
             </div>
 
@@ -158,6 +173,14 @@ const TutorialPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Milestone Feedback Popup triggered on video completion */}
+      {showFeedback && (
+        <FeedbackPopup 
+          message="🎓 You just completed a tutorial!" 
+          onClose={() => setShowFeedback(false)} 
+        />
       )}
     </div>
   );
