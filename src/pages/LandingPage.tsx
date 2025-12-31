@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Download, ChevronDown, ChevronRight, Layout, 
   Code2, Check, ArrowRight, Terminal, 
   BookOpen, LifeBuoy,
   GraduationCap, Users, Wrench,
-  Instagram, Linkedin, Mail, Rocket
+  Instagram, Linkedin, Mail, Rocket,
+  LogOut, User
 } from 'lucide-react';
-import { supabase } from '../services/supabase'; // Ensure this import exists to check session
+import { supabase } from '../services/supabase';
 import type { Session } from '@supabase/supabase-js';
 
 const DOWNLOAD_LINK = "https://github.com/aditya-dev-projects/Zerocodes-2.0/releases/download/v2.0.0/Zerocodes.Setup.2.0.0.exe";
@@ -147,12 +148,24 @@ const LandingPage: React.FC = () => {
   const [activeUseCase, setActiveUseCase] = useState<string>('students');
   const [activeFeatureIndex, setActiveFeatureIndex] = useState<number>(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -177,7 +190,6 @@ const LandingPage: React.FC = () => {
                 <button onClick={() => scrollToSection('pricing')} className="hover:text-gray-900 transition-colors font-medium text-[15px]">Pricing</button>
                 <NavDropdown label="Resources" onItemClick={scrollToSection} items={[{ label: 'Documentation', icon: <BookOpen />, to: '/docs' }, { label: 'Academy (New)', icon: <Rocket />, to: '/tutorial' }, { label: 'Support', icon: <LifeBuoy />, targetId: 'support' }]} />
                 
-                {/* Feedback Button - Only for logged in users */}
                 {session && (
                   <a 
                     href="https://forms.gle/xz9LQQ3wrvWKUCJC7" 
@@ -190,61 +202,93 @@ const LandingPage: React.FC = () => {
                 )}
               </div>
             </div>
+            
             <div className="flex items-center gap-4">
-              <a href={DOWNLOAD_LINK} className="bg-[#1a1a1a] hover:bg-black text-white px-6 py-2.5 rounded-full text-[14px] font-medium transition-all hover:scale-105 flex items-center gap-2 shadow-lg shadow-gray-200 group">
-                <span>Download</span>
-                <Download size={16} className="group-hover:translate-y-0.5 transition-transform" />
-              </a>
+              {session ? (
+                <div className="flex items-center gap-3">
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100">
+                    <User size={14} className="text-gray-400" />
+                    <span className="text-xs font-medium text-gray-600 truncate max-w-[120px]">
+                      {session.user.email}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut size={16} />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              ) : (
+                <Link 
+                  to="/auth" 
+                  className="bg-[#1a1a1a] hover:bg-black text-white px-6 py-2.5 rounded-full text-[14px] font-medium transition-all hover:scale-105 shadow-lg shadow-gray-200"
+                >
+                  Login / Sign Up
+                </Link>
+              )}
             </div>
           </div>
         </div>
       </nav>
 
-      <section id="product" className="relative pt-44 pb-20 px-6 overflow-hidden scroll-mt-20">
-        <ParticleBackground density={80} />
-        <div className="max-w-5xl mx-auto text-center relative z-10 mb-24">
-          <h1 className="text-6xl sm:text-7xl md:text-8xl font-medium text-gray-900 tracking-tighter mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-1000">Elevate your craft<br /><span className="text-gray-400">with the next-gen IDE</span></h1>
-          <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-12 leading-relaxed font-light animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">Visual blocks meet professional code. Built-in AI assistance. <br className="hidden sm:block"/>Zero configuration required.</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in zoom-in duration-1000 delay-300">
-            <a href={DOWNLOAD_LINK} className="group h-14 px-8 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center gap-3 text-lg font-medium transition-all hover:bg-black hover:scale-105 shadow-xl shadow-gray-200"><Download className="w-5 h-5" />Download for Windows</a>
-            <Link to="/editor" className="group h-14 px-8 rounded-full bg-white border border-gray-200 text-gray-900 flex items-center justify-center gap-3 text-lg font-medium transition-all hover:bg-gray-50 hover:border-gray-300 hover:scale-105">Try Web Editor<ArrowRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" /></Link>
+      <section id="product" className="relative pt-44 pb-32 px-6 overflow-hidden scroll-mt-20">
+        <ParticleBackground density={40} />
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <h1 className="text-6xl sm:text-7xl font-medium text-gray-900 tracking-tight mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            Build programs visually.<br />
+            Learn logic before syntax.
+          </h1>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-16 leading-relaxed font-normal animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
+            A logic-first coding IDE that turns visual blocks into real C, Python, and Java code.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 animate-in fade-in zoom-in duration-1000 delay-300">
+            <Link to="/editor" className="group h-14 px-10 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center gap-3 text-lg font-medium transition-all hover:bg-black hover:scale-105 shadow-xl shadow-gray-200">
+              Try Web Editor
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <button disabled className="h-14 px-10 rounded-full bg-white border border-gray-200 text-gray-400 flex items-center justify-center gap-3 text-lg font-medium cursor-not-allowed opacity-60">
+              <Download className="w-5 h-5" />
+              Desktop App (Coming Soon)
+            </button>
           </div>
         </div>
+      </section>
 
-        <div className="max-w-7xl mx-auto px-6 relative z-20 pb-20">
-           <div className="text-center mb-12">
-              <span className="text-sm font-bold text-blue-600 uppercase tracking-wider">Features Overview</span>
-              <h2 className="text-4xl font-medium text-gray-900 mt-2">What all Zekodes has</h2>
-           </div>
-           <div className="flex flex-wrap justify-center gap-3 mb-8">
-              {FEATURES.map((feature, index) => (
-                <button key={feature.id} onClick={() => setActiveFeatureIndex(index)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 border ${activeFeatureIndex === index ? 'bg-gray-900 text-white border-gray-900 shadow-lg scale-105' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}>
-                  {React.cloneElement(feature.icon, { className: `w-4 h-4 ${activeFeatureIndex === index ? 'text-white' : 'text-gray-500'}` })}{feature.title}
-                </button>
-              ))}
-           </div>
-           <div className="text-center mb-8 max-w-2xl mx-auto h-20">
-             <h3 className="text-2xl font-medium text-gray-900 mb-2">{FEATURES[activeFeatureIndex].title}</h3>
-             <p className="text-gray-500">{FEATURES[activeFeatureIndex].desc}</p>
-           </div>
-           <div className="max-w-6xl mx-auto">
-               <div className="bg-gray-100/50 rounded-[2.5rem] p-2 sm:p-4 border border-gray-200 shadow-2xl">
-                  <div className="bg-white rounded-[2rem] border border-gray-200 overflow-hidden shadow-sm flex flex-col">
-                     <div className="border-b border-gray-100 px-6 py-4 flex items-center justify-between bg-white">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-400"></div><div className="w-3 h-3 rounded-full bg-yellow-400"></div><div className="w-3 h-3 rounded-full bg-green-400"></div></div>
-                        <div className="text-xs text-gray-400 font-mono uppercase tracking-wider">Zekodes Preview</div>
-                        <div className="w-12"></div> 
-                     </div>
-                     <div className="relative bg-[#1e1e1e] w-full aspect-[16/10] overflow-hidden group">
-                        {FEATURES.map((feature, index) => (
-                           <img key={feature.id} src={feature.img} alt={feature.title} className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ease-in-out ${activeFeatureIndex === index ? 'opacity-100 z-10' : 'opacity-0 z-0'}`} />
-                        ))}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e]/50 via-transparent to-transparent pointer-events-none z-20"></div>
-                     </div>
-                  </div>
-               </div>
-           </div>
-        </div>
+      <section className="max-w-7xl mx-auto px-6 relative z-20 pb-20">
+         <div className="text-center mb-12">
+            <span className="text-sm font-bold text-blue-600 uppercase tracking-wider">Features Overview</span>
+            <h2 className="text-4xl font-medium text-gray-900 mt-2">What all Zekodes has</h2>
+         </div>
+         <div className="flex flex-wrap justify-center gap-3 mb-8">
+            {FEATURES.map((feature, index) => (
+              <button key={feature.id} onClick={() => setActiveFeatureIndex(index)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 border ${activeFeatureIndex === index ? 'bg-gray-900 text-white border-gray-900 shadow-lg scale-105' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}>
+                {React.cloneElement(feature.icon, { className: `w-4 h-4 ${activeFeatureIndex === index ? 'text-white' : 'text-gray-500'}` })}{feature.title}
+              </button>
+            ))}
+         </div>
+         <div className="text-center mb-8 max-w-2xl mx-auto h-20">
+           <h3 className="text-2xl font-medium text-gray-900 mb-2">{FEATURES[activeFeatureIndex].title}</h3>
+           <p className="text-gray-500">{FEATURES[activeFeatureIndex].desc}</p>
+         </div>
+         <div className="max-w-6xl mx-auto">
+             <div className="bg-gray-100/50 rounded-[2.5rem] p-2 sm:p-4 border border-gray-200 shadow-2xl">
+                <div className="bg-white rounded-[2rem] border border-gray-200 overflow-hidden shadow-sm flex flex-col">
+                   <div className="border-b border-gray-100 px-6 py-4 flex items-center justify-between bg-white">
+                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-400"></div><div className="w-3 h-3 rounded-full bg-yellow-400"></div><div className="w-3 h-3 rounded-full bg-green-400"></div></div>
+                      <div className="text-xs text-gray-400 font-mono uppercase tracking-wider">Zekodes Preview</div>
+                      <div className="w-12"></div> 
+                   </div>
+                   <div className="relative bg-[#1e1e1e] w-full aspect-[16/10] overflow-hidden group">
+                      {FEATURES.map((feature, index) => (
+                         <img key={feature.id} src={feature.img} alt={feature.title} className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ease-in-out ${activeFeatureIndex === index ? 'opacity-100 z-10' : 'opacity-0 z-0'}`} />
+                      ))}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e]/50 via-transparent to-transparent pointer-events-none z-20"></div>
+                   </div>
+                </div>
+             </div>
+         </div>
       </section>
 
       <section id="use-cases" className="py-24 bg-white relative border-t border-gray-100">
