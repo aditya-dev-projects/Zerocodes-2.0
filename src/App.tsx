@@ -7,6 +7,7 @@ import SetupPage from './pages/SetupPage';
 import TutorialPage from './pages/TutorialPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
+import Profile from './pages/Profile'; // <--- NEW IMPORT
 import AuthPage from './components/AuthPage';
 
 const isDesktopApp = () => {
@@ -46,6 +47,10 @@ const App: React.FC = () => {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsConditions />} />
         <Route path="/auth" element={<AuthPage />} />
+        
+        {/* NEW PROFILE ROUTE */}
+        <Route path="/profile" element={<Profile />} />
+
         <Route 
           path="/editor" 
           element={

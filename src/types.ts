@@ -1,4 +1,3 @@
-
 export const Language = {
   C: 'c',
   PYTHON: 'python',
@@ -46,16 +45,25 @@ export interface BlockDefinition {
   id: string;
   label: string;
   category: BlockCategory;
-  code: Record<string, string>; // Language -> Code Template (e.g. "printf("{text}");")
+  code: Record<string, string>; 
   inputs?: BlockInputDefinition[];
-  language?: string; // 'c' | 'python' | 'java' for filtering
-  color: string; // Visual identifier
-  hasChildren?: boolean; // Manually flagged for nesting support
+  language?: string; 
+  color: string; 
+  hasChildren?: boolean; 
 }
 
 export interface BlockInstance {
   id: string;
-  type: string; // Corresponds to BlockDefinition.id
-  params: Record<string, string>; // Key-value pair for inputs
-  children?: BlockInstance[]; // For nesting (loops/ifs)
+  type: string; 
+  params: Record<string, string>; 
+  children?: BlockInstance[]; 
+}
+
+// --- NEW PROFILE TYPE ---
+export interface Profile {
+  id: string;
+  full_name: string | null;
+  experience_level: 'Beginner' | 'Intermediate' | 'Pro' | null;
+  has_seen_tutorial: boolean;
+  email?: string;
 }

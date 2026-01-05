@@ -15,8 +15,8 @@ import type { Session } from '@supabase/supabase-js';
 import AuthPage from '../components/AuthPage';
 import UserProfile from '../components/UserProfile';
 import DocumentationPage from './DocumentationPage';
-import OnboardingTour from '../components/OnboardingTour';
-import FeedbackPopup from '../components/FeedbackPopup'; // Added Feedback Component
+import FeedbackPopup from '../components/FeedbackPopup';
+import WelcomeBoard from '../components/WelcomeBoard'; 
 
 const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string => {
   if (blocks.length === 0) return "";
@@ -56,29 +56,102 @@ const EditorPage: React.FC = () => {
   const [output, setOutput] = useState("");
   const [executor, setExecutor] = useState<CodeExecutor | null>(null);
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
-  const [showTutorial, setShowTutorial] = useState(false);
   
-  // Added Feedback State
-  const [showFeedback, setShowFeedback] = useState(false);
+  // NEW STATES
+  const [showWelcome, setShowWelcome] = useState(false); // Controls the "Academy/Tutorial" box
+  const [showFeedback, setShowFeedback] = useState(false); // Controls the Feedback box
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  // Track if user has already given feedback so we don't query DB on every run
+  const [userFeedbackStatus, setUserFeedbackStatus] = useState<boolean>(false);
 
   const isDesktop = navigator.userAgent.toLowerCase().includes('electron');
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setLoadingAuth(false);
-    });
+      
+      if (session?.user) {
+        setUserId(session.user.id);
+        checkUserStatus(session.user.id);
+      }
+    };
 
-    const hasSeenOnboarding = localStorage.getItem('zekodes_onboarding_complete');
-    if (!hasSeenOnboarding) {
-      setShowTutorial(true);
-    }
+    initSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user) {
+        setUserId(session.user.id);
+        checkUserStatus(session.user.id);
+      }
     });
+
     return () => subscription.unsubscribe();
   }, []);
+
+  // Check Supabase for "has_seen_tutorial" AND "has_given_feedback"
+  const checkUserStatus = async (uid: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('has_seen_tutorial, has_given_feedback') // Fetch both columns
+        .eq('id', uid)
+        .single();
+
+      if (error && error.code === 'PGRST116') {
+        // Row doesn't exist (e.g., first time Google Login) -> Create it
+        const { error: insertError } = await supabase.from('profiles').insert([{
+            id: uid,
+            full_name: 'Explorer', // Default
+            experience_level: 'Beginner',
+            has_seen_tutorial: false,
+            has_given_feedback: false
+        }]);
+        if (!insertError) {
+            setShowWelcome(true);
+            setUserFeedbackStatus(false);
+        }
+      } else if (data) {
+        // User exists: Update local states based on DB data
+        if (!data.has_seen_tutorial) {
+            setShowWelcome(true);
+        }
+        
+        // Store feedback status locally to check later during handleRun
+        setUserFeedbackStatus(data.has_given_feedback || false);
+      }
+    } catch (e) {
+      console.error("Error checking user status:", e);
+    }
+  };
+
+  const handleCloseWelcome = async () => {
+    setShowWelcome(false);
+    // Update Supabase: User has seen the tutorial/academy box
+    if (userId) {
+      await supabase
+        .from('profiles')
+        .update({ has_seen_tutorial: true })
+        .eq('id', userId);
+    }
+  };
+
+  const handleCloseFeedback = async () => {
+    setShowFeedback(false);
+    // Update Supabase: User has seen the feedback box
+    if (userId) {
+        await supabase
+          .from('profiles')
+          .update({ has_given_feedback: true })
+          .eq('id', userId);
+        
+        // Update local state so it doesn't show again in this session
+        setUserFeedbackStatus(true);
+    }
+  };
 
   useEffect(() => {
     if (viewMode === 'blocks') {
@@ -86,11 +159,6 @@ const EditorPage: React.FC = () => {
       setGeneratedCode(code);
     }
   }, [blocks, language, viewMode]);
-
-  const handleOnboardingComplete = () => {
-    localStorage.setItem('zekodes_onboarding_complete', 'true');
-    setShowTutorial(false);
-  };
 
   const handleLanguageChange = (newLang: Language) => {
     setLanguage(newLang);
@@ -123,11 +191,9 @@ const EditorPage: React.FC = () => {
         if (!inputRequested) {
           setStatus(ExecutionStatus.SUCCESS);
           
-          // TRIGGER: Show feedback popup ONLY on the first successful program run
-          const alreadyPrompted = localStorage.getItem('zekodes_first_run_feedback');
-          if (!alreadyPrompted) {
+          // UPDATED FEEDBACK LOGIC: Check state variable derived from DB
+          if (!userFeedbackStatus) {
             setShowFeedback(true);
-            localStorage.setItem('zekodes_first_run_feedback', 'true');
           }
         }
       } catch (e) {
@@ -151,7 +217,14 @@ const EditorPage: React.FC = () => {
           setOutput(prev => prev + text);
         }
       });
-      if (!inputRequested) setStatus(ExecutionStatus.SUCCESS);
+      if (!inputRequested) {
+        setStatus(ExecutionStatus.SUCCESS);
+        
+        // UPDATED FEEDBACK LOGIC (Also check here if run finishes after input)
+        if (!userFeedbackStatus) {
+            setShowFeedback(true);
+        }
+      }
     } catch (e) {
       setStatus(ExecutionStatus.ERROR);
     }
@@ -204,7 +277,7 @@ const EditorPage: React.FC = () => {
       <div className="w-12 flex flex-col items-center py-4 bg-[#333333] border-r border-[#2b2b2b] z-20 relative">
         {!isDesktop && (
           <Link to="/" className="mb-6 p-2 rounded hover:bg-[#444] text-gray-400 hover:text-white transition-colors" title="Back to Home">
-             <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
           </Link>
         )}
         
@@ -219,20 +292,19 @@ const EditorPage: React.FC = () => {
           <Book className="w-6 h-6" />
         </div>
 
-        {/* Academy Icon correctly placed below Docs */}
         <div onClick={() => navigate('/tutorial')} className="mb-6 cursor-pointer text-gray-500 hover:text-blue-400 transition-colors" title="Academy">
           <Rocket className="w-6 h-6" />
         </div>
 
         <div className="mt-auto flex flex-col items-center space-y-4">
-           <div onClick={() => setShowProfile(!showProfile)} className={`cursor-pointer transition-colors ${showProfile ? 'text-blue-400' : 'text-gray-500 hover:text-white'}`} title="User Profile">
+           {/* Redirect to full Profile Page */}
+           <div onClick={() => navigate('/profile')} className="cursor-pointer transition-colors text-gray-500 hover:text-white" title="User Profile">
              <UserCircle className="w-6 h-6" />
            </div>
            <div className="cursor-pointer text-gray-500 hover:text-white pb-4">
              <Settings className="w-6 h-6" />
            </div>
         </div>
-        {showProfile && <UserProfile userEmail={session.user.email} onClose={() => setShowProfile(false)} />}
       </div>
 
       {/* Main Workspace */}
@@ -259,10 +331,7 @@ const EditorPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Action Buttons and Language Selector */}
               <div className="flex items-center space-x-3">
-                
-                {/* Language Selector in Top Bar */}
                 <div className="relative flex items-center bg-[#252526] border border-[#333] rounded px-2 py-1 mr-2 group">
                   <span className="text-[10px] font-bold text-gray-500 uppercase mr-2 border-r border-[#333] pr-2">Target</span>
                   <select 
@@ -325,13 +394,14 @@ const EditorPage: React.FC = () => {
         </>
       )}
 
-      {showTutorial && <OnboardingTour onComplete={handleOnboardingComplete} />}
+      {/* NEW WELCOME BOARD (Supabase Controlled) */}
+      {showWelcome && <WelcomeBoard onClose={handleCloseWelcome} />}
       
-      {/* FEEDBACK POPUP */}
+      {/* FEEDBACK POPUP (Supabase Controlled) */}
       {showFeedback && (
         <FeedbackPopup 
-          message="🎉 You just ran your first program!" 
-          onClose={() => setShowFeedback(false)} 
+          message="🎉 You just ran your first program! How was the experience?" 
+          onClose={handleCloseFeedback} 
         />
       )}
     </div>
@@ -339,18 +409,3 @@ const EditorPage: React.FC = () => {
 };
 
 export default EditorPage;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
