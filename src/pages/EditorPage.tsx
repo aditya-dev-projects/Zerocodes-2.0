@@ -13,7 +13,7 @@ import { streamGeminiResponse, CodeExecutor } from '../services/gemini';
 import { supabase } from '../services/supabase';
 import type { Session } from '@supabase/supabase-js';
 import AuthPage from '../components/AuthPage';
-import UserProfile from '../components/UserProfile';
+// import UserProfile from '../components/UserProfile';
 import DocumentationPage from './DocumentationPage';
 import FeedbackPopup from '../components/FeedbackPopup';
 import WelcomeBoard from '../components/WelcomeBoard'; 
@@ -46,7 +46,7 @@ const EditorPage: React.FC = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
-  const [showProfile, setShowProfile] = useState(false);
+  // const [setShowProfile] = useState(false);
   const [language, setLanguage] = useState<Language>(Language.C);
   const [blocks, setBlocks] = useState<BlockInstance[]>([]);
   const [generatedCode, setGeneratedCode] = useState<string>("");
