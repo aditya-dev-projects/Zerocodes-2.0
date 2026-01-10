@@ -23,10 +23,7 @@ export interface ExecutionResult {
 }
 
 export const ToolMode = {
-  EXECUTE: 'execute',
-  EXPLAIN: 'explain',
-  DEBUG: 'debug',
-  OPTIMIZE: 'optimize'
+  EXECUTE: 'execute'
 } as const;
 
 export type ToolMode = typeof ToolMode[keyof typeof ToolMode];

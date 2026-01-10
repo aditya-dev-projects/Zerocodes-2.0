@@ -21,9 +21,15 @@ const AuthPage: React.FC = () => {
   
   const [error, setError] = useState<string | null>(null);
 
+  // 1. CHECK SESSION ON LOAD
+  // If the user is already logged in (or comes back from Google Auth), 
+  // set the flag and go to editor.
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate('/editor');
+      if (session) {
+        localStorage.setItem('zekodes_setup_complete', 'true'); // <--- CRITICAL FIX
+        navigate('/editor');
+      }
     });
   }, [navigate]);
 
@@ -64,17 +70,23 @@ const AuthPage: React.FC = () => {
 
           if (profileError) {
             console.error("Profile creation failed:", profileError);
-            // We don't block auth if profile fails, but it's good to log
           }
 
-          // Check if auto-login is needed (some Supabase configs require email confirmation first)
+          // Check if auto-login is needed
           const { data: sessionData } = await supabase.auth.getSession();
           if (!sessionData.session) {
              alert('Account created! If email confirmation is enabled, please check your inbox.');
+             // Stop here if no session (email confirmation required)
+             return; 
           }
         }
       }
+
+      // 2. SUCCESSFUL LOGIN/SIGNUP
+      // Mark setup as complete so the Router allows access to /editor
+      localStorage.setItem('zekodes_setup_complete', 'true'); // <--- CRITICAL FIX
       navigate('/editor');
+
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -87,10 +99,13 @@ const AuthPage: React.FC = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/editor'
+          // Ensure this URL matches your Supabase redirect settings
+          redirectTo: window.location.origin + '/editor' 
         }
       });
       if (error) throw error;
+      // Note: Google login will redirect the page, so the 'useEffect' 
+      // at the top will handle the return and setting the local storage.
     } catch (err: any) {
       setError(err.message);
     }
@@ -112,6 +127,7 @@ const AuthPage: React.FC = () => {
           </div>
           <div className="space-y-6">
             <div className="flex items-center gap-4">
+               {/* Ensure you have this file in your public folder */}
                <img src="/favicon.png" alt="Zekodes Logo" className="h-10 w-auto filter brightness-0 invert" />
                <span className="text-2xl font-bold text-white tracking-tighter">Zekodes</span>
             </div>
@@ -184,26 +200,26 @@ const AuthPage: React.FC = () => {
               {/* NEW FIELDS: Only show for Sign Up */}
               {!isLogin && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                   <div className="relative">
-                    <User className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
-                    <input
-                      type="text" placeholder="Full Name" required
-                      className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-gray-700 focus:outline-none focus:border-blue-500/30 focus:bg-white/[0.05] transition-all"
-                      value={fullName} onChange={(e) => setFullName(e.target.value)}
-                    />
-                  </div>
+                    <div className="relative">
+                     <User className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                     <input
+                       type="text" placeholder="Full Name" required
+                       className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-gray-700 focus:outline-none focus:border-blue-500/30 focus:bg-white/[0.05] transition-all"
+                       value={fullName} onChange={(e) => setFullName(e.target.value)}
+                     />
+                   </div>
 
-                  <div className="relative">
-                    <Award className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
-                    <select
-                      value={experience} onChange={(e) => setExperience(e.target.value)}
-                      className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-14 pr-5 text-white focus:outline-none focus:border-blue-500/30 focus:bg-white/[0.05] transition-all appearance-none cursor-pointer"
-                    >
-                      <option value="Beginner" className="bg-[#0c0c0c]">Beginner (Just starting)</option>
-                      <option value="Intermediate" className="bg-[#0c0c0c]">Intermediate (Building apps)</option>
-                      <option value="Pro" className="bg-[#0c0c0c]">Pro (Experienced)</option>
-                    </select>
-                  </div>
+                   <div className="relative">
+                     <Award className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                     <select
+                       value={experience} onChange={(e) => setExperience(e.target.value)}
+                       className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-14 pr-5 text-white focus:outline-none focus:border-blue-500/30 focus:bg-white/[0.05] transition-all appearance-none cursor-pointer"
+                     >
+                       <option value="Beginner" className="bg-[#0c0c0c]">Beginner (Just starting)</option>
+                       <option value="Intermediate" className="bg-[#0c0c0c]">Intermediate (Building apps)</option>
+                       <option value="Pro" className="bg-[#0c0c0c]">Pro (Experienced)</option>
+                     </select>
+                   </div>
                 </div>
               )}
             </div>

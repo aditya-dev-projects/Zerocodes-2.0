@@ -1,51 +1,105 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X, Trash2 } from 'lucide-react';
-import { ExecutionStatus } from '../types';
+import { Terminal } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+import 'xterm/css/xterm.css';
+
+// --- Fix: Extend Window interface for Electron's require ---
+declare global {
+  interface Window {
+    require: any;
+  }
+}
+
+// Access Electron safely
+const { ipcRenderer } = window.require ? window.require('electron') : { 
+  ipcRenderer: { send: () => {}, on: () => {}, removeAllListeners: () => {} } 
+};
 
 interface TerminalProps {
   isOpen: boolean;
   onClose: () => void;
-  output: string;
-  status: ExecutionStatus;
   onClear: () => void;
-  isWaitingForInput?: boolean;
-  onInput?: (text: string) => void;
 }
 
 const TerminalPanel: React.FC<TerminalProps> = ({ 
   isOpen, 
   onClose, 
-  output, 
-  status, 
-  onClear,
-  isWaitingForInput = false,
-  onInput
+  onClear
 }) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [inputValue, setInputValue] = useState("");
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const xtermRef = useRef<Terminal | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [output, isOpen, isWaitingForInput]);
+    if (!isOpen || !terminalRef.current) return;
 
-  useEffect(() => {
-    // Auto-focus input when waiting
-    if (isWaitingForInput && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isWaitingForInput]);
+    if (!xtermRef.current) {
+      const term = new Terminal({
+        cursorBlink: true,
+        fontSize: 14,
+        fontFamily: 'Consolas, "Courier New", monospace',
+        theme: {
+          background: '#1e1e1e',
+          foreground: '#cccccc'
+        }
+      });
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (onInput) {
-        onInput(inputValue);
-        setInputValue("");
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      
+      term.open(terminalRef.current);
+      fitAddon.fit();
+
+      // Send input to Electron PTY
+      // --- Fix: Added explicit type (data: string) ---
+      term.onData((data: string) => {
+        ipcRenderer.send('terminal-input', data);
+      });
+
+      // Receive output from Electron PTY
+      // --- Fix: Added explicit type (data: string) ---
+      ipcRenderer.on('terminal-incoming', (_event: any, data: string) => {
+        term.write(data);
+      });
+
+      xtermRef.current = term;
+      fitAddonRef.current = fitAddon;
+      
+      // Initial resize to fit container
+      setTimeout(() => fitAddon.fit(), 100);
+    }
+
+    // Handle Window Resize
+    const handleResize = () => {
+      if (fitAddonRef.current && xtermRef.current) {
+        fitAddonRef.current.fit();
+        ipcRenderer.send('terminal-resize', {
+          cols: xtermRef.current.cols,
+          rows: xtermRef.current.rows
+        });
       }
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      ipcRenderer.removeAllListeners('terminal-incoming');
+    };
+  }, [isOpen]);
+
+  // Handle manual clear
+  useEffect(() => {
+    // xterm's clear is handled via the button below calling handleClear
+  }, [onClear]);
+
+  const handleClear = () => {
+    if (xtermRef.current) {
+      xtermRef.current.clear();
+      // Optional: Send 'clear' or 'cls' command to PTY if you want a shell clear
+      // ipcRenderer.send('terminal-input', navigator.userAgent.includes('Win') ? 'cls\r' : 'clear\r');
     }
+    onClear();
   };
 
   if (!isOpen) return null;
@@ -58,16 +112,10 @@ const TerminalPanel: React.FC<TerminalProps> = ({
           <div className="h-full flex items-center border-b border-blue-500 px-1 cursor-pointer">
             <span className="text-xs uppercase font-medium text-gray-100">Terminal</span>
           </div>
-          <div className="h-full flex items-center px-1 cursor-pointer hover:text-gray-200 text-gray-500">
-            <span className="text-xs uppercase font-medium">Output</span>
-          </div>
-          <div className="h-full flex items-center px-1 cursor-pointer hover:text-gray-200 text-gray-500">
-            <span className="text-xs uppercase font-medium">Debug Console</span>
-          </div>
         </div>
         
         <div className="flex items-center space-x-3 text-gray-400">
-          <button onClick={onClear} title="Clear Terminal" className="hover:text-gray-100 p-1 rounded hover:bg-gray-700">
+          <button onClick={handleClear} title="Clear Terminal" className="hover:text-gray-100 p-1 rounded hover:bg-gray-700">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
           <button onClick={onClose} title="Close Panel" className="hover:text-gray-100 p-1 rounded hover:bg-gray-700">
@@ -76,46 +124,9 @@ const TerminalPanel: React.FC<TerminalProps> = ({
         </div>
       </div>
 
-      {/* Terminal Body */}
-      <div 
-        ref={scrollRef}
-        className="flex-1 p-4 overflow-y-auto font-mono text-sm text-gray-300"
-      >
-        {status === ExecutionStatus.COMPILING && (
-          <div className="text-blue-400 mb-2 italic">Compiling blocks...</div>
-        )}
-        
-        <div className="whitespace-pre-wrap leading-relaxed">
-          {output || <span className="text-gray-600">Type 'Run' to execute your blocks.</span>}
-          
-          {status === ExecutionStatus.RUNNING && !isWaitingForInput && (
-             <span className="inline-block w-2 h-4 align-middle bg-gray-400 ml-1 animate-pulse"/>
-          )}
-        </div>
-
-        {/* Interactive Input Line */}
-        {isWaitingForInput && (
-          <div className="flex items-center mt-1">
-             <span className="text-green-500 font-bold mr-2">➜</span>
-             <input
-               ref={inputRef}
-               type="text"
-               value={inputValue}
-               onChange={(e) => setInputValue(e.target.value)}
-               onKeyDown={handleKeyDown}
-               className="flex-1 bg-transparent border-none outline-none text-gray-100 placeholder-gray-600"
-               placeholder="Enter input..."
-               autoComplete="off"
-             />
-          </div>
-        )}
-
-        {!isWaitingForInput && output && status !== ExecutionStatus.RUNNING && (
-          <div className="mt-2 flex items-center text-gray-500">
-            <span className="text-green-500 font-bold mr-2">➜</span>
-            <span>_</span>
-          </div>
-        )}
+      {/* XTerm Container */}
+      <div className="flex-1 overflow-hidden relative pl-2 pt-1">
+         <div ref={terminalRef} className="h-full w-full" />
       </div>
     </div>
   );

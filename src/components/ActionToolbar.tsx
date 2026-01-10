@@ -1,12 +1,11 @@
 import React from 'react';
-import { Play, Bug, Sparkles, BookOpen, ArrowRightLeft } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { Language, ToolMode, ExecutionStatus } from '../types';
 
 interface ActionToolbarProps {
   currentLang: Language;
   onLangChange: (lang: Language) => void;
   onRun: (mode: ToolMode) => void;
-  onConvert: () => void;
   status: ExecutionStatus;
 }
 
@@ -14,7 +13,6 @@ const ActionToolbar: React.FC<ActionToolbarProps> = ({
   currentLang, 
   onLangChange, 
   onRun, 
-  onConvert,
   status 
 }) => {
   const isBusy = status === ExecutionStatus.RUNNING || status === ExecutionStatus.COMPILING;
@@ -61,44 +59,6 @@ const ActionToolbar: React.FC<ActionToolbarProps> = ({
         >
           <Play className="w-4 h-4 fill-current" />
           <span className="hidden sm:inline">Run Code</span>
-        </button>
-
-        <div className="h-6 w-px bg-gray-700 mx-2 hidden md:block"></div>
-
-        <button
-          onClick={() => onRun(ToolMode.DEBUG)}
-          disabled={isBusy}
-          title="Debug & Fix"
-          className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <Bug className="w-5 h-5" />
-        </button>
-
-        <button
-          onClick={() => onRun(ToolMode.OPTIMIZE)}
-          disabled={isBusy}
-          title="Optimize"
-          className="p-2 text-gray-400 hover:text-purple-400 hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <Sparkles className="w-5 h-5" />
-        </button>
-
-        <button
-          onClick={() => onRun(ToolMode.EXPLAIN)}
-          disabled={isBusy}
-          title="Explain Code"
-          className="p-2 text-gray-400 hover:text-blue-400 hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <BookOpen className="w-5 h-5" />
-        </button>
-
-        <button
-          onClick={onConvert}
-          disabled={isBusy}
-          title={`Convert to ${currentLang === Language.C ? 'Python' : 'C'}`}
-          className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <ArrowRightLeft className="w-5 h-5" />
         </button>
       </div>
     </div>
