@@ -1,31 +1,72 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, shell } = require('electron');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-// Try to use node-pty
+// --- 1. SETUP NODE-PTY (Terminal Backend) ---
 let pty;
 try {
   pty = require('node-pty');
 } catch (e) {
-  console.warn("node-pty not found. Ensure it is installed.");
+  console.warn("node-pty not found. Ensure it is installed if you want terminal features.");
 }
 
-const isDev = !app.isPackaged;
+const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 let mainWindow;
 let ptyProcess = null;
 
+// --- 2. CREATE WINDOW FUNCTION (UPDATED WITH FIX) ---
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
+    width: 1280,
     height: 800,
+    title: 'Zekodes',
+    backgroundColor: '#1e1e1e', 
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      webSecurity: false
+      webSecurity: false,
+      devTools: true
     },
   });
+
+  // --- 🔴 THE FIX: FORCE COPY/PASTE/ZOOM AT WINDOW LEVEL ---
+  // This guarantees shortcuts work even if the Editor doesn't catch them
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    // Check if Control (Windows/Linux) or Command (Mac) is pressed
+    const isCmdOrCtrl = input.control || input.meta;
+
+    if (isCmdOrCtrl) {
+      const key = input.key.toLowerCase();
+      
+      if (key === 'v') {
+        mainWindow.webContents.paste();
+      }
+      if (key === 'c') {
+        mainWindow.webContents.copy();
+      }
+      if (key === 'x') {
+        mainWindow.webContents.cut();
+      }
+      if (key === 'a') {
+        mainWindow.webContents.selectAll();
+      }
+      // Zoom In (Ctrl + +) or (Ctrl + =)
+      if (key === '+' || key === '=') {
+        mainWindow.webContents.setZoomLevel(mainWindow.webContents.getZoomLevel() + 0.5);
+      }
+      // Zoom Out (Ctrl + -)
+      if (key === '-') {
+        mainWindow.webContents.setZoomLevel(mainWindow.webContents.getZoomLevel() - 0.5);
+      }
+      // Reset Zoom (Ctrl + 0)
+      if (key === '0') {
+        mainWindow.webContents.setZoomLevel(0);
+      }
+    }
+  });
+  // ---------------------------------------------------------
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173'); 
@@ -34,7 +75,57 @@ function createWindow() {
     const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
     mainWindow.loadFile(indexPath);
   }
+
+  // Open external links in default browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
 }
+
+// --- 3. MENU TEMPLATE (Fallback & UI) ---
+const template = [
+  {
+    label: 'Edit',
+    submenu: [
+      { role: 'undo' },
+      { role: 'redo' },
+      { type: 'separator' },
+      { role: 'cut' },
+      { role: 'copy' },
+      { role: 'paste' },
+      { role: 'delete' },
+      { type: 'separator' },
+      { role: 'selectAll' }
+    ]
+  },
+  {
+    label: 'View',
+    submenu: [
+      { role: 'reload' },
+      { role: 'forceReload' },
+      { role: 'toggleDevTools' },
+      { type: 'separator' },
+      { role: 'resetZoom' },
+      { role: 'zoomIn' },
+      { role: 'zoomOut' },
+      { type: 'separator' },
+      { role: 'togglefullscreen' }
+    ]
+  },
+  {
+    role: 'window',
+    submenu: [
+      { role: 'minimize' },
+      { role: 'close' }
+    ]
+  }
+];
+
+const menu = Menu.buildFromTemplate(template);
+Menu.setApplicationMenu(menu);
+
+// --- 4. TERMINAL HELPER FUNCTIONS ---
 
 function initPty() {
   if (!pty) return;
@@ -61,10 +152,8 @@ function initPty() {
   }
 }
 
-// --- HELPER: Check if tool exists ---
 function checkTool(toolName) {
     try {
-        // Try getting version (e.g., "gcc --version")
         execSync(`${toolName} --version`, { stdio: 'ignore' });
         return true;
     } catch (e) {
@@ -72,7 +161,7 @@ function checkTool(toolName) {
     }
 }
 
-// --- IPC HANDLERS ---
+// --- 5. IPC HANDLERS ---
 
 ipcMain.on('terminal:input', (event, data) => {
   if (ptyProcess) ptyProcess.write(data);
@@ -93,9 +182,8 @@ ipcMain.on('terminal:kill', () => {
   }
 });
 
-// --- RUN LOGIC ---
+// --- 6. EXECUTION LOGIC (Java/Python/C) ---
 ipcMain.on('execution:run', (event, { language, code }) => {
-  // 1. Reset Terminal
   if (ptyProcess) {
     try { ptyProcess.kill(); } catch(e) {}
     ptyProcess = null;
@@ -105,14 +193,12 @@ ipcMain.on('execution:run', (event, { language, code }) => {
 
   if (!ptyProcess) return;
 
-  // 2. Prepare Files
   const tempDir = path.join(os.tmpdir(), 'zerocodes_exec');
   if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
   const isWindows = os.platform() === 'win32';
   let command = '';
   let filePath = '';
-  let toolMissing = false;
 
   try {
     switch (language.toLowerCase()) {
@@ -143,14 +229,13 @@ ipcMain.on('execution:run', (event, { language, code }) => {
       case 'cpp':
       case 'c++':
         if (!checkTool('gcc')) {
-            ptyProcess.write('\r\n\x1b[31mError: GCC (C Compiler) is not installed.\r\nPlease install MinGW or w64devkit to run C code.\x1b[0m\r\n');
+            ptyProcess.write('\r\n\x1b[31mError: GCC is not installed.\r\nPlease install MinGW or w64devkit.\x1b[0m\r\n');
             return;
         }
         filePath = path.join(tempDir, 'main.c');
         const exePath = path.join(tempDir, isWindows ? 'main.exe' : 'main');
         fs.writeFileSync(filePath, code);
         
-        // Windows '&&' fix
         if (isWindows) {
           command = `gcc "${filePath}" -o "${exePath}"; if ($?) { & "${exePath}" }`;
         } else {
@@ -185,7 +270,15 @@ ipcMain.on('execution:run', (event, { language, code }) => {
   }
 });
 
-app.whenReady().then(createWindow);
+// --- 7. APP LIFECYCLE ---
+
+app.whenReady().then(() => {
+    createWindow();
+
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
