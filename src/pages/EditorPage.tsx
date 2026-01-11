@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Play, Save, Code2, Blocks, Settings, FileJson, 
-  Book, UserCircle, ArrowLeft, ChevronDown
+  Book, UserCircle, ArrowLeft, ChevronDown, Trash2
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Language, type BlockInstance } from '../types';
@@ -18,35 +18,110 @@ import Terminal from '../components/Terminal';
 loader.config({ monaco });
 const { ipcRenderer } = window.require('electron');
 
+// --- CODE GENERATION LOGIC ---
 const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string => {
   if (blocks.length === 0) return "";
+  
+  // Helper to recursively generate code for a single block
   const generateBlockCode = (block: BlockInstance, indentLevel: number): string => {
     const indent = "    ".repeat(indentLevel);
     const def = BLOCK_DEFINITIONS.find(d => d.id === block.type);
     if (!def) return `${indent}// Unknown block: ${block.type}\n`;
+    
     let template = def.code[lang] || Object.values(def.code)[0] || "";
+    
+    // Replace parameters
     Object.entries(block.params).forEach(([key, value]) => {
       template = template.split(`{${key}}`).join(value);
     });
+    
     let result = indent + template + "\n";
+    
+    // Process children (nested blocks)
     if (block.children && block.children.length > 0) {
       block.children.forEach(child => {
         result += generateBlockCode(child, indentLevel + 1);
       });
+      // Close bracket if the template opened one (heuristic)
       if (template.trim().endsWith('{')) { result += indent + "}\n"; }
     }
     return result;
   };
-  const rawCode = blocks.map(b => generateBlockCode(b, 0)).join("");
-  if (lang === Language.JAVA && !rawCode.includes("class ")) {
-      const body = blocks.map(b => generateBlockCode(b, 2)).join("");
-      return `public class Main {\n    public static void main(String[] args) {\n${body}    }\n}`;
+
+  // --- JAVA SPECIFIC HANDLER ---
+  if (lang === Language.JAVA) {
+      const imports: string[] = [];
+      const bodyBlocks: BlockInstance[] = [];
+
+      // Separate Imports from Body Logic
+      blocks.forEach(b => {
+          const def = BLOCK_DEFINITIONS.find(d => d.id === b.type);
+          // Check if it's an 'includes' category OR the code starts with 'import'
+          const isImport = def?.category === 'includes' || def?.code[lang]?.trim().startsWith('import');
+          
+          if (isImport) {
+              imports.push(generateBlockCode(b, 0).trim());
+          } else {
+              bodyBlocks.push(b);
+          }
+      });
+
+      const importsCode = imports.join("\n");
+      // Raw body code (indent 0) for checking structure
+      const bodyRaw = bodyBlocks.map(b => generateBlockCode(b, 0)).join("");
+
+      // Logic: If we have body blocks, we might need a Main class wrapper.
+      if (bodyBlocks.length > 0) {
+          if (!bodyRaw.includes("class ")) {
+              // Wrap in Main class
+              const bodyIndented = bodyBlocks.map(b => generateBlockCode(b, 2)).join("");
+              const mainClass = `public class Main {\n    public static void main(String[] args) {\n${bodyIndented}    }\n}`;
+              return importsCode ? `${importsCode}\n\n${mainClass}` : mainClass;
+          } else {
+              // User already dropped a Class block, just append imports at top
+              return importsCode ? `${importsCode}\n\n${bodyRaw}` : bodyRaw;
+          }
+      } else {
+          // If NO body blocks (only imports), just return imports (don't force empty Main class)
+          return importsCode;
+      }
   }
-  if (lang === Language.C && !rawCode.includes("main(")) {
-      const body = blocks.map(b => generateBlockCode(b, 1)).join("");
-      return `#include <stdio.h>\n\nint main() {\n${body}    return 0;\n}`;
+
+  // --- C SPECIFIC HANDLER ---
+  if (lang === Language.C) {
+      const includes: string[] = [];
+      const bodyBlocks: BlockInstance[] = [];
+
+      blocks.forEach(b => {
+          const def = BLOCK_DEFINITIONS.find(d => d.id === b.type);
+          const isInclude = def?.category === 'includes' || def?.code[lang]?.trim().startsWith('#include');
+          
+          if (isInclude) {
+              includes.push(generateBlockCode(b, 0).trim());
+          } else {
+              bodyBlocks.push(b);
+          }
+      });
+
+      let includesCode = includes.join("\n");
+      const bodyRaw = bodyBlocks.map(b => generateBlockCode(b, 0)).join("");
+
+      // If we have logic but no main(), wrap it
+      if (bodyBlocks.length > 0 && !bodyRaw.includes("main(")) {
+          // Ensure stdio.h is present if we are auto-generating main
+          if (!includesCode.includes("<stdio.h>")) {
+              includesCode = `#include <stdio.h>\n${includesCode}`;
+          }
+          const bodyIndented = bodyBlocks.map(b => generateBlockCode(b, 1)).join("");
+          const mainFunc = `int main() {\n${bodyIndented}    return 0;\n}`;
+          return includesCode.trim() ? `${includesCode.trim()}\n\n${mainFunc}` : mainFunc;
+      }
+      
+      return includesCode ? `${includesCode}\n\n${bodyRaw}` : bodyRaw;
   }
-  return rawCode;
+
+  // --- PYTHON / FALLBACK ---
+  return blocks.map(b => generateBlockCode(b, 0)).join("");
 };
 
 const getMonacoLanguage = (lang: Language) => {
@@ -92,20 +167,34 @@ const EditorPage: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // --- Update Code Logic ---
   useEffect(() => {
     if (viewMode === 'blocks') {
       const code = generateCodeFromBlocks(blocks, language);
-      if (code && code.trim() !== "") setGeneratedCode(code);
+      if (blocks.length === 0) {
+        setGeneratedCode("// Drag blocks here to generate code...");
+      } else {
+        setGeneratedCode(code);
+      }
     }
   }, [blocks, language, viewMode]);
 
   const handleLanguageChange = (newLang: Language) => {
     setLanguage(newLang);
+    // Optional: Clear blocks on language switch if syntax is incompatible
     if (viewMode === 'blocks') setBlocks([]); 
+  };
+
+  // --- Handle Clear Canvas ---
+  const handleClearCanvas = () => {
+    if (window.confirm("Are you sure you want to clear the entire canvas?")) {
+        setBlocks([]);
+    }
   };
 
   // --- RUN LOGIC ---
   const handleRun = () => {
+    // Allows running in code mode even if user typed it manually
     if (!generatedCode.trim()) return;
     
     setTerminalOpen(true);
@@ -148,10 +237,15 @@ const EditorPage: React.FC = () => {
   }, [isDragging, onDrag, stopDragging]);
 
   const handleEditorChange = (value: string | undefined) => {
-      if (viewMode === 'code') setGeneratedCode(value || "");
+      // Allow updates ONLY if in code mode
+      if (viewMode === 'code') {
+          setGeneratedCode(value || "");
+      }
   };
+  
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+    // Initial layout fix
     setTimeout(() => { editor.layout(); editor.focus(); }, 100);
   };
 
@@ -195,6 +289,20 @@ const EditorPage: React.FC = () => {
                   </select>
                   <ChevronDown size={12} className="absolute right-2 pointer-events-none text-gray-500" />
                 </div>
+
+                 {/* --- CLEAR CANVAS BUTTON (Only visible in Blocks mode) --- */}
+                 {viewMode === 'blocks' && (
+                   <button 
+                     onClick={handleClearCanvas} 
+                     className="flex items-center space-x-1.5 bg-red-900/40 hover:bg-red-900/60 border border-red-900/50 text-red-200 px-3 py-1 rounded-sm text-xs transition-all active:scale-95"
+                     title="Clear Canvas"
+                   >
+                     <Trash2 className="w-3 h-3" /> <span>Clear</span>
+                   </button>
+                 )}
+
+                 <div className="w-px h-4 bg-gray-600 mx-1"></div>
+                 
                  <button onClick={handleRun} className="flex items-center space-x-1.5 bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded-sm text-xs transition-all active:scale-95 shadow-sm">
                    <Play className="w-3 h-3 fill-current" /> <span>Run Local</span>
                  </button>
@@ -212,6 +320,7 @@ const EditorPage: React.FC = () => {
                   )}
                   <div className={`${viewMode === 'blocks' ? 'w-[40%] border-l border-[#2b2b2b]' : 'flex-1'} bg-[#1e1e1e] h-full overflow-hidden`}>
                     <Editor
+                        key={viewMode} // CRITICAL FIX: Forces remount on mode switch to reset ReadOnly state
                         height="100%"
                         width="100%"
                         language={getMonacoLanguage(language)}

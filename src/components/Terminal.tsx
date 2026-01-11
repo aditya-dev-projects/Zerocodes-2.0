@@ -35,13 +35,18 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
   const [problems, setProblems] = useState<Problem[]>([]);
   const [outputLog, setOutputLog] = useState<string>("");
 
+  // Helper: Remove ANSI color codes/cursor movements to get clean text for Output tab
   const stripAnsi = (str: string) => {
     return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
   };
 
   const parseForProblems = (chunk: string) => {
     const cleanLine = stripAnsi(chunk);
+    
+    // Regex for Java/C/C++ compilers (e.g., "Main.java:5: error: ...")
     const javaMatch = cleanLine.match(/([a-zA-Z0-9_]+\.(java|c|cpp|py)):(\d+): (error|warning): (.+)/);
+    
+    // Check for Python Tracebacks
     const pythonError = cleanLine.includes("Traceback (most recent call last)") || cleanLine.includes("Error:");
 
     if (javaMatch) {
@@ -54,6 +59,7 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
         }]);
     } else if (pythonError) {
         setProblems(prev => {
+            // Avoid duplicate "Runtime Error" entries
             if (prev.some(p => p.message.includes("Traceback"))) return prev;
             return [...prev, {
                 id: Date.now(),
@@ -114,8 +120,25 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
 
     // --- LISTENERS ---
     const handleIncoming = (_: any, data: string) => {
+      // 1. Write to XTerm (Visual Terminal)
       term.write(data);
-      setOutputLog(prev => prev + stripAnsi(data));
+
+      // 2. Check for ANSI Clear Screen Sequences
+      // \x1b[2J = Clear entire screen
+      // \x1b[3J = Clear scrollback
+      // \x1bc   = Reset terminal
+      if (data.includes('\x1b[2J') || data.includes('\x1b[3J') || data.includes('\x1bc')) {
+          setOutputLog("");
+          setProblems([]);
+      }
+
+      // 3. Update Output Log (Clean Text Only)
+      // We append only if it's not a clear command to avoid ghost text
+      if (!data.includes('\x1b[2J')) {
+          setOutputLog(prev => prev + stripAnsi(data));
+      }
+      
+      // 4. Parse for Errors
       parseForProblems(data);
     };
 
@@ -139,7 +162,7 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
     };
   }, []);
 
-  // --- RESET TRIGGER (Fixes Output not clearing) ---
+  // --- RESET TRIGGER (Fixes Output not clearing via Button) ---
   useEffect(() => {
     if (resetTrigger && resetTrigger > 0) {
         if (xtermRef.current) xtermRef.current.clear();
@@ -218,7 +241,6 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
       <div className="flex-1 relative overflow-hidden bg-[#1e1e1e]">
          
          {/* 1. TERMINAL (Always Rendered, just Hidden via Visibility) */}
-         {/* This fixes the "dimensions undefined" crash because it stays in the DOM */}
          <div 
             ref={terminalRef} 
             className="h-full w-full pl-2"

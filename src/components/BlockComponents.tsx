@@ -1,8 +1,13 @@
 import React from 'react';
-import { Box, Type, PlayCircle, Plus, X, GripVertical, FileCode, Braces, Calculator, Repeat, ArrowRight,  } from 'lucide-react';
+import { 
+  Box, Type, PlayCircle, Plus, Trash2, GripVertical, 
+  FileCode, Braces, Calculator, Repeat, ArrowRight 
+} from 'lucide-react';
 import { type BlockDefinition, type BlockInstance, type BlockCategory, Language } from '../types';
 
-// --- Constants ---
+// ==================================================================================
+// 🧱 BLOCK DEFINITIONS
+// ==================================================================================
 
 // Mapping user color themes to Tailwind classes
 const COLOR_THEMES: Record<string, string> = {
@@ -17,30 +22,8 @@ const COLOR_THEMES: Record<string, string> = {
   'block-extension': 'text-gray-600 border-gray-500 bg-gray-50',
 };
 
-// ==================================================================================
-// 🧱 BLOCK DEFINITIONS (Where you add new blocks)
-// ==================================================================================
-
 export const BLOCK_DEFINITIONS: BlockDefinition[] = [
   
-  // --------------------------------------------------------------------------------
-  // 📍 QUICK COPY TEMPLATE (Uncomment and fill to add new block)
-  // --------------------------------------------------------------------------------
-  /*
-  {
-    id: 'unique-id-here',       // e.g., 'py-power'
-    category: 'operators',      // variables, conditionals, loops, functions, io
-    label: 'Label on Block',    // e.g., 'Power'
-    code: { python: 'code' },   // e.g., { python: '{a} ** {b}' } or { c: '...' }
-    inputs: [
-      { name: 'var1', placeholder: 'x', defaultValue: '1' },
-      { name: 'var2', placeholder: 'y', defaultValue: '1' }
-    ],
-    language: 'python',         // c, python, or java
-    color: 'block-operators'    // Pick a color theme from above
-  },
-  */
-
   // ==============================================================================
   // 🟢 C LANGUAGE BLOCKS
   // ==============================================================================
@@ -863,11 +846,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
   }
 ];
 
-// ==================================================================================
-// 🛑 END OF BLOCK DEFINITIONS
-// ==================================================================================
-
-
 const CATEGORIES: { id: BlockCategory; label: string; icon: any }[] = [
   { id: 'includes', label: 'Includes', icon: FileCode },
   { id: 'functions', label: 'Functions', icon: PlayCircle },
@@ -943,7 +921,7 @@ interface BlockRendererProps {
   onUpdate: (id: string, name: string, value: string) => void;
   onDelete: (id: string) => void;
   depth?: number;
-  onDropContainer?: (e: React.DragEvent) => void; // New prop for container drops
+  onDropContainer?: (e: React.DragEvent) => void; 
   moveBlock: (sourceId: string, targetId: string | null, mode: 'before' | 'append') => void;
 }
 
@@ -990,15 +968,6 @@ export const BlockItem: React.FC<BlockRendererProps> = ({ block, onDelete, onUpd
                 if (draggedId) {
                     moveBlock(draggedId, child.id, 'append');
                 } else {
-                     // If new block from sidebar
-                     // This logic is tricky because handleDrop in BlockCanvas handles new blocks.
-                     // We need to pass this up or replicate logic.
-                     // For simplicity, we rely on BlockCanvas's handleDrop for new blocks, 
-                     // but we need to tell it targetId.
-                     // Since we can't easily pass 'handleDrop' down deeply without prop drilling or context,
-                     // we'll stick to moveBlock for reordering here.
-                     // If user drops new block here, it might bubble up or fail if we stop propagation.
-                     // Ideally, 'onDropContainer' passed from BlockCanvas handles new blocks.
                      if (onDropContainer) onDropContainer(e);
                 }
             }}
@@ -1028,9 +997,9 @@ export const BlockItem: React.FC<BlockRendererProps> = ({ block, onDelete, onUpd
 
         <button 
           onClick={() => onDelete(block.id)}
-          className="ml-auto p-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="ml-auto p-1 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
         >
-          <X className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" />
         </button>
       </div>
 
@@ -1079,13 +1048,8 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks }) => {
 
     const draggedBlockId = e.dataTransfer.getData('block-id');
     if (draggedBlockId) {
-        // Handle Move
-        // If targetBlockId is present, we insert BEFORE it (unless handled by container logic)
-        // The container drop logic calls this with targetBlockId as the container ID.
-        // We need to distinguish 'append to container' vs 'insert before'.
-        // However, for new blocks, we reused handleDrop.
-        // For moves, we call moveBlock directly in handlers.
-        // So this part might only be reached for NEW blocks if we are careful.
+        // If it's an existing block, the move logic is handled via moveBlock calls in the sub-components
+        // We return here to avoid creating duplicates if the event bubbles up.
         return;
     }
 
@@ -1257,7 +1221,7 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks }) => {
           const draggedId = e.dataTransfer.getData('block-id');
           if (draggedId) {
               e.preventDefault();
-              moveBlock(draggedId, null, 'append');
+              moveBlock(draggedId, null, 'append'); // Move to root
           } else {
               handleDrop(e);
           }
