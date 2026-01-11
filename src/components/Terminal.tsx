@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Terminal as XTerminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
@@ -35,7 +35,7 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
   const [problems, setProblems] = useState<Problem[]>([]);
   const [outputLog, setOutputLog] = useState<string>("");
 
-  // Helper: Remove ANSI color codes/cursor movements to get clean text for Output tab
+  // Helper: Remove ANSI color codes for Output tab
   const stripAnsi = (str: string) => {
     return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
   };
@@ -43,7 +43,7 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
   const parseForProblems = (chunk: string) => {
     const cleanLine = stripAnsi(chunk);
     
-    // Regex for Java/C/C++ compilers (e.g., "Main.java:5: error: ...")
+    // Regex for Java/C/C++ compilers
     const javaMatch = cleanLine.match(/([a-zA-Z0-9_]+\.(java|c|cpp|py)):(\d+): (error|warning): (.+)/);
     
     // Check for Python Tracebacks
@@ -59,7 +59,6 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
         }]);
     } else if (pythonError) {
         setProblems(prev => {
-            // Avoid duplicate "Runtime Error" entries
             if (prev.some(p => p.message.includes("Traceback"))) return prev;
             return [...prev, {
                 id: Date.now(),
@@ -75,11 +74,13 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
   useEffect(() => {
     if (!terminalRef.current) return;
 
+    // 1. Init Xterm Instance
     const term = new XTerminal({
       cursorBlink: true,
       fontSize: 14,
       fontFamily: 'Consolas, "Courier New", monospace',
       lineHeight: 1.2,
+      convertEol: true, // Fixes weird line ending issues
       theme: {
         background: '#1e1e1e',
         foreground: '#cccccc',
@@ -106,44 +107,53 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
 
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
+    
+    // 2. Open Terminal in DOM
     term.open(terminalRef.current);
     
-    // Initial Fit safety check
-    try {
-        if (terminalRef.current.clientWidth > 0) {
-            fitAddon.fit();
-        }
-    } catch(e) {}
-
     xtermRef.current = term;
     fitAddonRef.current = fitAddon;
 
+    // 3. Initial Fit (Small delay to ensure DOM paint)
+    setTimeout(() => {
+        try {
+             if (terminalRef.current && terminalRef.current.clientWidth > 0) {
+                 fitAddon.fit();
+             }
+        } catch (e) { console.warn("Initial fit failed", e); }
+    }, 50);
+
     // --- LISTENERS ---
     const handleIncoming = (_: any, data: string) => {
-      // 1. Write to XTerm (Visual Terminal)
-      term.write(data);
+      // Safety Check: If term is disposed or element missing, don't write
+      if (!xtermRef.current || !terminalRef.current) return;
 
-      // 2. Check for ANSI Clear Screen Sequences
-      // \x1b[2J = Clear entire screen
-      // \x1b[3J = Clear scrollback
-      // \x1bc   = Reset terminal
+      // 1. Write to XTerm (Only if we have valid dimensions to avoid crash)
+      // If hidden, writing might sometimes cause issues, but usually Xterm handles buffer.
+      // We wrap in try-catch to suppress the "dimensions" error if it happens during hidden state.
+      try {
+          term.write(data);
+      } catch (err) {
+          console.warn("Xterm write error (likely hidden):", err);
+      }
+
+      // 2. Check for Clear Commands
       if (data.includes('\x1b[2J') || data.includes('\x1b[3J') || data.includes('\x1bc')) {
           setOutputLog("");
           setProblems([]);
       }
 
-      // 3. Update Output Log (Clean Text Only)
-      // We append only if it's not a clear command to avoid ghost text
+      // 3. Update Output Log (Clean Text)
       if (!data.includes('\x1b[2J')) {
           setOutputLog(prev => prev + stripAnsi(data));
       }
       
-      // 4. Parse for Errors
+      // 4. Parse Errors
       parseForProblems(data);
     };
 
     const handleClearCommand = () => {
-       term.clear();
+       try { term.clear(); } catch(e){}
        setOutputLog("");
        setProblems([]);
     };
@@ -155,56 +165,70 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
       ipcRenderer.send('terminal:input', data);
     });
 
+    // Cleanup
     return () => {
       ipcRenderer.removeListener('terminal:incoming', handleIncoming);
       ipcRenderer.removeListener('terminal:clear', handleClearCommand);
       term.dispose();
+      xtermRef.current = null;
     };
   }, []);
 
-  // --- RESET TRIGGER (Fixes Output not clearing via Button) ---
+  // --- RESET TRIGGER ---
   useEffect(() => {
     if (resetTrigger && resetTrigger > 0) {
-        if (xtermRef.current) xtermRef.current.clear();
+        if (xtermRef.current) {
+            try { xtermRef.current.clear(); } catch(e){}
+        }
         setOutputLog("");
         setProblems([]);
     }
   }, [resetTrigger]);
 
-  // --- SAFE RESIZE OBSERVER ---
+  // --- SAFE RESIZE OBSERVER (THE FIX) ---
   useEffect(() => {
-    const handleResize = () => {
-        if (!fitAddonRef.current || !terminalRef.current) return;
-        // CRITICAL: Prevent fit() if hidden or zero size to avoid "dimensions" error
-        if (terminalRef.current.clientWidth === 0 || terminalRef.current.clientHeight === 0) return;
-        
+    const performFit = () => {
+        if (!fitAddonRef.current || !xtermRef.current || !terminalRef.current) return;
+
+        // CRITICAL FIX: Do NOT call fit() if the terminal is hidden or has 0 dimensions.
+        // This prevents 'Cannot read properties of undefined (reading dimensions)'
+        if (
+            activeTab !== 'TERMINAL' || 
+            terminalRef.current.clientWidth === 0 || 
+            terminalRef.current.clientHeight === 0 ||
+            terminalRef.current.offsetParent === null // Checks if element is effectively hidden (display:none)
+        ) {
+            return;
+        }
+
         try {
             fitAddonRef.current.fit();
             const dims = fitAddonRef.current.proposeDimensions();
             if (dims && !isNaN(dims.cols) && !isNaN(dims.rows)) {
                 ipcRenderer.send('terminal:resize', { cols: dims.cols, rows: dims.rows });
             }
-        } catch(e) { 
-            // Suppress errors during layout thrashing
+        } catch(e) {
+            // Suppress fit errors during resize/layout trashing
         }
     };
 
+    // Observer for container resize
     const resizeObserver = new ResizeObserver(() => {
-        // Use animation frame to avoid resize loops
-        window.requestAnimationFrame(handleResize);
+        // Debounce via animation frame
+        window.requestAnimationFrame(performFit);
     });
 
     if (terminalRef.current) {
         resizeObserver.observe(terminalRef.current);
     }
 
-    // Force one fit when switching back to terminal tab
+    // Force fit when switching BACK to TERMINAL tab
     if (activeTab === 'TERMINAL') {
-        setTimeout(handleResize, 50);
+        setTimeout(performFit, 100);
     }
 
     return () => resizeObserver.disconnect();
-  }, [activeTab]);
+  }, [activeTab]); // Re-run logic when tab changes
 
   return (
     <div className="flex flex-col h-full bg-[#1e1e1e] border-t border-[#2b2b2b]">
@@ -240,15 +264,22 @@ const Terminal: React.FC<TerminalProps> = ({ onClose, onClear, onMaximize, reset
       {/* CONTENT AREA */}
       <div className="flex-1 relative overflow-hidden bg-[#1e1e1e]">
          
-         {/* 1. TERMINAL (Always Rendered, just Hidden via Visibility) */}
+         {/* 1. TERMINAL 
+            Using 'visibility: hidden' + 'z-index' keeps the geometry alive 
+            but prevents visual rendering issues.
+            Using 'display: none' would crash xterm on resize.
+         */}
          <div 
             ref={terminalRef} 
             className="h-full w-full pl-2"
             style={{ 
                 visibility: activeTab === 'TERMINAL' ? 'visible' : 'hidden',
-                position: activeTab === 'TERMINAL' ? 'relative' : 'absolute',
+                position: 'absolute', // Keep it absolute to overlap with others
                 top: 0, 
-                left: 0 
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: activeTab === 'TERMINAL' ? 1 : 0
             }}
          />
          
