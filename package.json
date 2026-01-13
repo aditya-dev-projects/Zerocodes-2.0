@@ -62,6 +62,17 @@
       "dist/**/*",
       "electron/**/*"
     ],
+    "extraResources": [
+      "resources/**"
+    ],
+    "protocols": [
+      {
+        "name": "Zerocodes Auth",
+        "schemes": [
+          "zekodes"
+        ]
+      }
+    ],
     "directories": {
       "buildResources": "assets"
     }

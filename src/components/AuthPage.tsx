@@ -6,6 +6,9 @@ import {
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 
+// Electron IPC
+const { ipcRenderer, shell } = window.require('electron');
+
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -21,16 +24,51 @@ const AuthPage: React.FC = () => {
   
   const [error, setError] = useState<string | null>(null);
 
-  // 1. CHECK SESSION ON LOAD
-  // If the user is already logged in (or comes back from Google Auth), 
-  // set the flag and go to editor.
+  // 1. CHECK SESSION ON LOAD & LISTEN FOR DEEP LINK
   useEffect(() => {
+    // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        localStorage.setItem('zekodes_setup_complete', 'true'); // <--- CRITICAL FIX
+        localStorage.setItem('zekodes_setup_complete', 'true');
         navigate('/editor');
       }
     });
+
+    // Listen for Deep Link Login from Main Process
+    const handleAuthSession = async (_: any, url: string) => {
+        try {
+            // URL format: zekodes://google-auth#access_token=...&refresh_token=...
+            // Extract tokens from the hash
+            const hashIndex = url.indexOf('#');
+            if (hashIndex !== -1) {
+                const params = new URLSearchParams(url.substring(hashIndex + 1));
+                const access_token = params.get('access_token');
+                const refresh_token = params.get('refresh_token');
+
+                if (access_token && refresh_token) {
+                    const { error } = await supabase.auth.setSession({
+                        access_token,
+                        refresh_token
+                    });
+                    if (!error) {
+                        localStorage.setItem('zekodes_setup_complete', 'true');
+                        navigate('/editor');
+                    } else {
+                        setError(error.message);
+                    }
+                }
+            }
+        } catch (err: any) {
+            console.error("Auth parsing error", err);
+            setError("Failed to parse login information.");
+        }
+    };
+
+    ipcRenderer.on('auth:session', handleAuthSession);
+
+    return () => {
+        ipcRenderer.removeListener('auth:session', handleAuthSession);
+    };
   }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -76,15 +114,12 @@ const AuthPage: React.FC = () => {
           const { data: sessionData } = await supabase.auth.getSession();
           if (!sessionData.session) {
              alert('Account created! If email confirmation is enabled, please check your inbox.');
-             // Stop here if no session (email confirmation required)
              return; 
           }
         }
       }
 
-      // 2. SUCCESSFUL LOGIN/SIGNUP
-      // Mark setup as complete so the Router allows access to /editor
-      localStorage.setItem('zekodes_setup_complete', 'true'); // <--- CRITICAL FIX
+      localStorage.setItem('zekodes_setup_complete', 'true');
       navigate('/editor');
 
     } catch (err: any) {
@@ -94,20 +129,31 @@ const AuthPage: React.FC = () => {
     }
   };
 
+  // --- 🔴 THE FIX: EXTERNAL BROWSER AUTH FLOW ---
   const handleGoogleLogin = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      setLoading(true);
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Ensure this URL matches your Supabase redirect settings
-          redirectTo: window.location.origin + '/editor' 
+          // Tell Supabase to redirect to our custom protocol after Google is done
+          redirectTo: 'zekodes://google-auth',
+          // IMPORTANT: Get the URL instead of redirecting the current window
+          skipBrowserRedirect: true 
         }
       });
+      
       if (error) throw error;
-      // Note: Google login will redirect the page, so the 'useEffect' 
-      // at the top will handle the return and setting the local storage.
+
+      // If we got the URL, open it in the system default browser
+      if (data?.url) {
+        shell.openExternal(data.url);
+      }
+      
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,7 +173,6 @@ const AuthPage: React.FC = () => {
           </div>
           <div className="space-y-6">
             <div className="flex items-center gap-4">
-               {/* Ensure you have this file in your public folder */}
                <img src="/favicon.png" alt="Zekodes Logo" className="h-10 w-auto filter brightness-0 invert" />
                <span className="text-2xl font-bold text-white tracking-tighter">Zekodes</span>
             </div>
@@ -197,7 +242,6 @@ const AuthPage: React.FC = () => {
                 />
               </div>
 
-              {/* NEW FIELDS: Only show for Sign Up */}
               {!isLogin && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                     <div className="relative">
