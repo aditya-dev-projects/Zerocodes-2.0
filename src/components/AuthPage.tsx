@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Mail, Lock, ArrowRight, Terminal, Code2, Sparkles, CheckCircle2,
-  AlertCircle, Loader2, User, Award
+  AlertCircle, Loader2
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 
 // --- SAFE ELECTRON IMPORT PATTERN ---
-// This prevents the "window.require is not a function" crash in browsers.
 const getElectron = () => {
   // @ts-ignore
   if (typeof window !== 'undefined' && window.require) {
@@ -35,28 +34,45 @@ const AuthPage: React.FC = () => {
   // Basic Auth State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
-  // New Profile Fields
-  const [fullName, setFullName] = useState('');
-  const [experience, setExperience] = useState('Beginner');
+  const [confirmPassword, setConfirmPassword] = useState('');
   
   const [error, setError] = useState<string | null>(null);
 
+  // Helper to check profile existence and redirect
+  const checkProfileAndNavigate = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .eq('user_id', userId)
+        .single();
+
+      if (error || !data) {
+        // Redirect to new Create Profile page if no profile exists
+        navigate('/create-profile');
+      } else {
+        // Directly to Editor if profile exists
+        localStorage.setItem('zekodes_setup_complete', 'true');
+        navigate('/editor');
+      }
+    } catch (err) {
+      console.error("Profile check failed", err);
+      navigate('/create-profile');
+    }
+  };
+
   // 1. CHECK SESSION ON LOAD & LISTEN FOR DEEP LINK
   useEffect(() => {
-    // Check existing session
     const checkSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-            // If refresh token is invalid, clear it to prevent loop
             console.warn("Session error:", error.message);
             await supabase.auth.signOut();
             return;
         }
         if (session) {
-          localStorage.setItem('zekodes_setup_complete', 'true');
-          navigate('/editor');
+          await checkProfileAndNavigate(session.user.id);
         }
       } catch (err) {
         console.error("Session check failed", err);
@@ -65,10 +81,8 @@ const AuthPage: React.FC = () => {
     
     checkSession();
 
-    // Listen for Deep Link Login from Main Process (Only if in Electron)
     const handleAuthSession = async (_: any, url: string) => {
         try {
-            // URL format: zekodes://google-auth#access_token=...&refresh_token=...
             const hashIndex = url.indexOf('#');
             if (hashIndex !== -1) {
                 const params = new URLSearchParams(url.substring(hashIndex + 1));
@@ -76,14 +90,13 @@ const AuthPage: React.FC = () => {
                 const refresh_token = params.get('refresh_token');
 
                 if (access_token && refresh_token) {
-                    const { error } = await supabase.auth.setSession({
+                    const { data, error } = await supabase.auth.setSession({
                         access_token,
                         refresh_token
                     });
-                    if (!error) {
-                        localStorage.setItem('zekodes_setup_complete', 'true');
-                        navigate('/editor');
-                    } else {
+                    if (!error && data.user) {
+                        await checkProfileAndNavigate(data.user.id);
+                    } else if (error) {
                         setError(error.message);
                     }
                 }
@@ -107,19 +120,24 @@ const AuthPage: React.FC = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isLogin && password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       if (isLogin) {
-        // --- LOGIN ---
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (signInError) throw signInError;
+        if (data.user) await checkProfileAndNavigate(data.user.id);
       } else {
-        // --- SIGN UP ---
         const { data: { user }, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -128,36 +146,14 @@ const AuthPage: React.FC = () => {
         if (signUpError) throw signUpError;
         
         if (user) {
-          // Create Profile in Database
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              { 
-                id: user.id, 
-                full_name: fullName, 
-                experience_level: experience,
-                has_seen_tutorial: false 
-              }
-            ]);
-
-          if (profileError) {
-            console.error("Profile creation failed:", profileError);
-          }
-
-          // Check if auto-login is needed
           const { data: sessionData } = await supabase.auth.getSession();
           if (!sessionData.session) {
              alert('Account created! If email confirmation is enabled, please check your inbox.');
-             // Stop here if no session (email confirmation required)
              return; 
           }
+          await checkProfileAndNavigate(user.id);
         }
       }
-
-      // 2. SUCCESSFUL LOGIN/SIGNUP
-      localStorage.setItem('zekodes_setup_complete', 'true');
-      navigate('/editor');
-
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -168,15 +164,11 @@ const AuthPage: React.FC = () => {
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
-      
-      // Determine flow based on environment
       const isElectron = !!ipcRenderer;
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // In Electron: Redirect to deep link
-          // In Browser: Redirect to the app URL (localhost or hosted)
           redirectTo: isElectron ? 'zekodes://google-auth' : window.location.origin,
           skipBrowserRedirect: isElectron 
         }
@@ -184,15 +176,11 @@ const AuthPage: React.FC = () => {
       
       if (error) throw error;
 
-      // ELECTRON FLOW: Open system browser with the auth URL
       if (isElectron && data?.url) {
         if (shell) {
             shell.openExternal(data.url);
         }
       }
-      
-      // BROWSER FLOW: Supabase handles the redirect automatically if skipBrowserRedirect is false
-      
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -216,7 +204,6 @@ const AuthPage: React.FC = () => {
           </div>
           <div className="space-y-6">
             <div className="flex items-center gap-4">
-               {/* Ensure you have this file in your public folder */}
                <img src="/favicon.png" alt="Zekodes Logo" className="h-10 w-auto filter brightness-0 invert" />
                <span className="text-2xl font-bold text-white tracking-tighter">Zekodes</span>
             </div>
@@ -286,29 +273,14 @@ const AuthPage: React.FC = () => {
                 />
               </div>
 
-              {/* NEW FIELDS: Only show for Sign Up */}
               {!isLogin && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                    <div className="relative">
-                     <User className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
-                     <input
-                       type="text" placeholder="Full Name" required
-                       className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-gray-700 focus:outline-none focus:border-blue-500/30 focus:bg-white/[0.05] transition-all"
-                       value={fullName} onChange={(e) => setFullName(e.target.value)}
-                     />
-                   </div>
-
-                   <div className="relative">
-                     <Award className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
-                     <select
-                       value={experience} onChange={(e) => setExperience(e.target.value)}
-                       className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-14 pr-5 text-white focus:outline-none focus:border-blue-500/30 focus:bg-white/[0.05] transition-all appearance-none cursor-pointer"
-                     >
-                       <option value="Beginner" className="bg-[#0c0c0c]">Beginner (Just starting)</option>
-                       <option value="Intermediate" className="bg-[#0c0c0c]">Intermediate (Building apps)</option>
-                       <option value="Pro" className="bg-[#0c0c0c]">Pro (Experienced)</option>
-                     </select>
-                   </div>
+                <div className="relative animate-in fade-in slide-in-from-top-2">
+                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                  <input
+                    type="password" placeholder="Confirm Password" required
+                    className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-gray-700 focus:outline-none focus:border-blue-500/30 focus:bg-white/[0.05] transition-all"
+                    value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
                 </div>
               )}
             </div>

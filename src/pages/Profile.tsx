@@ -10,17 +10,19 @@ import {
   BookOpen, 
   MessageSquare, 
   X, 
-  Send 
+  Send,
+  Save,
+  Layers,
+  GraduationCap
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { Profile as ProfileType } from '../types';
 
 const Profile: React.FC = () => {
-  const [profile, setProfile] = useState<ProfileType | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
   
-  // State for Onboarding/Feedback Logic
-  const [showWelcome, setShowWelcome] = useState(false);
+  // UI State for Feedback
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
 
@@ -30,10 +32,11 @@ const Profile: React.FC = () => {
     const fetchProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Fetch from the new user_profiles table
         const { data } = await supabase
-          .from('profiles')
+          .from('user_profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single();
         
         if (data) {
@@ -43,35 +46,48 @@ const Profile: React.FC = () => {
       setLoading(false);
     };
 
-    // --- ONBOARDING LOGIC START ---
-    const checkFirstTimeUser = () => {
-      const hasVisited = localStorage.getItem('zerocodes_has_visited');
-      
-      if (!hasVisited) {
-        // Case 1: First time user -> Show Welcome
-        setShowWelcome(true);
-        localStorage.setItem('zerocodes_has_visited', 'true');
-      } else {
-        // Case 2: Returning user -> Show Feedback
-        setShowFeedback(true);
-      }
-    };
-    // --- ONBOARDING LOGIC END ---
-
     fetchProfile();
-    checkFirstTimeUser();
+    
+    // Check if we should show the feedback box for returning users
+    const hasVisited = localStorage.getItem('zerocodes_has_visited');
+    if (hasVisited) {
+      setShowFeedback(true);
+    } else {
+      localStorage.setItem('zerocodes_has_visited', 'true');
+    }
   }, []);
+
+  const handleUpdateProfile = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          education_level: profile.education_level,
+          mode: profile.mode
+        })
+        .eq('user_id', profile.user_id);
+
+      if (error) throw error;
+      alert("Profile updated successfully! Constraints will be applied in the editor.");
+    } catch (err: any) {
+      console.error("Update failed:", err.message);
+      alert("Failed to update profile: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleLogout = async () => {
     if (window.confirm("Are you sure you want to log out?")) {
       await supabase.auth.signOut();
-      navigate('/login');
+      localStorage.removeItem('zekodes_setup_complete');
+      navigate('/');
     }
   };
 
   const submitFeedback = () => {
     if (!feedbackText.trim()) return;
-    // Here you would send 'feedbackText' to your backend/Supabase
     console.log("Feedback submitted:", feedbackText);
     alert("Thank you for your feedback!");
     setShowFeedback(false);
@@ -89,45 +105,6 @@ const Profile: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6 md:p-12 font-sans flex flex-col items-center relative">
       
-      {/* --- WELCOME MODAL (First Time Only) --- */}
-      {showWelcome && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-[#0c0c0c] border border-blue-500/30 rounded-2xl max-w-md w-full p-8 shadow-2xl relative animate-in fade-in zoom-in duration-300">
-            <button 
-              onClick={() => setShowWelcome(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-white"
-            >
-              <X size={20} />
-            </button>
-            
-            <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mb-6 mx-auto text-blue-400">
-              <BookOpen size={32} />
-            </div>
-            
-            <h2 className="text-2xl font-bold text-center mb-2">Welcome to Zerocodes!</h2>
-            <p className="text-gray-400 text-center mb-8">
-              Since you're new here, we recommend checking out our Academy to master the basics of block-based coding.
-            </p>
-            
-            <div className="flex flex-col gap-3">
-              <Link 
-                to="/academy" 
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-center font-medium transition-colors"
-                onClick={() => setShowWelcome(false)}
-              >
-                Go to Academy
-              </Link>
-              <button 
-                onClick={() => setShowWelcome(false)}
-                className="w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-center font-medium transition-colors"
-              >
-                Maybe Later
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="w-full max-w-2xl">
         <Link to="/editor" className="inline-flex items-center text-gray-400 hover:text-white mb-8 transition-colors">
           <ArrowLeft size={20} className="mr-2" /> Back to Editor
@@ -142,61 +119,66 @@ const Profile: React.FC = () => {
               {profile?.full_name?.charAt(0).toUpperCase() || <User />}
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">{profile?.full_name || 'User'}</h1>
-              <p className="text-gray-500">Developer Profile</p>
+              <h1 className="text-3xl font-bold tracking-tight">{profile?.full_name || 'Developer'}</h1>
+              <p className="text-gray-500">{profile?.email}</p>
             </div>
           </div>
           
           <div className="space-y-6">
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="bg-gray-800/50 p-3 rounded-full text-blue-400">
-                <User size={20} />
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs uppercase font-bold tracking-wider">Full Name</p>
-                <p className="text-lg font-medium">{profile?.full_name || 'Not set'}</p>
-              </div>
+            {/* Education Level Selection */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs font-bold uppercase text-gray-500 ml-1">
+                <GraduationCap size={14} /> Education Level
+              </label>
+              <select
+                className="w-full bg-white/[0.02] border border-white/5 rounded-xl py-4 px-5 focus:outline-none focus:border-blue-500/30 transition-all appearance-none cursor-pointer"
+                value={profile?.education_level}
+                onChange={(e) => setProfile({...profile, education_level: e.target.value})}
+              >
+                <option value="school" className="bg-[#0c0c0c]">School</option>
+                <option value="college" className="bg-[#0c0c0c]">College</option>
+                <option value="graduate" className="bg-[#0c0c0c]">Graduate</option>
+              </select>
             </div>
 
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="bg-gray-800/50 p-3 rounded-full text-green-400">
-                <Mail size={20} />
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs uppercase font-bold tracking-wider">Email Address</p>
-                <p className="text-lg font-medium">{profile?.email}</p>
-              </div>
+            {/* Mode Selection */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs font-bold uppercase text-gray-500 ml-1">
+                <Layers size={14} /> Coding Mode
+              </label>
+              <select
+                className="w-full bg-white/[0.02] border border-white/5 rounded-xl py-4 px-5 focus:outline-none focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
+                value={profile?.mode}
+                onChange={(e) => setProfile({...profile, mode: e.target.value})}
+              >
+                <option value="beginner" className="bg-[#0c0c0c]">Beginner (Enforced Logic)</option>
+                <option value="advanced" className="bg-[#0c0c0c]">Advanced (Flexible Coding)</option>
+              </select>
             </div>
 
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="bg-gray-800/50 p-3 rounded-full text-purple-400">
-                <Code size={20} />
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs uppercase font-bold tracking-wider">Coding Experience</p>
-                <span className={`inline-flex mt-1 px-3 py-1 rounded-full text-sm font-medium border ${
-                  profile?.experience_level === 'Pro' 
-                    ? 'bg-purple-500/10 text-purple-300 border-purple-500/20' 
-                    : profile?.experience_level === 'Intermediate' 
-                    ? 'bg-blue-500/10 text-blue-300 border-blue-500/20' 
-                    : 'bg-green-500/10 text-green-300 border-green-500/20'
-                }`}>
-                  {profile?.experience_level || 'Beginner'}
-                </span>
-              </div>
-            </div>
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-4 pt-4">
+              <button 
+                onClick={handleLogout}
+                className="flex items-center justify-center gap-3 p-4 rounded-xl bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 text-red-400 transition-all cursor-pointer group"
+              >
+                <LogOut size={20} className="group-hover:scale-110 transition-transform" />
+                <span className="font-medium">Sign Out</span>
+              </button>
 
-            <button 
-              onClick={handleLogout}
-              className="w-full mt-4 flex items-center justify-center gap-3 p-4 rounded-xl bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 text-red-400 transition-all cursor-pointer group"
-            >
-              <LogOut size={20} className="group-hover:scale-110 transition-transform" />
-              <span className="font-medium">Sign Out</span>
-            </button>
+              <button 
+                onClick={handleUpdateProfile}
+                disabled={saving}
+                className="flex items-center justify-center gap-3 p-4 rounded-xl bg-white text-black hover:bg-gray-100 transition-all font-medium disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                <span>Save Changes</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* --- FEEDBACK BOX (Returning Users Only) --- */}
+        {/* --- FEEDBACK BOX --- */}
         {showFeedback && (
           <div className="bg-[#0c0c0c] rounded-[1.5rem] border border-white/5 p-6 animate-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-3 mb-4">
@@ -216,7 +198,7 @@ const Profile: React.FC = () => {
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
               className="w-full bg-white/[0.02] border border-white/10 rounded-lg p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 resize-none h-24 mb-3"
-              placeholder="Tell us about your experience using Zerocodes..."
+              placeholder="Tell us about your experience using Zekodes..."
             />
             
             <button 

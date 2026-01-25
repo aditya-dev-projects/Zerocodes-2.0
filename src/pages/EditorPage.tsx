@@ -29,9 +29,31 @@ const electron = getElectron();
 const ipcRenderer = electron?.ipcRenderer || null;
 // ------------------------------------------
 
-// --- CODE GENERATION LOGIC ---
-const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string => {
+// --- CODE GENERATION LOGIC WITH CONSTRAINTS ---
+const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language, mode: 'beginner' | 'advanced'): string => {
   if (blocks.length === 0) return "";
+  
+  // BEGINNER MODE VALIDATION (C ONLY)
+  if (mode === 'beginner' && lang === Language.C) {
+    const hasStdio = blocks.some(b => b.type === 'c-include-stdio');
+    const hasMain = blocks.some(b => b.type === 'c-main-function');
+    
+    // Check for I/O blocks without stdio.h
+    const ioBlockTypes = ['c-printf', 'c-scanf-int', 'c-scanf-float', 'c-scanf-double', 'c-scanf-char', 'c-scanf-string'];
+    const hasIO = blocks.some(b => ioBlockTypes.includes(b.type));
+    
+    if (hasIO && !hasStdio) {
+      return "// BEGINNER MODE ERROR:\n// You are using an I/O block (like print or read).\n// You must add the '#include <stdio.h>' block at the top level first.";
+    }
+
+    // Check for logic blocks outside of main
+    const rootLogicBlocks = blocks.filter(b => 
+      !['c-include-stdio', 'c-main-function', 'c-function-declare'].includes(b.type)
+    );
+    if (rootLogicBlocks.length > 0 && !hasMain) {
+       return "// BEGINNER MODE ERROR:\n// Logic blocks (variables, loops, conditionals) must be placed INSIDE the 'main function' block.";
+    }
+  }
   
   const generateBlockCode = (block: BlockInstance, indentLevel: number): string => {
     const indent = "    ".repeat(indentLevel);
@@ -50,6 +72,7 @@ const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string
       block.children.forEach(child => {
         result += generateBlockCode(child, indentLevel + 1);
       });
+      // Handle auto-closing braces internally
       if (template.trim().endsWith('{')) { result += indent + "}\n"; }
     }
     return result;
@@ -73,6 +96,7 @@ const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string
       let includesCode = includes.join("\n");
       const bodyRaw = bodyBlocks.map(b => generateBlockCode(b, 0)).join("");
 
+      // Advanced mode still provides the safety of auto-generating main if it's missing
       if (bodyBlocks.length > 0 && !bodyRaw.includes("main(")) {
           if (!includesCode.includes("<stdio.h>")) {
               includesCode = `#include <stdio.h>\n${includesCode}`;
@@ -99,6 +123,7 @@ const getMonacoLanguage = (lang: Language) => {
 const EditorPage: React.FC = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
+  const [userMode, setUserMode] = useState<'beginner' | 'advanced'>('beginner');
   const [loadingAuth, setLoadingAuth] = useState(true);
   
   const [language, setLanguage] = useState<Language>(Language.PYTHON); 
@@ -120,6 +145,18 @@ const EditorPage: React.FC = () => {
     const initSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
+      
+      if (session) {
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('mode')
+          .eq('user_id', session.user.id)
+          .single();
+        
+        if (data) {
+          setUserMode(data.mode);
+        }
+      }
       setLoadingAuth(false);
     };
     initSession();
@@ -129,14 +166,15 @@ const EditorPage: React.FC = () => {
 
   useEffect(() => {
     if (viewMode === 'blocks') {
-      const code = generateCodeFromBlocks(blocks, language);
+      // Pass userMode to the generator
+      const code = generateCodeFromBlocks(blocks, language, userMode);
       if (blocks.length === 0) {
         setGeneratedCode("// Drag blocks here to generate code...");
       } else {
         setGeneratedCode(code);
       }
     }
-  }, [blocks, language, viewMode]);
+  }, [blocks, language, viewMode, userMode]);
 
   const handleLanguageChange = (newLang: Language) => {
     setLanguage(newLang);
@@ -150,21 +188,19 @@ const EditorPage: React.FC = () => {
   };
 
   const handleRun = () => {
-    if (!generatedCode.trim()) return;
+    if (!generatedCode.trim() || generatedCode.includes("BEGINNER MODE ERROR")) return;
     
     setTerminalOpen(true);
     if (terminalHeight < 50) setTerminalHeight(250); 
     
     setResetTrigger(prev => prev + 1);
     
-    // SAFE EXECUTION CHECK
     if (ipcRenderer) {
         ipcRenderer.send('terminal:kill');
         setTimeout(() => {
             ipcRenderer.send('execution:run', { language, code: generatedCode });
         }, 100);
     } else {
-        // Fallback for Web Users
         alert("Running code requires the Zekodes Desktop App. Please download it from the home page.");
     }
   };
@@ -232,7 +268,11 @@ const EditorPage: React.FC = () => {
           {viewMode === 'blocks' && (
             <div className="w-64 flex flex-col bg-[#252526] border-r border-[#2b2b2b]">
               <div className="h-9 px-4 flex items-center text-xs font-medium uppercase text-gray-400 bg-[#252526]">Toolbox</div>
-              <BlockSidebar currentLang={language} />
+              <BlockSidebar 
+                currentLang={language} 
+                mode={userMode} 
+                canvasBlocks={blocks} 
+              />
             </div>
           )}
           <div className="flex-1 flex flex-col min-w-0 bg-[#1e1e1e] h-full relative" ref={containerRef}>
@@ -275,7 +315,11 @@ const EditorPage: React.FC = () => {
                <div className="flex-1 flex flex-row overflow-hidden min-h-0">
                   {viewMode === 'blocks' && (
                     <div className="flex-1 flex flex-col min-w-0 border-r border-[#2b2b2b] relative bg-[#1e1e1e]">
-                      <BlockCanvas blocks={blocks} setBlocks={setBlocks} />
+                      <BlockCanvas 
+                        blocks={blocks} 
+                        setBlocks={setBlocks} 
+                        userMode={userMode} 
+                      />
                     </div>
                   )}
                   <div className={`${viewMode === 'blocks' ? 'w-[40%] border-l border-[#2b2b2b]' : 'flex-1'} bg-[#1e1e1e] h-full overflow-hidden`}>

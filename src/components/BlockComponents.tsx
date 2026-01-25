@@ -9,7 +9,6 @@ import { type BlockDefinition, type BlockInstance, type BlockCategory, Language 
 // 🧱 BLOCK DEFINITIONS
 // ==================================================================================
 
-// Mapping user color themes to Tailwind classes
 const COLOR_THEMES: Record<string, string> = {
   'block-variables': 'text-orange-600 border-orange-500 bg-orange-50',
   'block-events': 'text-purple-600 border-purple-500 bg-purple-50',
@@ -28,7 +27,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
   // 🟢 C LANGUAGE BLOCKS
   // ==============================================================================
 
-  // --- C Variables ---
   {
     id: 'c-int-declare',
     category: 'variables',
@@ -102,7 +100,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-variables'
   },
 
-  // --- C Conditionals ---
   {
     id: 'c-if',
     category: 'conditionals',
@@ -170,7 +167,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-control'
   },
 
-  // --- C Loops ---
   {
     id: 'c-for-loop',
     category: 'loops',
@@ -205,7 +201,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-motion'
   },
 
-  // --- C Functions ---
   {
     id: 'c-function-declare',
     category: 'functions',
@@ -242,7 +237,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-events'
   },
 
-  // --- C Includes & Main ---
   {
     id: 'c-include-stdio',
     category: 'includes',
@@ -260,16 +254,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-events',
     hasChildren: true
   },
-  {
-    id: 'c-closing-brace',
-    category: 'syntax',
-    label: '}',
-    code: { c: '}' },
-    language: 'c',
-    color: 'block-extension'
-  },
 
-  // --- C Input/Output ---
   {
     id: 'c-printf',
     category: 'io',
@@ -325,12 +310,10 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-sound'
   },
 
-
   // ==============================================================================
   // 🐍 PYTHON BLOCKS
   // ==============================================================================
 
-  // --- Python Variables ---
   {
     id: 'py-var-declare',
     category: 'variables',
@@ -368,7 +351,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-variables'
   },
 
-  // --- Python Conditionals ---
   {
     id: 'py-if',
     category: 'conditionals',
@@ -399,7 +381,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     hasChildren: true
   },
 
-  // --- Python Loops ---
   {
     id: 'py-for-seq',
     category: 'loops',
@@ -437,7 +418,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     hasChildren: true
   },
 
-  // --- Python Functions ---
   {
     id: 'py-func-def',
     category: 'functions',
@@ -461,7 +441,6 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     color: 'block-events'
   },
 
-  // --- Python I/O ---
   {
     id: 'py-print',
     category: 'io',
@@ -506,346 +485,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     ],
     language: 'python',
     color: 'block-sound'
-  },
-
-
-  // ==============================================================================
-  // ☕ JAVA BLOCKS (TEMPORARILY DISABLED)
-  // ==============================================================================
-
-  /*
-  // --- Java Variables ---
-  {
-    id: 'java-int-declare',
-    category: 'variables',
-    label: 'int (Integer)',
-    code: { java: 'int {name} = {value};' },
-    inputs: [
-      { name: 'name', placeholder: 'x', defaultValue: 'x' },
-      { name: 'value', placeholder: '0', defaultValue: '0' }
-    ],
-    language: 'java',
-    color: 'block-variables'
-  },
-  {
-    id: 'java-float-declare',
-    category: 'variables',
-    label: 'float',
-    code: { java: 'float {name} = {value}f;' },
-    inputs: [
-      { name: 'name', placeholder: 'f', defaultValue: 'f' },
-      { name: 'value', placeholder: '3.14', defaultValue: '3.14' }
-    ],
-    language: 'java',
-    color: 'block-variables'
-  },
-  {
-    id: 'java-double-declare',
-    category: 'variables',
-    label: 'double',
-    code: { java: 'double {name} = {value};' },
-    inputs: [
-      { name: 'name', placeholder: 'd', defaultValue: 'd' },
-      { name: 'value', placeholder: '0.0', defaultValue: '0.0' }
-    ],
-    language: 'java',
-    color: 'block-variables'
-  },
-  {
-    id: 'java-boolean-declare',
-    category: 'variables',
-    label: 'boolean',
-    code: { java: 'boolean {name} = {value};' },
-    inputs: [
-      { name: 'name', placeholder: 'flag', defaultValue: 'flag' },
-      { name: 'value', placeholder: 'true', defaultValue: 'true' }
-    ],
-    language: 'java',
-    color: 'block-variables'
-  },
-  {
-    id: 'java-string-declare',
-    category: 'variables',
-    label: 'String',
-    code: { java: 'String {name} = "{value}";' },
-    inputs: [
-      { name: 'name', placeholder: 'str', defaultValue: 'text' },
-      { name: 'value', placeholder: 'Hello', defaultValue: 'Hello' }
-    ],
-    language: 'java',
-    color: 'block-variables'
-  },
-  {
-    id: 'java-char-declare',
-    category: 'variables',
-    label: 'char',
-    code: { java: 'char {name} = \'{value}\';' },
-    inputs: [
-      { name: 'name', placeholder: 'c', defaultValue: 'c' },
-      { name: 'value', placeholder: 'A', defaultValue: 'A' }
-    ],
-    language: 'java',
-    color: 'block-variables'
-  },
-
-  // --- Java Conditionals ---
-  {
-    id: 'java-if',
-    category: 'conditionals',
-    label: 'if',
-    code: { java: 'if ({condition}) {' },
-    inputs: [{ name: 'condition', placeholder: 'x > 0', defaultValue: 'x > 0' }],
-    language: 'java',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'java-else-if',
-    category: 'conditionals',
-    label: 'else if',
-    code: { java: '} else if ({condition}) {' },
-    inputs: [{ name: 'condition', placeholder: 'x < 0', defaultValue: 'x < 0' }],
-    language: 'java',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'java-else',
-    category: 'conditionals',
-    label: 'else',
-    code: { java: '} else {' },
-    language: 'java',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'java-switch',
-    category: 'conditionals',
-    label: 'switch',
-    code: { java: 'switch ({var}) {' },
-    inputs: [
-      { name: 'var', placeholder: 'variable', defaultValue: 'day' }
-    ],
-    language: 'java',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'java-case',
-    category: 'conditionals',
-    label: 'case',
-    code: { java: 'case {val}:' },
-    inputs: [
-      { name: 'val', placeholder: 'value', defaultValue: '1' }
-    ],
-    language: 'java',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'java-default',
-    category: 'conditionals',
-    label: 'default',
-    code: { java: 'default:' },
-    language: 'java',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'java-break',
-    category: 'conditionals',
-    label: 'break',
-    code: { java: 'break;' },
-    language: 'java',
-    color: 'block-control'
-  },
-
-  // --- Java Loops ---
-  {
-    id: 'java-for',
-    category: 'loops',
-    label: 'for loop',
-    code: { java: 'for (int {i}={start}; {i}<{end}; {i}++) {' },
-    inputs: [
-      { name: 'i', placeholder: 'i', defaultValue: 'i' },
-      { name: 'start', placeholder: '0', defaultValue: '0' },
-      { name: 'end', placeholder: '10', defaultValue: '10' }
-    ],
-    language: 'java',
-    color: 'block-motion',
-    hasChildren: true
-  },
-  {
-    id: 'java-foreach',
-    category: 'loops',
-    label: 'for-each',
-    code: { java: 'for ({type} {item} : {collection}) {' },
-    inputs: [
-      { name: 'type', placeholder: 'String', defaultValue: 'String' },
-      { name: 'item', placeholder: 's', defaultValue: 's' },
-      { name: 'collection', placeholder: 'list', defaultValue: 'list' }
-    ],
-    language: 'java',
-    color: 'block-motion',
-    hasChildren: true
-  },
-  {
-    id: 'java-while',
-    category: 'loops',
-    label: 'while loop',
-    code: { java: 'while ({condition}) {' },
-    inputs: [{ name: 'condition', placeholder: 'true', defaultValue: 'true' }],
-    language: 'java',
-    color: 'block-motion',
-    hasChildren: true
-  },
-  {
-    id: 'java-do-while',
-    category: 'loops',
-    label: 'do-while loop',
-    code: { java: 'do {\n    // code\n} while ({condition});' },
-    inputs: [{ name: 'condition', placeholder: 'x < 5', defaultValue: 'x < 5' }],
-    language: 'java',
-    color: 'block-motion'
-  },
-
-  // --- Java Methods ---
-  {
-    id: 'java-method-def',
-    category: 'functions',
-    label: 'Define Method',
-    code: { java: 'public static {type} {name}({params}) {' },
-    inputs: [
-      { name: 'type', placeholder: 'void', defaultValue: 'void' },
-      { name: 'name', placeholder: 'myMethod', defaultValue: 'myMethod' },
-      { name: 'params', placeholder: 'int x', defaultValue: '' }
-    ],
-    language: 'java',
-    color: 'block-events',
-    hasChildren: true
-  },
-  {
-    id: 'java-method-call',
-    category: 'functions',
-    label: 'Call Method',
-    code: { java: '{name}({args});' },
-    inputs: [
-        { name: 'name', placeholder: 'myMethod', defaultValue: 'myMethod' },
-        { name: 'args', placeholder: '', defaultValue: '' }
-    ],
-    language: 'java',
-    color: 'block-events'
-  },
-    {
-    id: 'java-return',
-    category: 'functions',
-    label: 'return',
-    code: { java: 'return {value};' },
-    inputs: [{ name: 'value', placeholder: '0', defaultValue: '0' }],
-    language: 'java',
-    color: 'block-events'
-  },
-
-  // --- Java Boilerplate ---
-  {
-    id: 'java-main-class',
-    category: 'includes',
-    label: 'Main Class',
-    code: { java: 'public class Main {' },
-    language: 'java',
-    color: 'block-variables',
-    hasChildren: true
-  },
-  {
-    id: 'java-main-method',
-    category: 'functions',
-    label: 'main method',
-    code: { java: 'public static void main(String[] args) {' },
-    language: 'java',
-    color: 'block-events',
-    hasChildren: true
-  },
-    {
-    id: 'java-closing-brace',
-    category: 'syntax',
-    label: '}',
-    code: { java: '}' },
-    language: 'java',
-    color: 'block-extension'
-  },
-  {
-    id: 'java-scanner-import',
-    category: 'includes',
-    label: 'import Scanner',
-    code: { java: 'import java.util.Scanner;' },
-    language: 'java',
-    color: 'block-variables'
-  },
-
-  // --- Java I/O ---
-  {
-    id: 'java-print',
-    category: 'io',
-    label: 'System.out.println',
-    code: { java: 'System.out.println("{text}");' },
-    inputs: [{ name: 'text', placeholder: 'Hello', defaultValue: 'Hello' }],
-    language: 'java',
-    color: 'block-looks'
-  },
-  {
-    id: 'java-scanner-create',
-    category: 'io',
-    label: 'Create Scanner',
-    code: { java: 'Scanner scanner = new Scanner(System.in);' },
-    language: 'java',
-    color: 'block-sound'
-  },
-  {
-    id: 'java-read-int',
-    category: 'io',
-    label: 'Read int',
-    code: { java: '{var} = scanner.nextInt();' },
-    inputs: [{ name: 'var', placeholder: 'variable', defaultValue: 'num' }],
-    language: 'java',
-    color: 'block-sound'
-  },
-  {
-    id: 'java-read-double',
-    category: 'io',
-    label: 'Read double',
-    code: { java: '{var} = scanner.nextDouble();' },
-    inputs: [{ name: 'var', placeholder: 'variable', defaultValue: 'num' }],
-    language: 'java',
-    color: 'block-sound'
-  },
-  {
-    id: 'java-read-string',
-    category: 'io',
-    label: 'Read String (Line)',
-    code: { java: '{var} = scanner.nextLine();' },
-    inputs: [{ name: 'var', placeholder: 'variable', defaultValue: 'text' }],
-    language: 'java',
-    color: 'block-sound'
-  },
-  {
-    id: 'java-read-word',
-    category: 'io',
-    label: 'Read String (Word)',
-    code: { java: '{var} = scanner.next();' },
-    inputs: [{ name: 'var', placeholder: 'variable', defaultValue: 'word' }],
-    language: 'java',
-    color: 'block-sound'
-  },
-  {
-    id: 'java-read-boolean',
-    category: 'io',
-    label: 'Read boolean',
-    code: { java: '{var} = scanner.nextBoolean();' },
-    inputs: [{ name: 'var', placeholder: 'variable', defaultValue: 'flag' }],
-    language: 'java',
-    color: 'block-sound'
   }
-  */
 ];
 
 const CATEGORIES: { id: BlockCategory; label: string; icon: any }[] = [
@@ -861,8 +501,15 @@ const CATEGORIES: { id: BlockCategory; label: string; icon: any }[] = [
 
 // --- Components ---
 
-export const SidebarItem: React.FC<{ def: BlockDefinition }> = ({ def }) => {
+export const SidebarItem: React.FC<{ 
+  def: BlockDefinition;
+  isLocked: boolean;
+}> = ({ def, isLocked }) => {
   const onDragStart = (e: React.DragEvent, def: BlockDefinition) => {
+    if (isLocked) {
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer.setData('application/json', JSON.stringify(def));
     e.dataTransfer.effectAllowed = 'copy';
   };
@@ -871,11 +518,13 @@ export const SidebarItem: React.FC<{ def: BlockDefinition }> = ({ def }) => {
 
   return (
     <div 
-      draggable 
+      draggable={!isLocked}
       onDragStart={(e) => onDragStart(e, def)}
-      className={`p-2 mb-2 rounded-md border-l-4 border-y border-r cursor-grab active:cursor-grabbing flex items-center shadow-sm group transition-all ${themeClass}`}
+      className={`p-2 mb-2 rounded-md border-l-4 border-y border-r flex items-center shadow-sm group transition-all ${
+        isLocked ? 'opacity-30 cursor-not-allowed grayscale bg-gray-800 border-gray-700' : `cursor-grab active:cursor-grabbing ${themeClass}`
+      }`}
     >
-      <GripVertical className="w-4 h-4 mr-2 opacity-50 group-hover:opacity-100" />
+      <GripVertical className={`w-4 h-4 mr-2 ${isLocked ? 'hidden' : 'opacity-50 group-hover:opacity-100'}`} />
       <span className="text-xs font-bold uppercase">{def.label}</span>
     </div>
   );
@@ -883,16 +532,33 @@ export const SidebarItem: React.FC<{ def: BlockDefinition }> = ({ def }) => {
 
 interface BlockSidebarProps {
   currentLang: Language;
+  mode: 'beginner' | 'advanced';
+  canvasBlocks: BlockInstance[];
 }
 
-export const BlockSidebar: React.FC<BlockSidebarProps> = ({ currentLang }) => {
+export const BlockSidebar: React.FC<BlockSidebarProps> = ({ currentLang, mode, canvasBlocks }) => {
+  
+  const checkIsLocked = (def: BlockDefinition) => {
+    if (currentLang !== Language.C || mode === 'advanced') return false;
+
+    const hasMain = canvasBlocks.some(b => b.type === 'c-main-function');
+    const hasStdio = canvasBlocks.some(b => b.type === 'c-include-stdio');
+
+    // Rule: main() must exist before Variables, Conditionals, Loops, IO
+    const requiresMain = ['variables', 'conditionals', 'loops', 'io'].includes(def.category);
+    if (requiresMain && !hasMain) return true;
+
+    // Rule: I/O blocks require stdio.h
+    if (def.category === 'io' && !hasStdio) return true;
+
+    return false;
+  };
+
   return (
     <div className="h-full overflow-y-auto p-4 bg-[#1e1e1e] text-gray-300">
       {CATEGORIES.map(cat => {
         const blocks = BLOCK_DEFINITIONS.filter(b => {
-          // Match Category
           if (b.category !== cat.id) return false;
-          // Match Language
           if (b.language && b.language !== currentLang) return false;
           return true;
         });
@@ -906,7 +572,11 @@ export const BlockSidebar: React.FC<BlockSidebarProps> = ({ currentLang }) => {
               {cat.label}
             </div>
             {blocks.map(def => (
-              <SidebarItem key={def.id} def={def} />
+              <SidebarItem 
+                key={def.id} 
+                def={def} 
+                isLocked={checkIsLocked(def)} 
+              />
             ))}
           </div>
         );
@@ -925,15 +595,17 @@ interface BlockRendererProps {
   depth?: number;
   onDropContainer?: (e: React.DragEvent) => void; 
   moveBlock: (sourceId: string, targetId: string | null, mode: 'before' | 'append') => void;
+  userMode: 'beginner' | 'advanced';
 }
 
-export const BlockItem: React.FC<BlockRendererProps> = ({ block, onDelete, onUpdate, depth = 0, onDropContainer, moveBlock }) => {
+export const BlockItem: React.FC<BlockRendererProps> = ({ 
+  block, onDelete, onUpdate, depth = 0, onDropContainer, moveBlock, userMode 
+}) => {
   const def = BLOCK_DEFINITIONS.find(d => d.id === block.type);
   if (!def) return null;
 
   const themeClass = COLOR_THEMES[def.color] || 'text-gray-600 border-gray-500 bg-gray-50';
 
-  // Helper function for rendering nested blocks
   const renderNestedBlocks = (children: BlockInstance[]) => {
     return children.map((child, idx) => (
        <div
@@ -943,17 +615,12 @@ export const BlockItem: React.FC<BlockRendererProps> = ({ block, onDelete, onUpd
             e.stopPropagation();
             e.dataTransfer.setData('block-id', child.id);
         }}
-        onDragOver={(e) => {
-             e.preventDefault();
-             e.stopPropagation();
-        }}
+        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
         onDrop={(e) => {
              e.preventDefault();
              e.stopPropagation();
              const draggedId = e.dataTransfer.getData('block-id');
-             if (draggedId) {
-                 moveBlock(draggedId, child.id, 'before');
-             }
+             if (draggedId) moveBlock(draggedId, child.id, 'before');
         }}
        >
           <BlockItem 
@@ -963,6 +630,7 @@ export const BlockItem: React.FC<BlockRendererProps> = ({ block, onDelete, onUpd
             onDelete={onDelete} 
             depth={0}
             moveBlock={moveBlock}
+            userMode={userMode}
             onDropContainer={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -981,10 +649,8 @@ export const BlockItem: React.FC<BlockRendererProps> = ({ block, onDelete, onUpd
   return (
     <div className="relative group mb-2" style={{ marginLeft: `${depth * 20}px` }}>
       <div className={`border-l-4 border-y border-r rounded-r-md p-2 flex flex-wrap items-center shadow-sm ${themeClass}`}>
-        
         <GripVertical className="w-4 h-4 mr-2 opacity-50 cursor-grab active:cursor-grabbing" />
         <span className="text-xs font-bold uppercase mr-3 select-none">{def.label}</span>
-        
         {def.inputs && def.inputs.map((input) => (
           <div key={input.name} className="flex items-center mr-2 mb-1">
              <input 
@@ -996,7 +662,6 @@ export const BlockItem: React.FC<BlockRendererProps> = ({ block, onDelete, onUpd
             />
           </div>
         ))}
-
         <button 
           onClick={() => onDelete(block.id)}
           className="ml-auto p-1 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1005,24 +670,16 @@ export const BlockItem: React.FC<BlockRendererProps> = ({ block, onDelete, onUpd
         </button>
       </div>
 
-      {/* Render Children for Control blocks */}
       {def.hasChildren && (
         <div 
             className="ml-4 pl-4 border-l-2 border-gray-700 mt-1 min-h-[20px] py-1"
-            onDragOver={(e) => {
-                 e.preventDefault();
-                 e.stopPropagation();
-            }}
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onDrop={(e) => {
                  e.preventDefault();
                  e.stopPropagation();
                  const draggedId = e.dataTransfer.getData('block-id');
-                 if (draggedId) {
-                     moveBlock(draggedId, block.id, 'append');
-                 } else {
-                     // New block drop
-                     if (onDropContainer) onDropContainer(e);
-                 }
+                 if (draggedId) moveBlock(draggedId, block.id, 'append');
+                 else if (onDropContainer) onDropContainer(e);
             }}
         >
           {block.children && renderNestedBlocks(block.children)}
@@ -1040,33 +697,40 @@ export const BlockItem: React.FC<BlockRendererProps> = ({ block, onDelete, onUpd
 interface CanvasProps {
   blocks: BlockInstance[];
   setBlocks: React.Dispatch<React.SetStateAction<BlockInstance[]>>;
+  userMode: 'beginner' | 'advanced';
 }
 
-export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks }) => {
+export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks, userMode }) => {
   
   const handleDrop = (e: React.DragEvent, targetBlockId?: string) => {
     e.preventDefault();
     e.stopPropagation();
 
     const draggedBlockId = e.dataTransfer.getData('block-id');
-    if (draggedBlockId) {
-        // If it's an existing block, the move logic is handled via moveBlock calls in the sub-components
-        // We return here to avoid creating duplicates if the event bubbles up.
-        return;
-    }
+    if (draggedBlockId) return;
 
     const data = e.dataTransfer.getData('application/json');
     if (!data) return;
     
     const def: BlockDefinition = JSON.parse(data);
-    
-    // Initialize params with defaults
-    const initialParams: Record<string, string> = {};
-    if (def.inputs) {
-      def.inputs.forEach(inp => {
-        initialParams[inp.name] = inp.defaultValue;
-      });
+
+    // BEGINNER MODE DROP CONSTRAINTS
+    if (userMode === 'beginner' && def.language === 'c') {
+      // Rule: Logic blocks MUST be inside a container (main or function)
+      if (!targetBlockId && !['c-include-stdio', 'c-main-function', 'c-function-declare'].includes(def.id)) {
+        alert("Beginner Mode: This block must be placed inside main() or a function container.");
+        return;
+      }
+      
+      // Rule: Includes must be at root
+      if (targetBlockId && def.category === 'includes') {
+        alert("Beginner Mode: Include headers should be at the top level, outside main().");
+        return;
+      }
     }
+    
+    const initialParams: Record<string, string> = {};
+    if (def.inputs) def.inputs.forEach(inp => initialParams[inp.name] = inp.defaultValue);
 
     const newBlock: BlockInstance = {
       id: Math.random().toString(36).substr(2, 9),
@@ -1076,32 +740,25 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks }) => {
     };
 
     if (targetBlockId) {
-      // Add to children of target (Append)
       const addRecursive = (list: BlockInstance[]): BlockInstance[] => {
         return list.map(b => {
           if (b.id === targetBlockId) {
              const children = b.children || [];
              return { ...b, children: [...children, newBlock] };
           }
-          if (b.children) {
-            return { ...b, children: addRecursive(b.children) };
-          }
+          if (b.children) return { ...b, children: addRecursive(b.children) };
           return b;
         });
       };
       setBlocks(prev => addRecursive(prev));
     } else {
-      // Add to root
       setBlocks(prev => [...prev, newBlock]);
     }
   };
 
   const moveBlock = (sourceId: string, targetId: string | null, mode: 'before' | 'append') => {
       setBlocks(prev => {
-           // Deep clone
            let newBlocks = JSON.parse(JSON.stringify(prev));
-           
-           // 1. Find and remove source
            let sourceBlock: BlockInstance | null = null;
            const remove = (list: BlockInstance[]) => {
                const idx = list.findIndex(b => b.id === sourceId);
@@ -1110,27 +767,18 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks }) => {
                    list.splice(idx, 1);
                    return true;
                }
-               for (const b of list) {
-                   if (b.children && remove(b.children)) return true;
-               }
+               for (const b of list) if (b.children && remove(b.children)) return true;
                return false;
            };
            remove(newBlocks);
-           
            if (!sourceBlock) return prev; 
 
-           // 2. Insert
-           if (!targetId && mode === 'append') {
-               // Append to root if no target
-               newBlocks.push(sourceBlock);
-           } else if (targetId) {
+           if (!targetId && mode === 'append') newBlocks.push(sourceBlock);
+           else if (targetId) {
                const insert = (list: BlockInstance[]) => {
                   if (mode === 'before') {
                       const idx = list.findIndex(b => b.id === targetId);
-                      if (idx !== -1) {
-                          list.splice(idx, 0, sourceBlock!);
-                          return true;
-                      }
+                      if (idx !== -1) { list.splice(idx, 0, sourceBlock!); return true; }
                   }
                   if (mode === 'append') {
                       const parent = list.find(b => b.id === targetId);
@@ -1140,10 +788,7 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks }) => {
                           return true;
                       }
                   }
-                  
-                  for (const b of list) {
-                      if (b.children && insert(b.children)) return true;
-                  }
+                  for (const b of list) if (b.children && insert(b.children)) return true;
                   return false;
                };
                insert(newBlocks);
@@ -1152,17 +797,10 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks }) => {
       });
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-  };
-
   const updateBlock = (id: string, paramName: string, value: string) => {
     const updateRecursive = (list: BlockInstance[]): BlockInstance[] => {
       return list.map(b => {
-        if (b.id === id) {
-           return { ...b, params: { ...b.params, [paramName]: value } };
-        }
+        if (b.id === id) return { ...b, params: { ...b.params, [paramName]: value } };
         if (b.children) return { ...b, children: updateRecursive(b.children) };
         return b;
       });
@@ -1186,21 +824,13 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks }) => {
         <div 
           key={block.id} 
           draggable
-          onDragStart={(e) => {
-              e.stopPropagation();
-              e.dataTransfer.setData('block-id', block.id);
-          }}
-          onDragOver={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-          }}
+          onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.setData('block-id', block.id); }}
+          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onDrop={(e) => {
               e.preventDefault();
               e.stopPropagation();
               const draggedId = e.dataTransfer.getData('block-id');
-              if (draggedId) {
-                  moveBlock(draggedId, block.id, 'before');
-              }
+              if (draggedId) moveBlock(draggedId, block.id, 'before');
           }}
         >
           <BlockItem 
@@ -1210,6 +840,7 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks }) => {
             onDelete={deleteBlock}
             depth={depth}
             moveBlock={moveBlock}
+            userMode={userMode}
             onDropContainer={(e) => handleDrop(e, block.id)}
           />
         </div>
@@ -1221,21 +852,13 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks }) => {
     <div 
       onDrop={(e) => {
           const draggedId = e.dataTransfer.getData('block-id');
-          if (draggedId) {
-              e.preventDefault();
-              moveBlock(draggedId, null, 'append'); // Move to root
-          } else {
-              handleDrop(e);
-          }
+          if (draggedId) { e.preventDefault(); moveBlock(draggedId, null, 'append'); }
+          else handleDrop(e);
       }}
-      onDragOver={handleDragOver}
+      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
       className="flex-1 h-full bg-[#1e1e1e] overflow-y-auto p-8 relative"
-      style={{ 
-        backgroundImage: 'radial-gradient(#2a2a2a 1px, transparent 1px)', 
-        backgroundSize: '20px 20px' 
-      }}
+      style={{ backgroundImage: 'radial-gradient(#2a2a2a 1px, transparent 1px)', backgroundSize: '20px 20px' }}
     >
-      
       {blocks.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center text-gray-600 pointer-events-none">
           <div className="text-center">
@@ -1244,7 +867,6 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks }) => {
           </div>
         </div>
       )}
-      
       {renderBlocks(blocks)}
     </div>
   );

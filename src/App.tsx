@@ -9,6 +9,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import Profile from './pages/Profile'; 
 import AuthPage from './components/AuthPage';
+import CreateProfile from './pages/CreateProfile'; //
 
 // Helper to check if running in Electron
 const isDesktopApp = () => {
@@ -23,9 +24,9 @@ const RequireSetup: React.FC<{ children: React.ReactElement }> = ({ children }) 
   const location = useLocation();
   const isSetupComplete = localStorage.getItem('zekodes_setup_complete') === 'true';
   
-  // If desktop app and not setup, force auth
+  // If desktop app and not setup, force profile creation
   if (isDesktopApp() && !isSetupComplete) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    return <Navigate to="/create-profile" state={{ from: location }} replace />;
   }
 
   return children;
@@ -68,6 +69,7 @@ const App: React.FC = () => {
         {inDesktop ? (
           <>
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/create-profile" element={<CreateProfile />} /> {/* */}
             <Route path="/setup" element={<SetupPage />} />
             <Route path="/profile" element={<Profile />} />
             <Route 
@@ -83,6 +85,7 @@ const App: React.FC = () => {
           // WEB FALLBACK: Redirect app routes to Home
           <>
             <Route path="/auth" element={<Navigate to="/" replace />} />
+            <Route path="/create-profile" element={<Navigate to="/" replace />} /> {/* */}
             <Route path="/setup" element={<Navigate to="/" replace />} />
             <Route path="/profile" element={<Navigate to="/" replace />} />
             <Route path="/editor" element={<Navigate to="/" replace />} />
