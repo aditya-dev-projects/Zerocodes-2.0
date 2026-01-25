@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Box, Type, PlayCircle, Plus, Trash2, GripVertical, 
   FileCode, Braces, Calculator, Repeat, ArrowRight 
@@ -544,11 +544,9 @@ export const BlockSidebar: React.FC<BlockSidebarProps> = ({ currentLang, mode, c
     const hasMain = canvasBlocks.some(b => b.type === 'c-main-function');
     const hasStdio = canvasBlocks.some(b => b.type === 'c-include-stdio');
 
-    // Rule: main() must exist before Variables, Conditionals, Loops, IO
     const requiresMain = ['variables', 'conditionals', 'loops', 'io'].includes(def.category);
     if (requiresMain && !hasMain) return true;
 
-    // Rule: I/O blocks require stdio.h
     if (def.category === 'io' && !hasStdio) return true;
 
     return false;
@@ -601,6 +599,7 @@ interface BlockRendererProps {
 export const BlockItem: React.FC<BlockRendererProps> = ({ 
   block, onDelete, onUpdate, depth = 0, onDropContainer, moveBlock, userMode 
 }) => {
+  const [isOver, setIsOver] = useState(false);
   const def = BLOCK_DEFINITIONS.find(d => d.id === block.type);
   if (!def) return null;
 
@@ -672,11 +671,19 @@ export const BlockItem: React.FC<BlockRendererProps> = ({
 
       {def.hasChildren && (
         <div 
-            className="ml-4 pl-4 border-l-2 border-gray-700 mt-1 min-h-[20px] py-1"
-            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className={`ml-4 pl-4 border-l-2 border-gray-700 mt-1 min-h-[40px] py-4 transition-colors rounded-r-lg ${
+              isOver ? 'bg-blue-500/5 border-blue-500/50' : ''
+            }`}
+            onDragOver={(e) => { 
+              e.preventDefault(); 
+              e.stopPropagation(); 
+              setIsOver(true);
+            }}
+            onDragLeave={() => setIsOver(false)}
             onDrop={(e) => {
                  e.preventDefault();
                  e.stopPropagation();
+                 setIsOver(false);
                  const draggedId = e.dataTransfer.getData('block-id');
                  if (draggedId) moveBlock(draggedId, block.id, 'append');
                  else if (onDropContainer) onDropContainer(e);
@@ -684,8 +691,8 @@ export const BlockItem: React.FC<BlockRendererProps> = ({
         >
           {block.children && renderNestedBlocks(block.children)}
           {(!block.children || block.children.length === 0) && (
-             <div className="text-xs text-gray-600 italic pl-2 opacity-30 select-none py-1">
-               Drop nested blocks here...
+             <div className="text-xs text-gray-600 italic pl-2 opacity-40 select-none py-1 pointer-events-none">
+               Drop blocks here...
              </div>
           )}
         </div>
@@ -714,15 +721,12 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks, userMode
     
     const def: BlockDefinition = JSON.parse(data);
 
-    // BEGINNER MODE DROP CONSTRAINTS
     if (userMode === 'beginner' && def.language === 'c') {
-      // Rule: Logic blocks MUST be inside a container (main or function)
       if (!targetBlockId && !['c-include-stdio', 'c-main-function', 'c-function-declare'].includes(def.id)) {
         alert("Beginner Mode: This block must be placed inside main() or a function container.");
         return;
       }
       
-      // Rule: Includes must be at root
       if (targetBlockId && def.category === 'includes') {
         alert("Beginner Mode: Include headers should be at the top level, outside main().");
         return;
