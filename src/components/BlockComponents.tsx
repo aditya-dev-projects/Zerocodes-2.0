@@ -510,9 +510,10 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
 
 
   // ==============================================================================
-  // ☕ JAVA BLOCKS
+  // ☕ JAVA BLOCKS (TEMPORARILY DISABLED)
   // ==============================================================================
 
+  /*
   // --- Java Variables ---
   {
     id: 'java-int-declare',
@@ -844,6 +845,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     language: 'java',
     color: 'block-sound'
   }
+  */
 ];
 
 const CATEGORIES: { id: BlockCategory; label: string; icon: any }[] = [

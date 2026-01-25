@@ -1,7 +1,7 @@
 export const Language = {
   C: 'c',
   PYTHON: 'python',
-  JAVA: 'java'
+  // JAVA: 'java' // Temporarily disabled for future update
 } as const;
 
 export type Language = typeof Language[keyof typeof Language];

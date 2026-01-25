@@ -21,11 +21,10 @@ const Router = isDesktopApp() ? HashRouter : BrowserRouter;
 // Protected Route Wrapper: Ensures user has completed setup before seeing the Editor
 const RequireSetup: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const location = useLocation();
-  // Check both setup and auth keys to be safe
   const isSetupComplete = localStorage.getItem('zekodes_setup_complete') === 'true';
   
+  // If desktop app and not setup, force auth
   if (isDesktopApp() && !isSetupComplete) {
-    // If not ready, send them to Auth first (or Setup)
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
@@ -35,49 +34,60 @@ const RequireSetup: React.FC<{ children: React.ReactElement }> = ({ children }) 
 // The Home Route Logic
 const HomeRoute = () => {
   if (isDesktopApp()) {
-    // 1. Check if they have finished the intro/auth flow
+    // DESKTOP: Skip Landing Page. Go to Auth or Editor.
     const isSetupComplete = localStorage.getItem('zekodes_setup_complete') === 'true';
-    
-    // 2. If finished, go to Editor. If NOT finished, go to Auth Page.
     if (isSetupComplete) {
       return <Navigate to="/editor" replace />;
     } else {
       return <Navigate to="/auth" replace />;
     }
   }
-  // If Web, show Landing Page
+  // WEB: Show Landing Page
   return <LandingPage />;
 };
 
 const App: React.FC = () => {
+  const inDesktop = isDesktopApp();
+
   return (
     <Router>
       <Routes>
-        {/* Route 1: Home - Decides where to send the user (Landing vs Auth vs Editor) */}
+        {/* Route 1: Home - Smart switching between Landing and App */}
         <Route path="/" element={<HomeRoute />} />
 
-        {/* Route 2: Auth - The Login/Welcome Screen */}
-        <Route path="/auth" element={<AuthPage />} />
-
-        {/* Route 3: Setup - Specific setup steps if needed */}
-        <Route path="/setup" element={<SetupPage />} />
-        
-        {/* Other Pages */}
+        {/* Public Pages (Docs, Privacy, etc.) - Available on both */}
         <Route path="/docs" element={<DocumentationPage />} />
         <Route path="/tutorial" element={<TutorialPage />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsConditions />} />
-        <Route path="/profile" element={<Profile />} />
 
-        {/* Route 4: The Main Editor - Protected by RequireSetup */}
-        <Route 
-          path="/editor" 
-          element={
-            <RequireSetup>
-              <EditorPage />
-            </RequireSetup>
-          } 
-        />
+        {/* APP-ONLY ROUTES:
+          If we are in the Desktop App, allow access.
+          If we are on the Web, redirect to Home (Landing Page).
+        */}
+        {inDesktop ? (
+          <>
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/setup" element={<SetupPage />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route 
+              path="/editor" 
+              element={
+                <RequireSetup>
+                  <EditorPage />
+                </RequireSetup>
+              } 
+            />
+          </>
+        ) : (
+          // WEB FALLBACK: Redirect app routes to Home
+          <>
+            <Route path="/auth" element={<Navigate to="/" replace />} />
+            <Route path="/setup" element={<Navigate to="/" replace />} />
+            <Route path="/profile" element={<Navigate to="/" replace />} />
+            <Route path="/editor" element={<Navigate to="/" replace />} />
+          </>
+        )}
 
         {/* Fallback: Catch-all for unknown routes */}
         <Route path="*" element={<Navigate to="/" replace />} />

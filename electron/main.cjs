@@ -25,19 +25,16 @@ if (process.defaultApp) {
   app.setAsDefaultProtocolClient('zekodes');
 }
 
-// Ensure Single Instance Lock (Required for Windows Deep Linking)
+// Ensure Single Instance Lock
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
   app.on('second-instance', (event, commandLine) => {
-    // Someone tried to run a second instance, we should focus our window.
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
-    // Handle Windows Deep Link URL
-    // argv: [executable, script, url]
     const url = commandLine.find(arg => arg.startsWith('zekodes://'));
     if (url) handleDeepLink(url);
   });
@@ -52,7 +49,6 @@ app.on('open-url', (event, url) => {
 function handleDeepLink(url) {
   if (!mainWindow) return;
   try {
-    // Send raw URL to renderer to handle parsing logic
     mainWindow.webContents.send('auth:session', url);
   } catch (e) {
     console.error('Deep link parse error:', e);
@@ -96,7 +92,6 @@ function createWindow() {
     mainWindow.loadFile(indexPath);
   }
 
-  // Open external links in default browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     electronShell.openExternal(url);
     return { action: 'deny' };
@@ -139,7 +134,6 @@ function getEmbeddedToolPath(tool) {
     const bin = isWindows ? 'python.exe' : 'python3';
     let p = path.join(basePath, 'python', bin);
     if (fs.existsSync(p)) return p;
-    // Search subfolders
     try {
         const subdirs = fs.readdirSync(path.join(basePath, 'python'), { withFileTypes: true })
             .filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
@@ -153,17 +147,14 @@ function getEmbeddedToolPath(tool) {
   
   if (tool === 'gcc') {
     const bin = isWindows ? 'gcc.exe' : 'gcc';
-    // Check various common paths
     const potentialPaths = [
         path.join(basePath, 'gcc', 'bin', bin),
         path.join(basePath, 'gcc', 'w64devkit', 'bin', bin),
         path.join(basePath, 'gcc', 'mingw64', 'bin', bin)
     ];
-
     for (const p of potentialPaths) {
         if (fs.existsSync(p)) return p;
     }
-
     return null;
   }
   return null;
@@ -171,13 +162,20 @@ function getEmbeddedToolPath(tool) {
 
 function initPty() {
   if (!pty) return;
+  // If a process already exists, we use it (unless we manually killed it)
   if (ptyProcess) return;
 
-  const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+  const isWindows = os.platform() === 'win32';
+  const shell = isWindows ? 'powershell.exe' : 'bash';
   
+  // Clean prompt startup args
+  const args = isWindows 
+    ? ['-NoLogo', '-NoExit', '-Command', 'function prompt { "" }; Clear-Host'] 
+    : [];
+
   try {
     const env = Object.assign({}, process.env);
-    const pathSeparator = os.platform() === 'win32' ? ';' : ':';
+    const pathSeparator = isWindows ? ';' : ':';
     let extraPath = '';
 
     const pythonExe = getEmbeddedToolPath('python');
@@ -188,7 +186,6 @@ function initPty() {
 
     const gccExe = getEmbeddedToolPath('gcc');
     if (gccExe) {
-        // Add the bin folder to PATH
         extraPath += path.dirname(gccExe) + pathSeparator;
     }
 
@@ -196,10 +193,9 @@ function initPty() {
         env.PATH = extraPath + env.PATH;
     }
 
-    // Force GCC to ignore some system variables that might confuse it
     delete env.GCC_EXEC_PREFIX; 
 
-    ptyProcess = pty.spawn(shell, [], {
+    ptyProcess = pty.spawn(shell, args, {
       name: 'xterm-color',
       cols: 80,
       rows: 30,
@@ -229,7 +225,12 @@ ipcMain.on('terminal:resize', (event, { cols, rows }) => {
   if (ptyProcess) ptyProcess.resize(cols, rows);
 });
 ipcMain.on('terminal:clear-request', () => {
+  // Manual clear button logic
   if (mainWindow) mainWindow.webContents.send('terminal:clear');
+  if (ptyProcess) {
+      const clearCmd = os.platform() === 'win32' ? 'Clear-Host\r' : 'clear\r';
+      ptyProcess.write(clearCmd);
+  }
 });
 ipcMain.on('terminal:kill', () => {
   if (ptyProcess) {
@@ -238,14 +239,29 @@ ipcMain.on('terminal:kill', () => {
   }
 });
 
-// --- 6. EXECUTION LOGIC (FIXED FOR GCC) ---
+// --- 6. EXECUTION LOGIC (FIXED: KILL & RESTART) ---
 ipcMain.on('execution:run', (event, { language, code }) => {
-  if (!ptyProcess) {
-      initPty();
-      setTimeout(() => runCode(language, code), 500);
-  } else {
-      runCode(language, code);
+  // Step 1: Force kill the previous terminal session
+  // This ensures NO history, NO scrolling, NO ghost text.
+  if (ptyProcess) {
+      try {
+          ptyProcess.kill();
+      } catch (e) {
+          console.error("Error killing PTY:", e);
+      }
+      ptyProcess = null;
   }
+
+  // Step 2: Signal Frontend to wipe the visual buffer
+  if (mainWindow) mainWindow.webContents.send('terminal:clear');
+
+  // Step 3: Start a fresh terminal (Starts at TOP line)
+  initPty();
+
+  // Step 4: Run the code after a short delay (to let shell boot)
+  setTimeout(() => {
+      runCode(language, code);
+  }, 400);
 });
 
 function runCode(language, code) {
@@ -263,6 +279,8 @@ function runCode(language, code) {
 
   const q = (s) => isWindows ? `"${s}"` : `'${s}'`;
 
+  // Note: We removed "Clear-Host" here because the terminal is already fresh.
+  
   try {
     switch (language.toLowerCase()) {
       case 'python':
@@ -291,31 +309,15 @@ function runCode(language, code) {
         const exePath = path.join(tempDir, isWindows ? 'main.exe' : 'main');
         fs.writeFileSync(filePath, code);
         
-        // --- THE FIX ---
-        // 1. Get directory of gcc.exe (the bin folder)
         const gccDir = (gccPath !== 'gcc') ? path.dirname(gccPath) : '';
-        
-        // 2. Add the -B flag. This forces GCC to look for 'as.exe' inside its own bin folder.
-        // It solves the "CreateProcess: No such file" error when GCC gets confused by paths.
         const bFlag = (gccDir && isWindows) ? ` -B ${q(gccDir + path.sep)} ` : ' ';
 
         if (isWindows) {
-           // CMD: & "path\to\gcc" -B "path\to\bin\" "file.c" -o "file.exe" ...
            command = `& ${q(gccPath)}${bFlag}${q(filePath)} -o ${q(exePath)}; if ($?) { & ${q(exePath)} }`;
         } else {
            command = `${q(gccPath)}${bFlag}${q(filePath)} -o ${q(exePath)} && ${q(exePath)}`;
         }
         break;
-        
-      case 'java':
-         filePath = path.join(tempDir, 'Main.java');
-         fs.writeFileSync(filePath, code);
-         if (isWindows) {
-            command = `javac "${filePath}"; if ($?) { java -cp "${tempDir}" Main }`;
-         } else {
-            command = `javac "${filePath}" && java -cp "${tempDir}" Main`;
-         }
-         break;
     }
 
     if (command) {

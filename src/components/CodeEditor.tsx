@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Language } from '../types';
 
@@ -68,7 +67,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ code, onChange, language, readO
     });
 
     // 3. Keywords & Syntax
-    if (lang === Language.C || lang === Language.JAVA) {
+    if (lang === Language.C /* || lang === Language.JAVA */) {
       // Types & Keywords (Blue/Pink)
       html = html.replace(/\b(int|float|double|char|void|bool|long|short|signed|unsigned|struct|enum|union|const|static|volatile|extern|register|auto|class|public|private|protected|import|package|new|this|super|interface|implements|extends|final)\b/g, '<span class="text-[#569cd6] font-bold">$1</span>');
       // Control Flow (Purple)

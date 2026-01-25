@@ -6,8 +6,26 @@ import {
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 
-// Electron IPC
-const { ipcRenderer, shell } = window.require('electron');
+// --- SAFE ELECTRON IMPORT PATTERN ---
+// This prevents the "window.require is not a function" crash in browsers.
+const getElectron = () => {
+  // @ts-ignore
+  if (typeof window !== 'undefined' && window.require) {
+    try {
+      // @ts-ignore
+      return window.require('electron');
+    } catch (e) {
+      console.warn("Electron not detected. Running in browser mode.");
+      return null;
+    }
+  }
+  return null;
+};
+
+const electron = getElectron();
+const ipcRenderer = electron?.ipcRenderer || null;
+const shell = electron?.shell || null;
+// ------------------------------------
 
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -27,18 +45,30 @@ const AuthPage: React.FC = () => {
   // 1. CHECK SESSION ON LOAD & LISTEN FOR DEEP LINK
   useEffect(() => {
     // Check existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        localStorage.setItem('zekodes_setup_complete', 'true');
-        navigate('/editor');
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+            // If refresh token is invalid, clear it to prevent loop
+            console.warn("Session error:", error.message);
+            await supabase.auth.signOut();
+            return;
+        }
+        if (session) {
+          localStorage.setItem('zekodes_setup_complete', 'true');
+          navigate('/editor');
+        }
+      } catch (err) {
+        console.error("Session check failed", err);
       }
-    });
+    };
+    
+    checkSession();
 
-    // Listen for Deep Link Login from Main Process
+    // Listen for Deep Link Login from Main Process (Only if in Electron)
     const handleAuthSession = async (_: any, url: string) => {
         try {
             // URL format: zekodes://google-auth#access_token=...&refresh_token=...
-            // Extract tokens from the hash
             const hashIndex = url.indexOf('#');
             if (hashIndex !== -1) {
                 const params = new URLSearchParams(url.substring(hashIndex + 1));
@@ -64,10 +94,14 @@ const AuthPage: React.FC = () => {
         }
     };
 
-    ipcRenderer.on('auth:session', handleAuthSession);
+    if (ipcRenderer) {
+        ipcRenderer.on('auth:session', handleAuthSession);
+    }
 
     return () => {
-        ipcRenderer.removeListener('auth:session', handleAuthSession);
+        if (ipcRenderer) {
+            ipcRenderer.removeListener('auth:session', handleAuthSession);
+        }
     };
   }, [navigate]);
 
@@ -114,11 +148,13 @@ const AuthPage: React.FC = () => {
           const { data: sessionData } = await supabase.auth.getSession();
           if (!sessionData.session) {
              alert('Account created! If email confirmation is enabled, please check your inbox.');
+             // Stop here if no session (email confirmation required)
              return; 
           }
         }
       }
 
+      // 2. SUCCESSFUL LOGIN/SIGNUP
       localStorage.setItem('zekodes_setup_complete', 'true');
       navigate('/editor');
 
@@ -129,26 +165,33 @@ const AuthPage: React.FC = () => {
     }
   };
 
-  // --- 🔴 THE FIX: EXTERNAL BROWSER AUTH FLOW ---
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
+      
+      // Determine flow based on environment
+      const isElectron = !!ipcRenderer;
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Tell Supabase to redirect to our custom protocol after Google is done
-          redirectTo: 'zekodes://google-auth',
-          // IMPORTANT: Get the URL instead of redirecting the current window
-          skipBrowserRedirect: true 
+          // In Electron: Redirect to deep link
+          // In Browser: Redirect to the app URL (localhost or hosted)
+          redirectTo: isElectron ? 'zekodes://google-auth' : window.location.origin,
+          skipBrowserRedirect: isElectron 
         }
       });
       
       if (error) throw error;
 
-      // If we got the URL, open it in the system default browser
-      if (data?.url) {
-        shell.openExternal(data.url);
+      // ELECTRON FLOW: Open system browser with the auth URL
+      if (isElectron && data?.url) {
+        if (shell) {
+            shell.openExternal(data.url);
+        }
       }
+      
+      // BROWSER FLOW: Supabase handles the redirect automatically if skipBrowserRedirect is false
       
     } catch (err: any) {
       setError(err.message);
@@ -173,6 +216,7 @@ const AuthPage: React.FC = () => {
           </div>
           <div className="space-y-6">
             <div className="flex items-center gap-4">
+               {/* Ensure you have this file in your public folder */}
                <img src="/favicon.png" alt="Zekodes Logo" className="h-10 w-auto filter brightness-0 invert" />
                <span className="text-2xl font-bold text-white tracking-tighter">Zekodes</span>
             </div>
@@ -242,6 +286,7 @@ const AuthPage: React.FC = () => {
                 />
               </div>
 
+              {/* NEW FIELDS: Only show for Sign Up */}
               {!isLogin && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                     <div className="relative">

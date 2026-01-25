@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependency directories
 node_modules
 dist
 dist-ssr
@@ -25,3 +26,9 @@ dist-ssr
 
 # Local Netlify folder
 .netlify
+
+# --- ZEKODES SPECIFIC ---
+# Ignore the large resources folder (GCC, Python runtimes)
+# This keeps your repo light. Netlify doesn't need these.
+# Your local Electron builder will still find them on your disk.
+resources/

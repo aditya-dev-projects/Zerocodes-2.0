@@ -1,5 +1,5 @@
 {
-  "name": "zerocodes-desktop",
+  "name": "zekodes-desktop",
   "private": true,
   "version": "2.0.0",
   "main": "electron/main.cjs",
@@ -49,7 +49,7 @@
   },
   "build": {
     "appId": "com.zerocodes.app",
-    "productName": "Zerocodes",
+    "productName": "Zekodes",
     "win": {
       "target": "nsis",
       "icon": "public/icon.ico"

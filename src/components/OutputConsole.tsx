@@ -45,9 +45,7 @@ const OutputConsole: React.FC<OutputConsoleProps> = ({ output, status, mode, exe
 
   const getHeaderText = () => {
     if (mode === ToolMode.EXECUTE) return "Terminal Output";
-    if (mode === ToolMode.DEBUG) return "Debug Analysis";
-    if (mode === ToolMode.OPTIMIZE) return "Optimization Suggestions";
-    if (mode === ToolMode.EXPLAIN) return "Code Explanation";
+    // Future modes (DEBUG, OPTIMIZE, etc.) can be added here once defined in types.ts
     return "Output";
   };
 

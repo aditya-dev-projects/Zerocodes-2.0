@@ -16,13 +16,23 @@ import * as monaco from "monaco-editor";
 import Terminal from '../components/Terminal'; 
 
 loader.config({ monaco });
-const { ipcRenderer } = window.require('electron');
+
+// --- SAFE ELECTRON IMPORT (FIXES CRASH) ---
+const getElectron = () => {
+  // @ts-ignore
+  if (typeof window !== 'undefined' && window.require) {
+    try { return window.require('electron'); } catch { return null; }
+  }
+  return null;
+};
+const electron = getElectron();
+const ipcRenderer = electron?.ipcRenderer || null;
+// ------------------------------------------
 
 // --- CODE GENERATION LOGIC ---
 const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string => {
   if (blocks.length === 0) return "";
   
-  // Helper to recursively generate code for a single block
   const generateBlockCode = (block: BlockInstance, indentLevel: number): string => {
     const indent = "    ".repeat(indentLevel);
     const def = BLOCK_DEFINITIONS.find(d => d.id === block.type);
@@ -30,64 +40,21 @@ const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string
     
     let template = def.code[lang] || Object.values(def.code)[0] || "";
     
-    // Replace parameters
     Object.entries(block.params).forEach(([key, value]) => {
       template = template.split(`{${key}}`).join(value);
     });
     
     let result = indent + template + "\n";
     
-    // Process children (nested blocks)
     if (block.children && block.children.length > 0) {
       block.children.forEach(child => {
         result += generateBlockCode(child, indentLevel + 1);
       });
-      // Close bracket if the template opened one (heuristic)
       if (template.trim().endsWith('{')) { result += indent + "}\n"; }
     }
     return result;
   };
 
-  // --- JAVA SPECIFIC HANDLER ---
-  if (lang === Language.JAVA) {
-      const imports: string[] = [];
-      const bodyBlocks: BlockInstance[] = [];
-
-      // Separate Imports from Body Logic
-      blocks.forEach(b => {
-          const def = BLOCK_DEFINITIONS.find(d => d.id === b.type);
-          // Check if it's an 'includes' category OR the code starts with 'import'
-          const isImport = def?.category === 'includes' || def?.code[lang]?.trim().startsWith('import');
-          
-          if (isImport) {
-              imports.push(generateBlockCode(b, 0).trim());
-          } else {
-              bodyBlocks.push(b);
-          }
-      });
-
-      const importsCode = imports.join("\n");
-      // Raw body code (indent 0) for checking structure
-      const bodyRaw = bodyBlocks.map(b => generateBlockCode(b, 0)).join("");
-
-      // Logic: If we have body blocks, we might need a Main class wrapper.
-      if (bodyBlocks.length > 0) {
-          if (!bodyRaw.includes("class ")) {
-              // Wrap in Main class
-              const bodyIndented = bodyBlocks.map(b => generateBlockCode(b, 2)).join("");
-              const mainClass = `public class Main {\n    public static void main(String[] args) {\n${bodyIndented}    }\n}`;
-              return importsCode ? `${importsCode}\n\n${mainClass}` : mainClass;
-          } else {
-              // User already dropped a Class block, just append imports at top
-              return importsCode ? `${importsCode}\n\n${bodyRaw}` : bodyRaw;
-          }
-      } else {
-          // If NO body blocks (only imports), just return imports (don't force empty Main class)
-          return importsCode;
-      }
-  }
-
-  // --- C SPECIFIC HANDLER ---
   if (lang === Language.C) {
       const includes: string[] = [];
       const bodyBlocks: BlockInstance[] = [];
@@ -106,9 +73,7 @@ const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string
       let includesCode = includes.join("\n");
       const bodyRaw = bodyBlocks.map(b => generateBlockCode(b, 0)).join("");
 
-      // If we have logic but no main(), wrap it
       if (bodyBlocks.length > 0 && !bodyRaw.includes("main(")) {
-          // Ensure stdio.h is present if we are auto-generating main
           if (!includesCode.includes("<stdio.h>")) {
               includesCode = `#include <stdio.h>\n${includesCode}`;
           }
@@ -120,13 +85,11 @@ const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language): string
       return includesCode ? `${includesCode}\n\n${bodyRaw}` : bodyRaw;
   }
 
-  // --- PYTHON / FALLBACK ---
   return blocks.map(b => generateBlockCode(b, 0)).join("");
 };
 
 const getMonacoLanguage = (lang: Language) => {
     switch (lang) {
-        case Language.JAVA: return 'java';
         case Language.PYTHON: return 'python';
         case Language.C: return 'c';
         default: return 'plaintext';
@@ -138,19 +101,16 @@ const EditorPage: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   
-  // Editor State
   const [language, setLanguage] = useState<Language>(Language.PYTHON); 
   const [blocks, setBlocks] = useState<BlockInstance[]>([]);
   const [generatedCode, setGeneratedCode] = useState<string>("// Switch to 'Blocks' tab to start building...");
   const [viewMode, setViewMode] = useState<'blocks' | 'code' | 'docs'>('blocks');
   
-  // Terminal UI State
   const [terminalOpen, setTerminalOpen] = useState(true);
   const [terminalHeight, setTerminalHeight] = useState(250);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // RESET TRIGGER STATE
   const [resetTrigger, setResetTrigger] = useState(0); 
 
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -167,7 +127,6 @@ const EditorPage: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- Update Code Logic ---
   useEffect(() => {
     if (viewMode === 'blocks') {
       const code = generateCodeFromBlocks(blocks, language);
@@ -181,35 +140,40 @@ const EditorPage: React.FC = () => {
 
   const handleLanguageChange = (newLang: Language) => {
     setLanguage(newLang);
-    // Optional: Clear blocks on language switch if syntax is incompatible
     if (viewMode === 'blocks') setBlocks([]); 
   };
 
-  // --- Handle Clear Canvas ---
   const handleClearCanvas = () => {
     if (window.confirm("Are you sure you want to clear the entire canvas?")) {
         setBlocks([]);
     }
   };
 
-  // --- RUN LOGIC ---
   const handleRun = () => {
-    // Allows running in code mode even if user typed it manually
     if (!generatedCode.trim()) return;
     
     setTerminalOpen(true);
     if (terminalHeight < 50) setTerminalHeight(250); 
     
     setResetTrigger(prev => prev + 1);
-    ipcRenderer.send('terminal:kill');
-    setTimeout(() => {
-        ipcRenderer.send('execution:run', { language, code: generatedCode });
-    }, 100);
+    
+    // SAFE EXECUTION CHECK
+    if (ipcRenderer) {
+        ipcRenderer.send('terminal:kill');
+        setTimeout(() => {
+            ipcRenderer.send('execution:run', { language, code: generatedCode });
+        }, 100);
+    } else {
+        // Fallback for Web Users
+        alert("Running code requires the Zekodes Desktop App. Please download it from the home page.");
+    }
   };
 
   const handleResetTerminal = () => {
       setResetTrigger(prev => prev + 1);
-      ipcRenderer.send('terminal:clear-request');
+      if (ipcRenderer) {
+          ipcRenderer.send('terminal:clear-request');
+      }
   };
   const handleCloseTerminal = () => setTerminalOpen(false);
 
@@ -237,15 +201,13 @@ const EditorPage: React.FC = () => {
   }, [isDragging, onDrag, stopDragging]);
 
   const handleEditorChange = (value: string | undefined) => {
-      // Allow updates ONLY if in code mode
       if (viewMode === 'code') {
           setGeneratedCode(value || "");
       }
   };
   
-  const handleEditorDidMount: OnMount = (editor, monaco) => {
+  const handleEditorDidMount: OnMount = (editor) => {
     editorRef.current = editor;
-    // Initial layout fix
     setTimeout(() => { editor.layout(); editor.focus(); }, 100);
   };
 
@@ -277,7 +239,7 @@ const EditorPage: React.FC = () => {
             <div className="h-10 flex items-center justify-between px-4 bg-[#1e1e1e] border-b border-[#2b2b2b] shrink-0">
               <div className="flex items-center space-x-2 text-sm">
                  <FileJson className="w-4 h-4 text-yellow-400" />
-                 <span className="text-gray-300">main.{language === Language.PYTHON ? 'py' : language === Language.JAVA ? 'java' : 'c'}</span>
+                 <span className="text-gray-300">main.{language === Language.PYTHON ? 'py' : 'c'}</span>
               </div>
               <div className="flex items-center space-x-3">
                  <div className="relative flex items-center bg-[#252526] border border-[#333] rounded px-2 py-1 mr-2 group">
@@ -285,12 +247,10 @@ const EditorPage: React.FC = () => {
                   <select value={language} onChange={(e) => handleLanguageChange(e.target.value as Language)} className="bg-transparent text-white text-xs font-medium outline-none cursor-pointer appearance-none pr-4">
                     <option value={Language.C} className="bg-[#252526]">C / C++</option>
                     <option value={Language.PYTHON} className="bg-[#252526]">Python 3</option>
-                    <option value={Language.JAVA} className="bg-[#252526]">Java</option>
                   </select>
                   <ChevronDown size={12} className="absolute right-2 pointer-events-none text-gray-500" />
                 </div>
 
-                 {/* --- CLEAR CANVAS BUTTON (Only visible in Blocks mode) --- */}
                  {viewMode === 'blocks' && (
                    <button 
                      onClick={handleClearCanvas} 
@@ -320,7 +280,7 @@ const EditorPage: React.FC = () => {
                   )}
                   <div className={`${viewMode === 'blocks' ? 'w-[40%] border-l border-[#2b2b2b]' : 'flex-1'} bg-[#1e1e1e] h-full overflow-hidden`}>
                     <Editor
-                        key={viewMode} // CRITICAL FIX: Forces remount on mode switch to reset ReadOnly state
+                        key={viewMode} 
                         height="100%"
                         width="100%"
                         language={getMonacoLanguage(language)}
