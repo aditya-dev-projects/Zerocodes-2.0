@@ -136,6 +136,8 @@ const EditorPage: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
+  // resetTrigger is now ONLY used for the manual trash-button clear.
+  // It is NOT bumped when Run is clicked.
   const [resetTrigger, setResetTrigger] = useState(0); 
 
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -187,30 +189,39 @@ const EditorPage: React.FC = () => {
     }
   };
 
+  // --- RUN HANDLER ---
+  // This is now intentionally simple. It does exactly one thing:
+  // tell main.cjs to run the code.
+  //
+  // main.cjs handles everything else:
+  //   1. It writes "clear"/"Clear-Host" into the PTY (clears screen via PTY stream)
+  //   2. It waits for that to flush
+  //   3. It writes the run command into the PTY
+  //   4. Output flows naturally through PTY → terminal:incoming → xterm
+  //
+  // We do NOT:
+  //   - Kill the PTY (it stays alive, we reuse the shell)
+  //   - Call xterm.reset() or xterm.clear() (that desynchronizes PTY vs xterm)
+  //   - Bump resetTrigger (that's only for the manual trash button)
+  //   - Use setTimeout or any delays (main.cjs handles timing internally)
   const handleRun = () => {
     if (!generatedCode.trim() || generatedCode.includes("BEGINNER MODE ERROR")) return;
     
     setTerminalOpen(true);
     if (terminalHeight < 50) setTerminalHeight(250); 
     
-    setResetTrigger(prev => prev + 1);
-    
     if (ipcRenderer) {
-        ipcRenderer.send('terminal:kill');
-        setTimeout(() => {
-            ipcRenderer.send('execution:run', { language, code: generatedCode });
-        }, 100);
+        ipcRenderer.send('execution:run', { language, code: generatedCode });
     } else {
         alert("Running code requires the Zekodes Desktop App. Please download it from the home page.");
     }
   };
 
+  // Manual clear — only triggered by the trash button in Terminal.tsx
   const handleResetTerminal = () => {
       setResetTrigger(prev => prev + 1);
-      if (ipcRenderer) {
-          ipcRenderer.send('terminal:clear-request');
-      }
   };
+
   const handleCloseTerminal = () => setTerminalOpen(false);
 
   const startDragging = useCallback((e: React.MouseEvent) => { e.preventDefault(); setIsDragging(true); }, []);

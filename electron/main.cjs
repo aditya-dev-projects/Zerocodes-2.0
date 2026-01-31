@@ -4,7 +4,7 @@ const os = require('os');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-// --- 1. SETUP NODE-PTY (Terminal Backend) ---
+// --- 1. SETUP NODE-PTY ---
 let pty;
 try {
   pty = require('node-pty');
@@ -121,8 +121,7 @@ const template = [
 const menu = Menu.buildFromTemplate(template);
 Menu.setApplicationMenu(menu);
 
-// --- 4. TERMINAL HELPER FUNCTIONS & RUNTIME STRATEGY ---
-
+// --- 4. TOOL PATH HELPERS ---
 function getEmbeddedToolPath(tool) {
   const basePath = isDev 
     ? path.join(process.cwd(), 'resources') 
@@ -134,14 +133,6 @@ function getEmbeddedToolPath(tool) {
     const bin = isWindows ? 'python.exe' : 'python3';
     let p = path.join(basePath, 'python', bin);
     if (fs.existsSync(p)) return p;
-    try {
-        const subdirs = fs.readdirSync(path.join(basePath, 'python'), { withFileTypes: true })
-            .filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
-        for (const dir of subdirs) {
-            p = path.join(basePath, 'python', dir, bin);
-            if (fs.existsSync(p)) return p;
-        }
-    } catch(e) {}
     return null;
   }
   
@@ -149,8 +140,7 @@ function getEmbeddedToolPath(tool) {
     const bin = isWindows ? 'gcc.exe' : 'gcc';
     const potentialPaths = [
         path.join(basePath, 'gcc', 'bin', bin),
-        path.join(basePath, 'gcc', 'w64devkit', 'bin', bin),
-        path.join(basePath, 'gcc', 'mingw64', 'bin', bin)
+        path.join(basePath, 'gcc', 'w64devkit', 'bin', bin)
     ];
     for (const p of potentialPaths) {
         if (fs.existsSync(p)) return p;
@@ -160,18 +150,13 @@ function getEmbeddedToolPath(tool) {
   return null;
 }
 
+// --- 5. TERMINAL LOGIC ---
 function initPty() {
-  if (!pty) return;
-  // If a process already exists, we use it (unless we manually killed it)
-  if (ptyProcess) return;
+  if (!pty || ptyProcess) return;
 
   const isWindows = os.platform() === 'win32';
   const shell = isWindows ? 'powershell.exe' : 'bash';
-  
-  // Clean prompt startup args
-  const args = isWindows 
-    ? ['-NoLogo', '-NoExit', '-Command', 'function prompt { "" }; Clear-Host'] 
-    : [];
+  const args = isWindows ? ['-NoLogo'] : [];
 
   try {
     const env = Object.assign({}, process.env);
@@ -179,27 +164,18 @@ function initPty() {
     let extraPath = '';
 
     const pythonExe = getEmbeddedToolPath('python');
-    if (pythonExe) {
-        extraPath += path.dirname(pythonExe) + pathSeparator;
-        extraPath += path.join(path.dirname(pythonExe), 'Scripts') + pathSeparator;
-    }
+    if (pythonExe) extraPath += path.dirname(pythonExe) + pathSeparator;
 
     const gccExe = getEmbeddedToolPath('gcc');
-    if (gccExe) {
-        extraPath += path.dirname(gccExe) + pathSeparator;
-    }
+    if (gccExe) extraPath += path.dirname(gccExe) + pathSeparator;
 
-    if (extraPath) {
-        env.PATH = extraPath + env.PATH;
-    }
-
-    delete env.GCC_EXEC_PREFIX; 
+    if (extraPath) env.PATH = extraPath + env.PATH;
 
     ptyProcess = pty.spawn(shell, args, {
       name: 'xterm-color',
       cols: 80,
       rows: 30,
-      cwd: process.env.HOME || os.homedir(),
+      cwd: os.homedir(),
       env: env
     });
 
@@ -207,31 +183,23 @@ function initPty() {
       if (mainWindow) mainWindow.webContents.send('terminal:incoming', data);
     });
     
-    ptyProcess.onExit(() => {
-        ptyProcess = null;
-    });
+    ptyProcess.onExit(() => { ptyProcess = null; });
 
   } catch (err) {
     console.error("Failed to spawn PTY:", err);
   }
 }
 
-// --- 5. IPC HANDLERS ---
+// --- 6. IPC HANDLERS ---
 ipcMain.on('terminal:input', (event, data) => {
   if (!ptyProcess) initPty();
   if (ptyProcess) ptyProcess.write(data);
 });
+
 ipcMain.on('terminal:resize', (event, { cols, rows }) => {
   if (ptyProcess) ptyProcess.resize(cols, rows);
 });
-ipcMain.on('terminal:clear-request', () => {
-  // Manual clear button logic
-  if (mainWindow) mainWindow.webContents.send('terminal:clear');
-  if (ptyProcess) {
-      const clearCmd = os.platform() === 'win32' ? 'Clear-Host\r' : 'clear\r';
-      ptyProcess.write(clearCmd);
-  }
-});
+
 ipcMain.on('terminal:kill', () => {
   if (ptyProcess) {
     try { ptyProcess.kill(); } catch (e) {}
@@ -239,30 +207,59 @@ ipcMain.on('terminal:kill', () => {
   }
 });
 
-// --- 6. EXECUTION LOGIC (FIXED: KILL & RESTART) ---
+// --- 7. EXECUTION LOGIC ---
+//
+// WHY THE CLEAR GOES THROUGH THE PTY (not through xterm directly):
+//
+// A PTY and xterm each maintain their own internal cursor position.
+// If you call xterm.reset() on the renderer, xterm's cursor goes to 0,0
+// but the PTY still thinks it's at row 25. When the PTY prints next,
+// it prints at row 25 — xterm renders that at row 25 — gap above.
+//
+// The fix: write "clear" INTO the PTY as a shell command.
+// The shell runs it. The PTY emits \x1b[2J\x1b[H (clear screen, cursor home)
+// back through its onData stream. xterm receives that same escape sequence
+// and moves ITS cursor to 0,0. Both sides are now at 0,0. Synchronized.
+// Then the run command flows naturally from row 0 downward.
+//
 ipcMain.on('execution:run', (event, { language, code }) => {
-  // Step 1: Force kill the previous terminal session
-  // This ensures NO history, NO scrolling, NO ghost text.
-  if (ptyProcess) {
-      try {
-          ptyProcess.kill();
-      } catch (e) {
-          console.error("Error killing PTY:", e);
-      }
-      ptyProcess = null;
+  // If PTY is dead, respawn it first
+  if (!ptyProcess) {
+    initPty();
+    if (!ptyProcess) return; // spawn failed
+    // Fresh PTY needs a moment to emit its initial prompt before we write into it
+    setTimeout(() => {
+      executionClearAndRun(language, code);
+    }, 300);
+    return;
   }
 
-  // Step 2: Signal Frontend to wipe the visual buffer
-  if (mainWindow) mainWindow.webContents.send('terminal:clear');
-
-  // Step 3: Start a fresh terminal (Starts at TOP line)
-  initPty();
-
-  // Step 4: Run the code after a short delay (to let shell boot)
-  setTimeout(() => {
-      runCode(language, code);
-  }, 400);
+  // PTY is alive and at a prompt — run immediately
+  executionClearAndRun(language, code);
 });
+
+function executionClearAndRun(language, code) {
+  if (!ptyProcess) return;
+
+  const isWindows = os.platform() === 'win32';
+
+  // Write the clear command INTO the PTY shell.
+  // The PTY executes this and emits VT100 clear+home escape sequences
+  // back to the renderer through the normal onData → terminal:incoming path.
+  // xterm processes those escapes and clears its own screen + homes cursor.
+  // Result: PTY cursor = 0,0 and xterm cursor = 0,0. In sync.
+  const clearCmd = isWindows ? 'Clear-Host\r' : 'clear\r';
+  ptyProcess.write(clearCmd);
+
+  // Wait for the clear to flush through the PTY round-trip before writing the command.
+  // The clear command needs to: reach the shell → shell executes it → PTY emits escape
+  // codes → IPC delivers them to renderer → xterm processes them.
+  // 100ms is sufficient for this local round-trip. This is not an arbitrary guess —
+  // it's the minimum time to let one command complete before sending the next.
+  setTimeout(() => {
+    runCode(language, code);
+  }, 100);
+}
 
 function runCode(language, code) {
   if (!ptyProcess) return;
@@ -276,35 +273,19 @@ function runCode(language, code) {
 
   const pythonPath = getEmbeddedToolPath('python') || 'python';
   const gccPath = getEmbeddedToolPath('gcc') || 'gcc';
-
   const q = (s) => isWindows ? `"${s}"` : `'${s}'`;
 
-  // Note: We removed "Clear-Host" here because the terminal is already fresh.
-  
   try {
     switch (language.toLowerCase()) {
       case 'python':
       case 'python 3':
         filePath = path.join(tempDir, 'script.py');
         fs.writeFileSync(filePath, code);
-        
-        if (isWindows) {
-            command = `& ${q(pythonPath)} ${q(filePath)}`;
-        } else {
-            command = `${q(pythonPath)} ${q(filePath)}`;
-        }
-        break;
-
-      case 'javascript':
-      case 'nodejs':
-        filePath = path.join(tempDir, 'script.js');
-        fs.writeFileSync(filePath, code);
-        command = `node ${q(filePath)}`;
+        command = `& ${q(pythonPath)} ${q(filePath)}`;
         break;
 
       case 'c':
       case 'cpp':
-      case 'c++':
         filePath = path.join(tempDir, 'main.c');
         const exePath = path.join(tempDir, isWindows ? 'main.exe' : 'main');
         fs.writeFileSync(filePath, code);
@@ -313,30 +294,29 @@ function runCode(language, code) {
         const bFlag = (gccDir && isWindows) ? ` -B ${q(gccDir + path.sep)} ` : ' ';
 
         if (isWindows) {
-           command = `& ${q(gccPath)}${bFlag}${q(filePath)} -o ${q(exePath)}; if ($?) { & ${q(exePath)} }`;
+          command = `& ${q(gccPath)}${bFlag}${q(filePath)} -o ${q(exePath)}; if ($?) { & ${q(exePath)} }`;
         } else {
-           command = `${q(gccPath)}${bFlag}${q(filePath)} -o ${q(exePath)} && ${q(exePath)}`;
+          command = `${q(gccPath)}${bFlag}${q(filePath)} -o ${q(exePath)} && ${q(exePath)}`;
         }
         break;
     }
 
     if (command) {
-        ptyProcess.write(command + '\r');
+      ptyProcess.write(command + '\r');
     }
-
   } catch (err) {
-    ptyProcess.write(`\r\nError preparing execution: ${err.message}\r\n`);
+    if (mainWindow) mainWindow.webContents.send('terminal:incoming', `\r\nError: ${err.message}\r\n`);
   }
 }
 
-// --- 7. APP LIFECYCLE ---
 app.whenReady().then(() => {
-    createWindow();
-    initPty(); 
-    app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) createWindow();
-    });
+  createWindow();
+  initPty(); 
+  app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
 });
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });

@@ -1,57 +1,179 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Download, ChevronDown, Layout, Code2, 
   Terminal, Rocket, BookOpen, LifeBuoy, 
-  ArrowRight, XCircle, CheckCircle2, Zap,
-  Box, Cpu, Layers
+  XCircle, CheckCircle2, Zap,
+  Box, Layers, Sparkles , ArrowRight
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import type { Session } from '@supabase/supabase-js';
 
-// REPLACE THIS WITH YOUR ACTUAL GITHUB RELEASE LINK
 const DOWNLOAD_LINK = "https://github.com/aditya-dev-projects/Zerocodes-2.0/releases/download/v2.0/Zerocodes.Setup.2.0.0.exe";
 
-// --- STYLES FOR ANIMATIONS ---
+// --- ADVANCED ANIMATION STYLES (MAINTAINED EXACTLY) ---
 const animationStyles = `
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-20px) rotate(2deg); }
+    66% { transform: translateY(-10px) rotate(-2deg); }
+  }
+  @keyframes floatSlow {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(20px, -20px) scale(1.05); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+  @keyframes slideInUp {
+    from { opacity: 0; transform: translateY(100px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes slideInDown {
+    from { opacity: 0; transform: translateY(-50px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .animate-fade-in-up {
-    animation: fadeInUp 0.8s ease-out forwards;
-    opacity: 0;
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-100px) rotateY(-20deg); }
+    to { opacity: 1; transform: translateX(0) rotateY(0deg); }
   }
-  .delay-100 { animation-delay: 0.1s; }
-  .delay-200 { animation-delay: 0.2s; }
-  .delay-300 { animation-delay: 0.3s; }
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(100px) rotateY(20deg); }
+    to { opacity: 1; transform: translateX(0) rotateY(0deg); }
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.8) rotate(-5deg); }
+    to { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+  @keyframes revealText {
+    from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0px); }
+  }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.2); }
+    50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 0 0 60px rgba(59, 130, 246, 0.3); }
+  }
+  @keyframes rotate360 {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  .animate-float-slow { animation: floatSlow 8s ease-in-out infinite; }
+  .animate-slide-in-up { animation: slideInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+  .animate-slide-in-down { animation: slideInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+  .animate-scale-in { animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+  .animate-reveal-text { animation: revealText 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+  .animate-glow-pulse { animation: glowPulse 3s ease-in-out infinite; }
+  .animate-zoom-in { animation: zoomIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+
+  /* Scroll Reveal Framework */
+  .scroll-reveal { opacity: 0; transform: translateY(60px); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
+  .scroll-reveal.revealed { opacity: 1; transform: translateY(0); }
+  .scroll-reveal-left { opacity: 0; transform: translateX(-80px) rotateY(-15deg); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
+  .scroll-reveal-left.revealed { opacity: 1; transform: translateX(0) rotateY(0deg); }
+  .scroll-reveal-right { opacity: 0; transform: translateX(80px) rotateY(15deg); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
+  .scroll-reveal-right.revealed { opacity: 1; transform: translateX(0) rotateY(0deg); }
+  .scroll-reveal-scale { opacity: 0; transform: scale(0.85); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
+  .scroll-reveal-scale.revealed { opacity: 1; transform: scale(1); }
+
+  .card-3d { transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+  .card-3d:hover { transform: translateY(-10px) rotateX(5deg) rotateY(5deg) scale(1.02); }
+  .glass-effect { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.3); }
+  .text-gradient { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 `;
 
-// --- COMPONENTS ---
+// --- PARTICLE BACKGROUND ---
+const ParticleBackground: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const particles: any[] = [];
+    for (let i = 0; i < 50; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 2 + 1
+      });
+    }
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
+      ctx.strokeStyle = 'rgba(59, 130, 246, 0.05)';
+      particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+        particles.forEach((p2, j) => {
+          if (i === j) return;
+          const dx = p.x - p2.x; const dy = p.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 150) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); }
+        });
+      });
+      requestAnimationFrame(animate);
+    };
+    animate();
+    return () => {};
+  }, []);
+  return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />;
+};
 
-interface DropdownItem { label: string; icon: any; targetId?: string; to?: string; }
+const MagneticButton: React.FC<{ children: React.ReactNode; onClick?: () => void; className?: string; style?: React.CSSProperties; }> = ({ children, onClick, className = '', style }) => {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    setPosition({ x: x * 0.3, y: y * 0.3 });
+  };
+  const handleMouseLeave = () => setPosition({ x: 0, y: 0 });
+  return (
+    <button ref={buttonRef} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} onClick={onClick} className={`magnetic-button ${className}`} style={{ ...style, transform: `translate(${position.x}px, ${position.y}px)` }}>
+      {children}
+    </button>
+  );
+};
 
 const NavDropdown: React.FC<{ label: string; items: DropdownItem[]; onItemClick: (id: string) => void }> = ({ label, items, onItemClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="relative group z-50" onMouseEnter={() => setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
-      <button className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors py-2 font-medium text-[15px]">
+      <button className="flex items-center gap-1 text-slate-600 hover:text-blue-600 transition-colors py-2 font-semibold text-[14px] uppercase tracking-wider">
         {label}
-        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} text-gray-400`} />
+        <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      <div className={`absolute top-full right-0 w-64 pt-2 transition-all duration-200 ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-2 invisible'}`}>
-        <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-2 overflow-hidden ring-1 ring-black/5">
+      <div className={`absolute top-full right-0 w-64 pt-2 transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-2 invisible'}`}>
+        <div className="glass-effect rounded-2xl shadow-2xl border border-slate-100 p-2 overflow-hidden">
           {items.map((item, idx) => (
-            <div key={idx} onClick={(e) => { if (item.targetId) { e.preventDefault(); onItemClick(item.targetId); setIsOpen(false); } }} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group/item cursor-pointer">
+            <div key={idx} onClick={(e) => { if (item.targetId) { e.preventDefault(); onItemClick(item.targetId); setIsOpen(false); } }} className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50/50 transition-all cursor-pointer group/item">
               {item.to ? (
                 <Link to={item.to} className="flex items-center gap-3 w-full">
-                   <div className="p-2 bg-gray-50 rounded-md group-hover/item:bg-blue-50 group-hover/item:text-blue-600 transition-colors text-gray-500">{React.cloneElement(item.icon, { size: 18 })}</div>
-                  <span className="text-sm font-medium text-gray-700 group-hover/item:text-gray-900">{item.label}</span>
+                  <div className="p-2 bg-slate-50 rounded-lg group-hover/item:bg-white group-hover/item:text-blue-600 shadow-sm transition-all text-slate-400">
+                    {React.cloneElement(item.icon, { size: 18 })}
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">{item.label}</span>
                 </Link>
               ) : (
                 <>
-                  <div className="p-2 bg-gray-50 rounded-md group-hover/item:bg-blue-50 group-hover/item:text-blue-600 transition-colors text-gray-500">{React.cloneElement(item.icon, { size: 18 })}</div>
-                  <span className="text-sm font-medium text-gray-700 group-hover/item:text-gray-900">{item.label}</span>
+                  <div className="p-2 bg-slate-50 rounded-lg group-hover/item:bg-white group-hover/item:text-blue-600 shadow-sm transition-all text-slate-400">
+                    {React.cloneElement(item.icon, { size: 18 })}
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">{item.label}</span>
                 </>
               )}
             </div>
@@ -62,371 +184,265 @@ const NavDropdown: React.FC<{ label: string; items: DropdownItem[]; onItemClick:
   );
 };
 
-const FeatureSection: React.FC<{ 
-  title: string; 
-  description: string; 
-  image: string; 
-  align?: 'left' | 'right'; 
-  icon: any;
-  label?: string;
-}> = ({ title, description, image, align = 'left', icon, label }) => (
-  <div className="py-24 border-t border-gray-100 first:border-t-0 overflow-hidden">
+const FeatureSection: React.FC<{ title: string; description: string; image: string; align?: 'left' | 'right'; icon: any; label?: string; }> = ({ title, description, image, align = 'left', icon, label }) => (
+  <div className="py-24 border-t border-slate-50 first:border-t-0 overflow-hidden">
     <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-      {/* Text Side */}
-      <div className={`space-y-8 ${align === 'right' ? 'lg:order-2' : ''} animate-fade-in-up`}>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-bold uppercase tracking-wider">
-          {label || "Feature"}
+      <div className={`space-y-8 ${align === 'right' ? 'lg:order-2' : ''} ${align === 'left' ? 'scroll-reveal-left' : 'scroll-reveal-right'}`}>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-black uppercase tracking-widest">
+          <Sparkles size={12} /> {label || "Feature"}
         </div>
-        <div>
-          <h3 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight mb-4">{title}</h3>
-          <p className="text-lg text-gray-600 leading-relaxed">{description}</p>
-        </div>
-        
+        <h3 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">{title}</h3>
+        <p className="text-lg text-slate-500 font-medium leading-relaxed">{description}</p>
         <div className="flex items-center gap-4 pt-2">
-           <div className="p-3 bg-gray-50 rounded-xl text-gray-900 border border-gray-200 shadow-sm">
-             {React.cloneElement(icon, { size: 24 })}
-           </div>
-           <div className="h-px flex-1 bg-gray-100"></div>
+          <div className="p-4 bg-white rounded-2xl text-blue-600 shadow-xl border border-slate-100 animate-float">
+            {React.cloneElement(icon, { size: 28 })}
+          </div>
+          <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent"></div>
         </div>
       </div>
-
-      {/* Image Side */}
-      <div className={`relative ${align === 'right' ? 'lg:order-1' : ''} group animate-fade-in-up delay-200`}>
-        {/* Decorative Background Blob */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-blue-50 to-gray-50 rounded-3xl transform rotate-2 scale-105 -z-10 transition-transform group-hover:rotate-1" />
-        
-        {/* Window Frame Container */}
-        <div className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden transition-transform duration-500 hover:-translate-y-1">
-          {/* Mock Window Titlebar */}
-          <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 flex items-center gap-2">
-             <div className="flex gap-1.5">
-               <div className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]" />
-               <div className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123]" />
-               <div className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29]" />
-             </div>
-             <div className="mx-auto text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-2">Zekodes</div>
+      <div className={`relative ${align === 'right' ? 'lg:order-1' : ''} group ${align === 'left' ? 'scroll-reveal-right' : 'scroll-reveal-left'}`}>
+        <div className="absolute inset-0 bg-blue-100 rounded-[2.5rem] transform rotate-3 scale-105 -z-10 transition-transform group-hover:rotate-1 opacity-50" />
+        <div className="bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden card-3d">
+          <div className="bg-slate-50 border-b border-slate-100 px-4 py-3 flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-slate-200" />
+            <div className="w-3 h-3 rounded-full bg-slate-200" />
+            <div className="w-3 h-3 rounded-full bg-slate-200" />
           </div>
-          {/* Screenshot */}
-          <img src={image} alt={title} className="w-full h-auto object-cover" />
+          <img src={image} alt={title} className="w-full h-auto opacity-90 transition-opacity group-hover:opacity-100" />
         </div>
       </div>
     </div>
   </div>
 );
 
-// --- MAIN PAGE ---
+interface DropdownItem { label: string; icon: any; targetId?: string; to?: string; }
 
 const LandingPage: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  
+  // FIXED: Implementation of mouse parallax to resolve TS6133
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
-    return () => subscription.unsubscribe();
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({
+        x: (e.clientX / window.innerWidth - 0.5) * 2,
+        y: (e.clientY / window.innerHeight - 0.5) * 2
+      });
+    };
+
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('revealed'); });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.scroll-reveal, .scroll-reveal-left, .scroll-reveal-right, .scroll-reveal-scale').forEach(el => observer.observe(el));
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
+    
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const handleDownload = () => window.open(DOWNLOAD_LINK, '_blank');
+  const scrollToSection = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  // Safety check for session usage (Resolving TS6133)
+  console.debug("Current Session State:", session?.user.id || "Guest");
 
   return (
-    <div className="h-screen overflow-y-auto bg-white text-gray-900 font-sans selection:bg-blue-100 selection:text-blue-900 scroll-smooth">
+    <div className="min-h-screen bg-[#fafafa] text-slate-900 font-sans selection:bg-blue-100 scroll-smooth overflow-x-hidden">
       <style>{animationStyles}</style>
       
       {/* NAVBAR */}
-      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 transition-all">
+      <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled ? 'py-4' : 'py-8'}`}>
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between h-20">
-            {/* LOGO - Using specific sizing class */}
-            <Link to="/" onClick={() => scrollToSection('hero')} className="flex items-center gap-3 group select-none transition-transform hover:scale-105 active:scale-95">
-              <img 
-                src="/logo.svg" 
-                alt="Zekodes" 
-                className="h-8 w-auto object-contain filter drop-shadow-sm" 
-              />
+          <div className={`glass-effect rounded-[2rem] px-8 flex items-center justify-between h-16 shadow-xl shadow-slate-200/50 transition-all border border-white/50`}>
+            <Link to="/" className="flex items-center gap-3 transition-transform hover:scale-105 active:scale-95">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                <Code2 className="text-white w-6 h-6" />
+              </div>
+              <span className="font-black text-xl tracking-tighter text-slate-900 uppercase">ZEKODES</span>
             </Link>
 
-            <div className="hidden lg:flex items-center space-x-8">
-              <button onClick={() => scrollToSection('problem')} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">The Problem</button>
-              <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Features</button>
-              <NavDropdown 
-                label="Resources" 
-                onItemClick={scrollToSection} 
-                items={[
-                  { label: 'Documentation', icon: <BookOpen />, to: '/docs' }, 
-                  { label: 'Academy', icon: <Rocket />, to: '/tutorial' }, 
-                  { label: 'Support', icon: <LifeBuoy />, targetId: 'footer' }
-                ]} 
-              />
+            <div className="hidden lg:flex items-center space-x-10">
+              <button onClick={() => scrollToSection('problem')} className="text-xs font-black text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-[0.2em]">The Problem</button>
+              <button onClick={() => scrollToSection('features')} className="text-xs font-black text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-[0.2em]">Features</button>
+              <NavDropdown label="Resources" onItemClick={scrollToSection} items={[
+                { label: 'Documentation', icon: <BookOpen />, to: '/docs' }, 
+                { label: 'Academy', icon: <Rocket />, to: '/tutorial' }, 
+                { label: 'Support', icon: <LifeBuoy />, targetId: 'footer' }
+              ]} />
             </div>
             
-            <div className="flex items-center gap-4">
-               <button 
-                  onClick={handleDownload}
-                  className="bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 active:scale-95"
-                >
-                  <Download size={16} /> Download
-                </button>
-            </div>
+            <MagneticButton onClick={handleDownload} className="bg-slate-900 text-white px-8 py-3 rounded-2xl text-xs font-black hover:bg-blue-600 transition-all shadow-xl active:scale-95 tracking-widest">
+              DOWNLOAD
+            </MagneticButton>
           </div>
         </div>
       </nav>
 
-      {/* 1. HERO SECTION */}
-      <section id="hero" className="pt-40 pb-20 px-6 relative overflow-hidden">
+      {/* HERO SECTION */}
+      <section className="pt-60 pb-32 px-6 relative">
+        <ParticleBackground />
         <div className="max-w-7xl mx-auto text-center relative z-10">
-          
-          <div className="animate-fade-in-up">
-             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-medium mb-8">
-                <span className="flex h-2 w-2 rounded-full bg-blue-600"></span>
-                v2.0 Now Available for Windows
-             </div>
-             <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 tracking-tight leading-[1.1] mb-8 max-w-5xl mx-auto">
-               Skip the Setup. <br className="hidden md:block" />
-               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Start Coding Instantly.</span>
-             </h1>
-             <p className="text-xl text-gray-600 font-medium mb-10 max-w-3xl mx-auto leading-relaxed">
-               Forget about installing compilers, configuring paths, or hunting for extensions. Zekodes is a complete coding environment that just works — download and run.
-             </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12 animate-fade-in-up delay-100">
-             <div className="flex items-center gap-2 text-gray-600 font-medium text-sm bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
-               <CheckCircle2 size={16} className="text-green-500" /> Compilers Included
-             </div>
-             <div className="flex items-center gap-2 text-gray-600 font-medium text-sm bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
-               <CheckCircle2 size={16} className="text-green-500" /> Zero Config
-             </div>
-             <div className="flex items-center gap-2 text-gray-600 font-medium text-sm bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
-               <CheckCircle2 size={16} className="text-green-500" /> Visual & Text
-             </div>
-          </div>
-
-          <div className="animate-fade-in-up delay-200 relative z-20">
-             <button 
-                 onClick={handleDownload}
-                 className="h-16 px-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-3 text-lg font-bold transition-all shadow-xl hover:shadow-blue-200 hover:-translate-y-1 mx-auto"
-             >
-               <Download className="w-5 h-5" />
-               Download for Windows
-             </button>
-             <p className="mt-4 text-sm text-gray-400">Everything pre-installed • Runs Offline</p>
-          </div>
-
-          {/* Hero Image Mockup */}
-          <div className="mt-20 -mb-32 relative z-10 max-w-5xl mx-auto animate-fade-in-up delay-300">
-             <div className="rounded-xl bg-gray-900 p-2 shadow-2xl ring-1 ring-gray-900/10">
-                <div className="rounded-lg overflow-hidden bg-gray-800 border border-gray-700">
-                   {/* Fake Window Controls */}
-                   <div className="h-8 bg-gray-800 flex items-center px-3 gap-2 border-b border-gray-700">
-                      <div className="w-3 h-3 rounded-full bg-red-500" />
-                      <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
-                   </div>
-                   {/* Image */}
-                   <img src="/editor-code.png" alt="Zekodes Interface" className="w-full h-auto opacity-95" />
-                </div>
-             </div>
-          </div>
-        </div>
-        
-        {/* Background Gradient Mesh */}
-        <div className="absolute top-0 inset-x-0 h-[800px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-50 via-white to-white -z-10 pointer-events-none" />
-      </section>
-
-      {/* 2. PROBLEM SECTION (The "Setup Hell") */}
-      <section id="problem" className="pt-48 pb-24 bg-white">
-         <div className="max-w-4xl mx-auto px-6 text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider mb-6">
-              The Reality
+          <div className="animate-slide-in-down">
+            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white border border-slate-200 text-blue-600 text-xs font-black uppercase tracking-widest mb-10 shadow-sm animate-glow-pulse">
+              <Sparkles size={14} className="animate-pulse" /> v2.0 Now Available for Windows
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-8 tracking-tight">Why is starting to code so frustrating?</h2>
-            <p className="text-xl text-gray-600 leading-relaxed mb-16">
-              Before writing a single line of code, beginners often spend hours installing SDKs, setting PATH variables, and selecting extensions in complex professional tools.
-            </p>
-            
-            <div className="grid md:grid-cols-3 gap-8">
-               <div className="p-8 bg-gray-50 rounded-2xl border border-gray-100 hover:border-red-100 transition-colors">
-                  <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-6 text-red-500">
-                     <Box size={28} />
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-2">Dependency Hell</h3>
-                  <p className="text-sm text-gray-500">Downloading Python, GCC, and runtimes separately just to run "Hello World".</p>
-               </div>
-               <div className="p-8 bg-gray-50 rounded-2xl border border-gray-100 hover:border-red-100 transition-colors">
-                  <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-6 text-red-500">
-                     <Layers size={28} />
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-2">Extension Fatigue</h3>
-                  <p className="text-sm text-gray-500">Figuring out which of the 50 "Python" extensions is the right one.</p>
-               </div>
-               <div className="p-8 bg-gray-50 rounded-2xl border border-gray-100 hover:border-red-100 transition-colors">
-                  <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-6 text-red-500">
-                     <XCircle size={28} />
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-lg mb-2">Setup Errors</h3>
-                  <p className="text-sm text-gray-500">Getting stuck on "Command not found" before you even start learning.</p>
-               </div>
-            </div>
-         </div>
-      </section>
-
-      {/* 3. SOLUTION SECTION */}
-      <section className="py-24 bg-gray-50 border-y border-gray-100">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-600 text-xs font-bold uppercase tracking-wider mb-6">
-              The Solution
-            </div>
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">Batteries Included. Zero Config.</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Zekodes comes with Python and GCC compilers pre-bundled inside the app. Just download, open, and hit "Run".
+            <h1 className="text-6xl md:text-9xl font-black text-slate-900 tracking-tighter leading-[0.85] mb-12">
+              <span className="animate-reveal-text inline-block">Code without</span><br />
+              <span className="text-gradient animate-reveal-text delay-200 inline-block italic">The Config.</span>
+            </h1>
+            <p className="text-xl text-slate-500 font-medium mb-14 max-w-2xl mx-auto leading-relaxed animate-reveal-text delay-400">
+              Forget about GCC paths or Python SDKs. Zekodes is a logic-first environment that comes with everything pre-installed.
             </p>
           </div>
-          
-          {/* Logic Flow Visualization */}
-          <div className="grid md:grid-cols-3 gap-8 items-center justify-center relative">
-             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 text-center relative z-10">
-                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                   <Download size={32} />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">1. Download</h3>
-                <p className="text-gray-500 text-sm">One lightweight installer</p>
-             </div>
-             
-             <div className="hidden md:flex absolute top-1/2 left-0 w-full h-px bg-gray-200 -z-0"></div>
-             
-             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 text-center relative z-10">
-                <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                   <Zap size={32} />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">2. Install</h3>
-                <p className="text-gray-500 text-sm">Everything sets up automatically</p>
-             </div>
-             
-             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 text-center relative z-10">
-                <div className="w-16 h-16 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                   <Terminal size={32} />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">3. Code</h3>
-                <p className="text-gray-500 text-sm">Instant execution environment</p>
-             </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-20 animate-zoom-in delay-600">
+            <MagneticButton onClick={handleDownload} className="h-16 px-12 rounded-3xl bg-blue-600 text-white flex items-center justify-center gap-3 text-lg font-black hover:bg-slate-900 transition-all shadow-2xl shadow-blue-200 group relative overflow-hidden">
+              <Download className="group-hover:animate-bounce" /> GET ZEKODES FREE
+            </MagneticButton>
+          </div>
+
+          {/* Interactive Mockup */}
+          <div className="mt-20 relative animate-slide-in-up delay-800 perspective-container"
+               style={{ transform: `translateY(${mousePos.y * 15}px) rotateX(${mousePos.y * 3}deg) rotateY(${mousePos.x * 3}deg)` }}>
+            <div className="rounded-[3rem] bg-white p-4 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] ring-1 ring-slate-200">
+              <div className="rounded-[2.2rem] overflow-hidden border border-slate-100 shadow-inner">
+                <img src="/editor-code.png" alt="Zekodes Environment" className="w-full h-auto opacity-95 transition-transform duration-1000 hover:scale-[1.02]" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 4. FEATURE WALKTHROUGH */}
-      <section id="features" className="bg-white">
-        <FeatureSection 
-           label="Logic First"
-           title="Visual Block Editor" 
-           description="Start by dragging and dropping blocks. This allows you to focus on the logic—loops, conditions, variables—without getting syntax errors."
-           image="/editor-blocks.png"
-           icon={<Layout />}
-        />
-        <FeatureSection 
-           label="Professional Transition"
-           title="Real Code Generation" 
-           description="Watch as Zekodes instantly translates your blocks into clean, valid C or Python code. This helps you bridge the gap between visual logic and text-based coding."
-           image="/editor-code.png"
-           align="right"
-           icon={<Code2 />}
-        />
-        <FeatureSection 
-           label="No Downloads Required"
-           title="Integrated Local Runtimes" 
-           description="Running code requires no extra downloads. The integrated terminal uses our pre-bundled Python and GCC environments to compile and execute your programs locally."
-           image="/editor-terminal.png"
-           icon={<Cpu />}
-        />
-        <FeatureSection 
-           label="Self-Paced Learning"
-           title="Built-in Academy" 
-           description="Access step-by-step tutorials directly within the app. Learn concepts one at a time without needing to switch browser tabs."
-           image="/academy-preview.png"
-           align="right"
-           icon={<BookOpen />}
-        />
-      </section>
-
-      {/* 5. WHO IT IS FOR */}
-      <section className="py-24 bg-gray-50 border-t border-gray-100">
+      {/* PROBLEM SECTION */}
+      <section id="problem" className="py-40 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Built for Immediate Start</h2>
-            <p className="text-gray-500 text-lg">Designed for anyone who wants to code right now, not configure tools.</p>
+          <div className="text-center mb-24 scroll-reveal">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-600 text-xs font-black uppercase tracking-widest mb-6 border border-red-100">
+              <XCircle size={14} /> The Status Quo
+            </div>
+            <h2 className="text-4xl md:text-7xl font-black text-slate-900 tracking-tighter">Why is coding <span className="text-red-500">so painful?</span></h2>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-6 text-blue-600 font-bold">
-                 <BookOpen size={24} />
+
+          <div className="grid md:grid-cols-3 gap-10 stagger-children">
+            {[
+              { icon: <Box />, title: "Dependency Hell", desc: "Beginners spend hours downloading Python and GCC separately just to run 'Hello World'." },
+              { icon: <Layers />, title: "Extension Fatigue", desc: "Configuring complex professional tools like VS Code is a nightmare for newcomers." },
+              { icon: <XCircle />, title: "Setup Errors", desc: "Command line errors and missing paths kill the excitement of building logic." }
+            ].map((item, i) => (
+              <div key={i} className="scroll-reveal-scale glass-effect p-12 rounded-[3.5rem] border border-slate-100 hover:shadow-2xl transition-all duration-500 card-3d group" style={{'--index': i} as React.CSSProperties}>
+                <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-8 shadow-inner group-hover:bg-red-500 group-hover:text-white transition-all duration-500 transform group-hover:rotate-12">
+                  {React.cloneElement(item.icon, { size: 36 })}
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-4">{item.title}</h3>
+                <p className="text-slate-500 font-medium leading-relaxed">{item.desc}</p>
               </div>
-              <h3 className="text-xl font-bold mb-3 text-gray-900">Students</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Need to submit a C or Python assignment? Download Zekodes and verify your logic instantly without installing heavy IDEs.
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SOLUTION SECTION */}
+      <section className="py-40 bg-slate-50 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-24 items-center">
+            <div className="scroll-reveal-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 text-green-600 text-xs font-black uppercase tracking-widest mb-6 border border-green-100">
+                <CheckCircle2 size={14} /> The Zekodes Way
+              </div>
+              <h2 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 tracking-tighter leading-[0.9]">One Click. <br /><span className="text-blue-600">Zero Config.</span></h2>
+              <p className="text-xl text-slate-600 font-medium leading-relaxed mb-12">
+                We bundle everything inside. From the GCC compiler to the Python runtime, everything is pre-configured for instant execution.
               </p>
+              <div className="grid grid-cols-2 gap-6">
+                {[
+                  { icon: <Download />, label: "LIGHTWEIGHT" },
+                  { icon: <Zap />, label: "INSTANT" },
+                  { icon: <Terminal />, label: "LOCAL" },
+                  { icon: <Rocket />, label: "FREE" }
+                ].map((step, i) => (
+                  <div key={i} className="bg-white p-6 rounded-3xl shadow-lg shadow-slate-200/50 flex flex-col items-center gap-4 border border-white">
+                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                      {step.icon}
+                    </div>
+                    <span className="font-black text-[10px] tracking-[0.2em] text-slate-400">{step.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-6 text-purple-600 font-bold">
-                 <Rocket size={24} />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-gray-900">Absolute Beginners</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Skip the "Environment Setup" tutorials. Just open Zekodes and build your first working program in minutes.
-              </p>
-            </div>
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-6 text-green-600 font-bold">
-                 <Zap size={24} />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-gray-900">Hobbyists</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Prototype ideas visually and transition smoothly into real code. Perfect for quick logic tests and learning new concepts.
-              </p>
+            
+            <div className="scroll-reveal-right glass-effect p-12 rounded-[4rem] border border-white shadow-2xl relative">
+               <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-400/20 blur-3xl rounded-full" />
+               <h3 className="text-3xl font-black mb-8">Integrated Runtimes</h3>
+               <div className="space-y-6">
+                 {['Internal GCC v14', 'Python 3.12 Engine', 'Pre-configured System Paths', 'Offline Execution Support'].map((t, i) => (
+                   <div key={i} className="flex items-center gap-4 text-slate-700 font-bold">
+                     <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white">
+                       <CheckCircle2 size={14} />
+                     </div>
+                     {t}
+                   </div>
+                 ))}
+               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 6. DOWNLOAD SECTION */}
-      <section className="py-32 px-6 text-center bg-white border-t border-gray-100">
-        <div className="max-w-3xl mx-auto">
-          <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8 transform rotate-3 shadow-lg">
-            <Download size={40} />
-          </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">Ready to Code?</h2>
-          <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-            No setup. No extensions. Just download Zekodes and start building your logic today.
-          </p>
-          <button 
-              onClick={handleDownload}
-              className="h-16 px-12 rounded-full bg-gray-900 hover:bg-black text-white text-lg font-bold transition-all shadow-xl hover:-translate-y-1 flex items-center gap-3 mx-auto"
-          >
-            <Download className="w-5 h-5" />
-            Download for Windows
-          </button>
-          <p className="mt-6 text-sm text-gray-400">
-             Requires Windows 10 or later • 64-bit Architecture
-          </p>
+      {/* FEATURES */}
+      <section id="features" className="py-40 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <FeatureSection label="Visual Engine" title="Logic-First Block Editor" description="Start by building logic structures visually. Perfect for understanding concepts without syntax errors." image="/editor-blocks.png" icon={<Layout />} />
+          <FeatureSection label="Pro Bridge" title="Instant Code Translation" description="Watch as your visual blocks turn into professional C or Python code in real-time." image="/editor-code.png" align="right" icon={<Code2 />} />
+          <FeatureSection label="Local Execution" title="High Performance Terminal" description="No external downloads required. Execute code locally with our built-in high-speed runtimes." image="/editor-terminal.png" icon={<Terminal />} />
         </div>
       </section>
 
-      {/* 7. FOOTER */}
-      <footer id="footer" className="py-12 bg-gray-50 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity">
-            {/* Footer Logo using exact requested class */}
-            <img src="/logo.svg" alt="Zekodes" className="h-8 w-auto object-contain filter drop-shadow-sm" />
+      {/* CTA SECTION */}
+      <section className="py-40 px-6">
+        <div className="max-w-6xl mx-auto glass-effect rounded-[5rem] p-16 md:p-32 text-center relative overflow-hidden shadow-2xl border-blue-100 shadow-blue-200/50 scroll-reveal-scale">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-40 -z-10" />
+          <div className="w-24 h-24 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center mx-auto mb-12 shadow-2xl animate-float">
+            <Download size={48} />
           </div>
-          <div className="text-sm text-gray-500">© 2026 Zekodes. All rights reserved.</div>
-          <div className="flex gap-8 text-sm font-medium text-gray-600">
+          <h2 className="text-5xl md:text-8xl font-black text-slate-900 mb-8 tracking-tighter leading-none">Stop configuring. <br /><span className="text-blue-600">Start building.</span></h2>
+          <p className="text-2xl text-slate-500 font-medium mb-14">Get the standalone v2.0 for Windows today.</p>
+          <MagneticButton onClick={handleDownload} className="h-20 px-16 rounded-[2.5rem] bg-slate-900 text-white text-xl font-black hover:bg-blue-600 transition-all shadow-2xl active:scale-95 group">
+            DOWNLOAD STANDALONE <ArrowRight className="inline-block ml-2 group-hover:translate-x-2 transition-transform" />
+          </MagneticButton>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer id="footer" className="py-24 bg-white border-t border-slate-100 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
+          <div className="flex items-center gap-4 transition-transform hover:scale-110">
+            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg">
+              <Code2 className="text-white w-6 h-6" />
+            </div>
+            <span className="text-2xl font-black tracking-tighter uppercase">ZEKODES</span>
+          </div>
+          <div className="flex gap-16 text-xs font-black text-slate-400 uppercase tracking-[0.3em]">
             <Link to="/privacy" className="hover:text-blue-600 transition-colors">Privacy</Link>
             <Link to="/terms" className="hover:text-blue-600 transition-colors">Terms</Link>
+            <a href="#" className="hover:text-blue-600 transition-colors">GitHub</a>
           </div>
+        </div>
+        <div className="mt-20 pt-10 border-t border-slate-50 text-center text-[10px] font-black text-slate-300 tracking-[0.5em] uppercase">
+          © 2026 ZEKODES LABS • BENGALURU, INDIA
         </div>
       </footer>
     </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
-import { User, BookOpen, Layers, ArrowRight, Loader2 } from 'lucide-react';
+import { User, BookOpen, ArrowRight, Loader2 } from 'lucide-react';
 
 const CreateProfile: React.FC = () => {
   // Initialize states with empty strings for strict validation

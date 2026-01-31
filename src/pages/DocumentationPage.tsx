@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, {  } from 'react';
 import { 
-  Book, Globe, MonitorPlay, 
+  Book, MonitorPlay, 
   ArrowLeft
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
