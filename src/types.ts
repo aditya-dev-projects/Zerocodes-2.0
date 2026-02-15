@@ -30,7 +30,7 @@ export type ToolMode = typeof ToolMode[keyof typeof ToolMode];
 
 // --- Visual Block Types ---
 
-export type BlockCategory = 'io' | 'variables' | 'conditionals' | 'functions' | 'includes' | 'operators' | 'loops' | 'syntax';
+export type BlockCategory = 'io' | 'variables' | 'conditionals' | 'functions' | 'includes' | 'operators' | 'loops' | 'syntax' | 'lists';
 
 export interface BlockInputDefinition {
   name: string;

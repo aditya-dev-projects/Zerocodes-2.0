@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { 
   Box, Type, PlayCircle, Plus, Trash2, GripVertical, 
-  FileCode, Braces, Calculator, Repeat, ArrowRight 
+  FileCode, Braces, Calculator, Repeat, ArrowRight, List
 } from 'lucide-react';
 import { type BlockDefinition, type BlockInstance, type BlockCategory, Language } from '../types';
+import { BlockManager } from '../blocks/manager'; 
 
 // ==================================================================================
-// 🧱 BLOCK DEFINITIONS
+// 🎨 COLOR THEMES
 // ==================================================================================
 
 const COLOR_THEMES: Record<string, string> = {
@@ -19,476 +20,15 @@ const COLOR_THEMES: Record<string, string> = {
   'block-motion': 'text-cyan-600 border-cyan-500 bg-cyan-50',
   'block-sensing': 'text-teal-600 border-teal-500 bg-teal-50',
   'block-extension': 'text-gray-600 border-gray-500 bg-gray-50',
+  'block-lists': 'text-red-600 border-red-500 bg-red-50',
 };
 
-export const BLOCK_DEFINITIONS: BlockDefinition[] = [
-  
-  // ==============================================================================
-  // 🟢 C LANGUAGE BLOCKS
-  // ==============================================================================
-
-  {
-    id: 'c-int-declare',
-    category: 'variables',
-    label: 'int (Integer)',
-    code: { c: 'int {name} = {value};' },
-    inputs: [
-      { name: 'name', placeholder: 'varName', defaultValue: 'x' },
-      { name: 'value', placeholder: '0', defaultValue: '0' }
-    ],
-    language: 'c',
-    color: 'block-variables'
-  },
-  {
-    id: 'c-float-declare',
-    category: 'variables',
-    label: 'float (Decimal)',
-    code: { c: 'float {name} = {value};' },
-    inputs: [
-      { name: 'name', placeholder: 'varName', defaultValue: 'pi' },
-      { name: 'value', placeholder: '3.14', defaultValue: '3.14' }
-    ],
-    language: 'c',
-    color: 'block-variables'
-  },
-  {
-    id: 'c-double-declare',
-    category: 'variables',
-    label: 'double (Precise Decimal)',
-    code: { c: 'double {name} = {value};' },
-    inputs: [
-      { name: 'name', placeholder: 'varName', defaultValue: 'd' },
-      { name: 'value', placeholder: '0.0', defaultValue: '0.0' }
-    ],
-    language: 'c',
-    color: 'block-variables'
-  },
-  {
-    id: 'c-char-declare',
-    category: 'variables',
-    label: 'char (Character)',
-    code: { c: 'char {name} = \'{value}\';' },
-    inputs: [
-      { name: 'name', placeholder: 'varName', defaultValue: 'c' },
-      { name: 'value', placeholder: 'A', defaultValue: 'A' }
-    ],
-    language: 'c',
-    color: 'block-variables'
-  },
-  {
-    id: 'c-string-declare',
-    category: 'variables',
-    label: 'String (char array)',
-    code: { c: 'char {name}[] = "{value}";' },
-    inputs: [
-      { name: 'name', placeholder: 'varName', defaultValue: 'text' },
-      { name: 'value', placeholder: 'Hello', defaultValue: 'Hello' }
-    ],
-    language: 'c',
-    color: 'block-variables'
-  },
-  {
-    id: 'c-bool-declare',
-    category: 'variables',
-    label: 'Boolean (int/ _Bool)',
-    code: { c: 'int {name} = {value}; // 0=false, 1=true' },
-    inputs: [
-      { name: 'name', placeholder: 'isValid', defaultValue: 'isValid' },
-      { name: 'value', placeholder: '1', defaultValue: '1' }
-    ],
-    language: 'c',
-    color: 'block-variables'
-  },
-
-  {
-    id: 'c-if',
-    category: 'conditionals',
-    label: 'if',
-    code: { c: 'if ({condition}) {' },
-    inputs: [{ name: 'condition', placeholder: 'x > 0', defaultValue: 'x > 0' }],
-    language: 'c',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'c-else-if',
-    category: 'conditionals',
-    label: 'else if',
-    code: { c: '} else if ({condition}) {' },
-    inputs: [{ name: 'condition', placeholder: 'x < 0', defaultValue: 'x < 0' }],
-    language: 'c',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'c-else',
-    category: 'conditionals',
-    label: 'else',
-    code: { c: '} else {' },
-    language: 'c',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'c-switch',
-    category: 'conditionals',
-    label: 'switch',
-    code: { c: 'switch ({variable}) {' },
-    inputs: [{ name: 'variable', placeholder: 'variable', defaultValue: 'day' }],
-    language: 'c',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'c-case',
-    category: 'conditionals',
-    label: 'case',
-    code: { c: 'case {value}:' },
-    inputs: [{ name: 'value', placeholder: '1', defaultValue: '1' }],
-    language: 'c',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'c-default',
-    category: 'conditionals',
-    label: 'default',
-    code: { c: 'default:' },
-    language: 'c',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'c-break',
-    category: 'conditionals',
-    label: 'break',
-    code: { c: 'break;' },
-    language: 'c',
-    color: 'block-control'
-  },
-
-  {
-    id: 'c-for-loop',
-    category: 'loops',
-    label: 'for loop',
-    code: { c: 'for (int {var} = {start}; {var} < {end}; {var}++) {' },
-    inputs: [
-      { name: 'var', placeholder: 'i', defaultValue: 'i' },
-      { name: 'start', placeholder: '0', defaultValue: '0' },
-      { name: 'end', placeholder: '10', defaultValue: '10' }
-    ],
-    language: 'c',
-    color: 'block-motion',
-    hasChildren: true
-  },
-  {
-    id: 'c-while-loop',
-    category: 'loops',
-    label: 'while loop',
-    code: { c: 'while ({condition}) {' },
-    inputs: [{ name: 'condition', placeholder: 'x < 10', defaultValue: 'x < 10' }],
-    language: 'c',
-    color: 'block-motion',
-    hasChildren: true
-  },
-  {
-    id: 'c-do-while',
-    category: 'loops',
-    label: 'do-while loop',
-    code: { c: 'do {\n    // code\n} while ({condition});' },
-    inputs: [{ name: 'condition', placeholder: 'x != 0', defaultValue: 'x != 0' }],
-    language: 'c',
-    color: 'block-motion'
-  },
-
-  {
-    id: 'c-function-declare',
-    category: 'functions',
-    label: 'Define Function',
-    code: { c: '{type} {name}({params}) {' },
-    inputs: [
-      { name: 'type', placeholder: 'void/int', defaultValue: 'void' },
-      { name: 'name', placeholder: 'myFunc', defaultValue: 'myFunc' },
-      { name: 'params', placeholder: 'int x', defaultValue: '' }
-    ],
-    language: 'c',
-    color: 'block-events',
-    hasChildren: true
-  },
-  {
-    id: 'c-function-call',
-    category: 'functions',
-    label: 'Call Function',
-    code: { c: '{name}({args});' },
-    inputs: [
-        { name: 'name', placeholder: 'myFunc', defaultValue: 'myFunc' },
-        { name: 'args', placeholder: '10', defaultValue: '' }
-    ],
-    language: 'c',
-    color: 'block-events'
-  },
-  {
-    id: 'c-return',
-    category: 'functions',
-    label: 'return',
-    code: { c: 'return {value};' },
-    inputs: [{ name: 'value', placeholder: '0', defaultValue: '0' }],
-    language: 'c',
-    color: 'block-events'
-  },
-
-  {
-    id: 'c-include-stdio',
-    category: 'includes',
-    label: '#include <stdio.h>',
-    code: { c: '#include <stdio.h>' },
-    language: 'c',
-    color: 'block-variables'
-  },
-  {
-    id: 'c-main-function',
-    category: 'functions',
-    label: 'main function',
-    code: { c: 'int main() {' },
-    language: 'c',
-    color: 'block-events',
-    hasChildren: true
-  },
-
-  {
-    id: 'c-printf',
-    category: 'io',
-    label: 'print message',
-    code: { c: 'printf("{text}\\n");' },
-    inputs: [{ name: 'text', placeholder: 'Hello World', defaultValue: 'Hello World' }],
-    language: 'c',
-    color: 'block-looks'
-  },
-  {
-    id: 'c-scanf-int',
-    category: 'io',
-    label: 'read integer',
-    code: { c: 'scanf("%d", &{var});' },
-    inputs: [{ name: 'var', placeholder: 'variable name', defaultValue: 'num' }],
-    language: 'c',
-    color: 'block-sound'
-  },
-  {
-    id: 'c-scanf-float',
-    category: 'io',
-    label: 'read float',
-    code: { c: 'scanf("%f", &{var});' },
-    inputs: [{ name: 'var', placeholder: 'variable name', defaultValue: 'num' }],
-    language: 'c',
-    color: 'block-sound'
-  },
-  {
-    id: 'c-scanf-double',
-    category: 'io',
-    label: 'read double',
-    code: { c: 'scanf("%lf", &{var});' },
-    inputs: [{ name: 'var', placeholder: 'variable name', defaultValue: 'num' }],
-    language: 'c',
-    color: 'block-sound'
-  },
-  {
-    id: 'c-scanf-char',
-    category: 'io',
-    label: 'read char',
-    code: { c: 'scanf(" %c", &{var});' },
-    inputs: [{ name: 'var', placeholder: 'variable name', defaultValue: 'c' }],
-    language: 'c',
-    color: 'block-sound'
-  },
-  {
-    id: 'c-scanf-string',
-    category: 'io',
-    label: 'read string',
-    code: { c: 'scanf("%s", {var});' },
-    inputs: [{ name: 'var', placeholder: 'variable name', defaultValue: 'str' }],
-    language: 'c',
-    color: 'block-sound'
-  },
-
-  // ==============================================================================
-  // 🐍 PYTHON BLOCKS
-  // ==============================================================================
-
-  {
-    id: 'py-var-declare',
-    category: 'variables',
-    label: 'Set Variable',
-    code: { python: '{name} = {value}' },
-    inputs: [
-      { name: 'name', placeholder: 'x', defaultValue: 'x' },
-      { name: 'value', placeholder: '5', defaultValue: '5' }
-    ],
-    language: 'python',
-    color: 'block-variables'
-  },
-  {
-    id: 'py-bool-declare',
-    category: 'variables',
-    label: 'Set Boolean',
-    code: { python: '{name} = {value}' },
-    inputs: [
-      { name: 'name', placeholder: 'isReady', defaultValue: 'isReady' },
-      { name: 'value', placeholder: 'True/False', defaultValue: 'True' }
-    ],
-    language: 'python',
-    color: 'block-variables'
-  },
-  {
-    id: 'py-list-declare',
-    category: 'variables',
-    label: 'Create List',
-    code: { python: '{name} = [{items}]' },
-    inputs: [
-      { name: 'name', placeholder: 'myList', defaultValue: 'myList' },
-      { name: 'items', placeholder: '1, 2, 3', defaultValue: '1, 2, 3' }
-    ],
-    language: 'python',
-    color: 'block-variables'
-  },
-
-  {
-    id: 'py-if',
-    category: 'conditionals',
-    label: 'if',
-    code: { python: 'if {condition}:' },
-    inputs: [{ name: 'condition', placeholder: 'x > 5', defaultValue: 'x > 5' }],
-    language: 'python',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'py-elif',
-    category: 'conditionals',
-    label: 'elif',
-    code: { python: 'elif {condition}:' },
-    inputs: [{ name: 'condition', placeholder: 'x < 5', defaultValue: 'x < 5' }],
-    language: 'python',
-    color: 'block-control',
-    hasChildren: true
-  },
-  {
-    id: 'py-else',
-    category: 'conditionals',
-    label: 'else',
-    code: { python: 'else:' },
-    language: 'python',
-    color: 'block-control',
-    hasChildren: true
-  },
-
-  {
-    id: 'py-for-seq',
-    category: 'loops',
-    label: 'for item in list',
-    code: { python: 'for {item} in {sequence}:' },
-    inputs: [
-      { name: 'item', placeholder: 'item', defaultValue: 'item' },
-      { name: 'sequence', placeholder: 'myList', defaultValue: 'myList' }
-    ],
-    language: 'python',
-    color: 'block-motion',
-    hasChildren: true
-  },
-  {
-    id: 'py-for-range',
-    category: 'loops',
-    label: 'for i in range',
-    code: { python: 'for {i} in range({n}):' },
-    inputs: [
-      { name: 'i', placeholder: 'i', defaultValue: 'i' },
-      { name: 'n', placeholder: '10', defaultValue: '10' }
-    ],
-    language: 'python',
-    color: 'block-motion',
-    hasChildren: true
-  },
-  {
-    id: 'py-while',
-    category: 'loops',
-    label: 'while',
-    code: { python: 'while {condition}:' },
-    inputs: [{ name: 'condition', placeholder: 'x < 10', defaultValue: 'x < 10' }],
-    language: 'python',
-    color: 'block-motion',
-    hasChildren: true
-  },
-
-  {
-    id: 'py-func-def',
-    category: 'functions',
-    label: 'Define Function',
-    code: { python: 'def {name}({params}):' },
-    inputs: [
-      { name: 'name', placeholder: 'myFunc', defaultValue: 'myFunc' },
-      { name: 'params', placeholder: 'arg1', defaultValue: '' }
-    ],
-    language: 'python',
-    color: 'block-events',
-    hasChildren: true
-  },
-  {
-    id: 'py-return',
-    category: 'functions',
-    label: 'return',
-    code: { python: 'return {value}' },
-    inputs: [{ name: 'value', placeholder: '0', defaultValue: '0' }],
-    language: 'python',
-    color: 'block-events'
-  },
-
-  {
-    id: 'py-print',
-    category: 'io',
-    label: 'print',
-    code: { python: 'print("{text}")' },
-    inputs: [{ name: 'text', placeholder: 'Hello', defaultValue: 'Hello' }],
-    language: 'python',
-    color: 'block-looks'
-  },
-  {
-    id: 'py-input-str',
-    category: 'io',
-    label: 'input (String)',
-    code: { python: '{var} = input("{prompt}")' },
-    inputs: [
-        { name: 'var', placeholder: 'name', defaultValue: 'name' },
-        { name: 'prompt', placeholder: 'Enter Name: ', defaultValue: '' }
-    ],
-    language: 'python',
-    color: 'block-sound'
-  },
-  {
-    id: 'py-input-int',
-    category: 'io',
-    label: 'input (Integer)',
-    code: { python: '{var} = int(input("{prompt}"))' },
-    inputs: [
-        { name: 'var', placeholder: 'age', defaultValue: 'age' },
-        { name: 'prompt', placeholder: 'Enter Age: ', defaultValue: '' }
-    ],
-    language: 'python',
-    color: 'block-sound'
-  },
-  {
-    id: 'py-input-float',
-    category: 'io',
-    label: 'input (Float)',
-    code: { python: '{var} = float(input("{prompt}"))' },
-    inputs: [
-        { name: 'var', placeholder: 'price', defaultValue: 'price' },
-        { name: 'prompt', placeholder: 'Enter Price: ', defaultValue: '' }
-    ],
-    language: 'python',
-    color: 'block-sound'
-  }
-];
+// ==================================================================================
+// 📂 CATEGORIES
+// ==================================================================================
 
 const CATEGORIES: { id: BlockCategory; label: string; icon: any }[] = [
+  { id: 'syntax', label: 'Structure', icon: Braces },
   { id: 'includes', label: 'Includes', icon: FileCode },
   { id: 'functions', label: 'Functions', icon: PlayCircle },
   { id: 'io', label: 'I/O', icon: Box },
@@ -496,7 +36,7 @@ const CATEGORIES: { id: BlockCategory; label: string; icon: any }[] = [
   { id: 'conditionals', label: 'Conditionals', icon: ArrowRight },
   { id: 'loops', label: 'Loops', icon: Repeat },
   { id: 'operators', label: 'Operators', icon: Calculator },
-  { id: 'syntax', label: 'Syntax', icon: Braces },
+  { id: 'lists', label: 'Lists', icon: List },
 ];
 
 // --- Components ---
@@ -537,29 +77,13 @@ interface BlockSidebarProps {
 }
 
 export const BlockSidebar: React.FC<BlockSidebarProps> = ({ currentLang, mode, canvasBlocks }) => {
-  
-  const checkIsLocked = (def: BlockDefinition) => {
-    if (currentLang !== Language.C || mode === 'advanced') return false;
-
-    const hasMain = canvasBlocks.some(b => b.type === 'c-main-function');
-    const hasStdio = canvasBlocks.some(b => b.type === 'c-include-stdio');
-
-    const requiresMain = ['variables', 'conditionals', 'loops', 'io'].includes(def.category);
-    if (requiresMain && !hasMain) return true;
-
-    if (def.category === 'io' && !hasStdio) return true;
-
-    return false;
-  };
-
   return (
     <div className="h-full overflow-y-auto p-4 bg-[#1e1e1e] text-gray-300">
       {CATEGORIES.map(cat => {
-        const blocks = BLOCK_DEFINITIONS.filter(b => {
-          if (b.category !== cat.id) return false;
-          if (b.language && b.language !== currentLang) return false;
-          return true;
-        });
+        // GET BLOCKS FROM MANAGER
+        const allBlocks = BlockManager.getBlocks(currentLang);
+        
+        const blocks = allBlocks.filter(b => b.category === cat.id);
         
         if (blocks.length === 0) return null;
 
@@ -573,7 +97,8 @@ export const BlockSidebar: React.FC<BlockSidebarProps> = ({ currentLang, mode, c
               <SidebarItem 
                 key={def.id} 
                 def={def} 
-                isLocked={checkIsLocked(def)} 
+                // CHECK LOCK FROM MANAGER
+                isLocked={BlockManager.isLocked(currentLang, def, canvasBlocks, mode)} 
               />
             ))}
           </div>
@@ -594,13 +119,17 @@ interface BlockRendererProps {
   onDropContainer?: (e: React.DragEvent) => void; 
   moveBlock: (sourceId: string, targetId: string | null, mode: 'before' | 'append') => void;
   userMode: 'beginner' | 'advanced';
+  currentLang: Language; // Added prop
 }
 
 export const BlockItem: React.FC<BlockRendererProps> = ({ 
-  block, onDelete, onUpdate, depth = 0, onDropContainer, moveBlock, userMode 
+  block, onDelete, onUpdate, depth = 0, onDropContainer, moveBlock, userMode, currentLang
 }) => {
   const [isOver, setIsOver] = useState(false);
-  const def = BLOCK_DEFINITIONS.find(d => d.id === block.type);
+  
+  // FIND DEF FROM MANAGER
+  const def = BlockManager.getBlocks(currentLang).find(d => d.id === block.type);
+  
   if (!def) return null;
 
   const themeClass = COLOR_THEMES[def.color] || 'text-gray-600 border-gray-500 bg-gray-50';
@@ -630,6 +159,7 @@ export const BlockItem: React.FC<BlockRendererProps> = ({
             depth={0}
             moveBlock={moveBlock}
             userMode={userMode}
+            currentLang={currentLang}
             onDropContainer={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -705,9 +235,10 @@ interface CanvasProps {
   blocks: BlockInstance[];
   setBlocks: React.Dispatch<React.SetStateAction<BlockInstance[]>>;
   userMode: 'beginner' | 'advanced';
+  currentLang: Language;
 }
 
-export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks, userMode }) => {
+export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks, userMode, currentLang }) => {
   
   const handleDrop = (e: React.DragEvent, targetBlockId?: string) => {
     e.preventDefault();
@@ -721,16 +252,11 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks, userMode
     
     const def: BlockDefinition = JSON.parse(data);
 
-    if (userMode === 'beginner' && def.language === 'c') {
-      if (!targetBlockId && !['c-include-stdio', 'c-main-function', 'c-function-declare'].includes(def.id)) {
-        alert("Beginner Mode: This block must be placed inside main() or a function container.");
-        return;
-      }
-      
-      if (targetBlockId && def.category === 'includes') {
-        alert("Beginner Mode: Include headers should be at the top level, outside main().");
-        return;
-      }
+    // VALIDATE DROP VIA MANAGER
+    const errorMsg = BlockManager.validateDrop(currentLang, def, targetBlockId, userMode);
+    if (errorMsg) {
+      alert(errorMsg);
+      return;
     }
     
     const initialParams: Record<string, string> = {};
@@ -845,6 +371,7 @@ export const BlockCanvas: React.FC<CanvasProps> = ({ blocks, setBlocks, userMode
             depth={depth}
             moveBlock={moveBlock}
             userMode={userMode}
+            currentLang={currentLang}
             onDropContainer={(e) => handleDrop(e, block.id)}
           />
         </div>

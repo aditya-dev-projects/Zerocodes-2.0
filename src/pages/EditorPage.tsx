@@ -5,7 +5,8 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Language, type BlockInstance } from '../types';
-import { BlockSidebar, BlockCanvas, BLOCK_DEFINITIONS } from '../components/BlockComponents';
+import { BlockSidebar, BlockCanvas } from '../components/BlockComponents';
+import { BlockManager } from '../blocks/manager'; // IMPORT MANAGER
 import { supabase } from '../services/supabase';
 import type { Session } from '@supabase/supabase-js';
 import AuthPage from '../components/AuthPage';
@@ -28,89 +29,6 @@ const getElectron = () => {
 const electron = getElectron();
 const ipcRenderer = electron?.ipcRenderer || null;
 // ------------------------------------------
-
-// --- CODE GENERATION LOGIC WITH CONSTRAINTS ---
-const generateCodeFromBlocks = (blocks: BlockInstance[], lang: Language, mode: 'beginner' | 'advanced'): string => {
-  if (blocks.length === 0) return "";
-  
-  // BEGINNER MODE VALIDATION (C ONLY)
-  if (mode === 'beginner' && lang === Language.C) {
-    const hasStdio = blocks.some(b => b.type === 'c-include-stdio');
-    const hasMain = blocks.some(b => b.type === 'c-main-function');
-    
-    // Check for I/O blocks without stdio.h
-    const ioBlockTypes = ['c-printf', 'c-scanf-int', 'c-scanf-float', 'c-scanf-double', 'c-scanf-char', 'c-scanf-string'];
-    const hasIO = blocks.some(b => ioBlockTypes.includes(b.type));
-    
-    if (hasIO && !hasStdio) {
-      return "// BEGINNER MODE ERROR:\n// You are using an I/O block (like print or read).\n// You must add the '#include <stdio.h>' block at the top level first.";
-    }
-
-    // Check for logic blocks outside of main
-    const rootLogicBlocks = blocks.filter(b => 
-      !['c-include-stdio', 'c-main-function', 'c-function-declare'].includes(b.type)
-    );
-    if (rootLogicBlocks.length > 0 && !hasMain) {
-       return "// BEGINNER MODE ERROR:\n// Logic blocks (variables, loops, conditionals) must be placed INSIDE the 'main function' block.";
-    }
-  }
-  
-  const generateBlockCode = (block: BlockInstance, indentLevel: number): string => {
-    const indent = "    ".repeat(indentLevel);
-    const def = BLOCK_DEFINITIONS.find(d => d.id === block.type);
-    if (!def) return `${indent}// Unknown block: ${block.type}\n`;
-    
-    let template = def.code[lang] || Object.values(def.code)[0] || "";
-    
-    Object.entries(block.params).forEach(([key, value]) => {
-      template = template.split(`{${key}}`).join(value);
-    });
-    
-    let result = indent + template + "\n";
-    
-    if (block.children && block.children.length > 0) {
-      block.children.forEach(child => {
-        result += generateBlockCode(child, indentLevel + 1);
-      });
-      // Handle auto-closing braces internally
-      if (template.trim().endsWith('{')) { result += indent + "}\n"; }
-    }
-    return result;
-  };
-
-  if (lang === Language.C) {
-      const includes: string[] = [];
-      const bodyBlocks: BlockInstance[] = [];
-
-      blocks.forEach(b => {
-          const def = BLOCK_DEFINITIONS.find(d => d.id === b.type);
-          const isInclude = def?.category === 'includes' || def?.code[lang]?.trim().startsWith('#include');
-          
-          if (isInclude) {
-              includes.push(generateBlockCode(b, 0).trim());
-          } else {
-              bodyBlocks.push(b);
-          }
-      });
-
-      let includesCode = includes.join("\n");
-      const bodyRaw = bodyBlocks.map(b => generateBlockCode(b, 0)).join("");
-
-      // Advanced mode still provides the safety of auto-generating main if it's missing
-      if (bodyBlocks.length > 0 && !bodyRaw.includes("main(")) {
-          if (!includesCode.includes("<stdio.h>")) {
-              includesCode = `#include <stdio.h>\n${includesCode}`;
-          }
-          const bodyIndented = bodyBlocks.map(b => generateBlockCode(b, 1)).join("");
-          const mainFunc = `int main() {\n${bodyIndented}    return 0;\n}`;
-          return includesCode.trim() ? `${includesCode.trim()}\n\n${mainFunc}` : mainFunc;
-      }
-      
-      return includesCode ? `${includesCode}\n\n${bodyRaw}` : bodyRaw;
-  }
-
-  return blocks.map(b => generateBlockCode(b, 0)).join("");
-};
 
 const getMonacoLanguage = (lang: Language) => {
     switch (lang) {
@@ -136,8 +54,6 @@ const EditorPage: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // resetTrigger is now ONLY used for the manual trash-button clear.
-  // It is NOT bumped when Run is clicked.
   const [resetTrigger, setResetTrigger] = useState(0); 
 
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -168,8 +84,8 @@ const EditorPage: React.FC = () => {
 
   useEffect(() => {
     if (viewMode === 'blocks') {
-      // Pass userMode to the generator
-      const code = generateCodeFromBlocks(blocks, language, userMode);
+      // ⚡ GENERATE VIA MANAGER
+      const code = BlockManager.generateCode(language, blocks, userMode);
       if (blocks.length === 0) {
         setGeneratedCode("// Drag blocks here to generate code...");
       } else {
@@ -189,21 +105,6 @@ const EditorPage: React.FC = () => {
     }
   };
 
-  // --- RUN HANDLER ---
-  // This is now intentionally simple. It does exactly one thing:
-  // tell main.cjs to run the code.
-  //
-  // main.cjs handles everything else:
-  //   1. It writes "clear"/"Clear-Host" into the PTY (clears screen via PTY stream)
-  //   2. It waits for that to flush
-  //   3. It writes the run command into the PTY
-  //   4. Output flows naturally through PTY → terminal:incoming → xterm
-  //
-  // We do NOT:
-  //   - Kill the PTY (it stays alive, we reuse the shell)
-  //   - Call xterm.reset() or xterm.clear() (that desynchronizes PTY vs xterm)
-  //   - Bump resetTrigger (that's only for the manual trash button)
-  //   - Use setTimeout or any delays (main.cjs handles timing internally)
   const handleRun = () => {
     if (!generatedCode.trim() || generatedCode.includes("BEGINNER MODE ERROR")) return;
     
@@ -217,7 +118,6 @@ const EditorPage: React.FC = () => {
     }
   };
 
-  // Manual clear — only triggered by the trash button in Terminal.tsx
   const handleResetTerminal = () => {
       setResetTrigger(prev => prev + 1);
   };
@@ -329,7 +229,8 @@ const EditorPage: React.FC = () => {
                       <BlockCanvas 
                         blocks={blocks} 
                         setBlocks={setBlocks} 
-                        userMode={userMode} 
+                        userMode={userMode}
+                        currentLang={language} // PASS LANG
                       />
                     </div>
                   )}
