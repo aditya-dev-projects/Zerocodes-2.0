@@ -1,450 +1,664 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, useScroll, useTransform, AnimatePresence, useMotionValue, useSpring, useInView, useMotionValueEvent } from 'framer-motion';
 import { 
-  Download, ChevronDown, Layout, Code2, 
-  Terminal, Rocket, BookOpen, LifeBuoy, 
-  XCircle, CheckCircle2, Zap,
-  Box, Layers, Sparkles , ArrowRight
+  Download, ChevronDown, Layout, Code2, Terminal, Rocket, 
+  CheckCircle2, Plus, Minus, Box, BookOpen , Layers
 } from 'lucide-react';
-import { supabase } from '../services/supabase';
-import type { Session } from '@supabase/supabase-js';
+import { Link, useNavigate } from 'react-router-dom';
 
 const DOWNLOAD_LINK = "https://github.com/aditya-dev-projects/Zerocodes-2.0/releases/download/v2.0/Zerocodes.Setup.2.0.0.exe";
 
-// --- ADVANCED ANIMATION STYLES (MAINTAINED EXACTLY) ---
-const animationStyles = `
-  @keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    33% { transform: translateY(-20px) rotate(2deg); }
-    66% { transform: translateY(-10px) rotate(-2deg); }
-  }
-  @keyframes floatSlow {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(20px, -20px) scale(1.05); }
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(1.05); }
-  }
-  @keyframes shimmer {
-    0% { background-position: -1000px 0; }
-    100% { background-position: 1000px 0; }
-  }
-  @keyframes slideInUp {
-    from { opacity: 0; transform: translateY(100px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  @keyframes slideInDown {
-    from { opacity: 0; transform: translateY(-50px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-100px) rotateY(-20deg); }
-    to { opacity: 1; transform: translateX(0) rotateY(0deg); }
-  }
-  @keyframes slideInRight {
-    from { opacity: 0; transform: translateX(100px) rotateY(20deg); }
-    to { opacity: 1; transform: translateX(0) rotateY(0deg); }
-  }
-  @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.8) rotate(-5deg); }
-    to { opacity: 1; transform: scale(1) rotate(0deg); }
-  }
-  @keyframes revealText {
-    from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
-    to { opacity: 1; transform: translateY(0); filter: blur(0px); }
-  }
-  @keyframes glowPulse {
-    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.2); }
-    50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 0 0 60px rgba(59, 130, 246, 0.3); }
-  }
-  @keyframes rotate360 {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  .animate-float { animation: float 6s ease-in-out infinite; }
-  .animate-float-slow { animation: floatSlow 8s ease-in-out infinite; }
-  .animate-slide-in-up { animation: slideInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-  .animate-slide-in-down { animation: slideInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-  .animate-scale-in { animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-  .animate-reveal-text { animation: revealText 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-  .animate-glow-pulse { animation: glowPulse 3s ease-in-out infinite; }
-  .animate-zoom-in { animation: zoomIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-
-  /* Scroll Reveal Framework */
-  .scroll-reveal { opacity: 0; transform: translateY(60px); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
-  .scroll-reveal.revealed { opacity: 1; transform: translateY(0); }
-  .scroll-reveal-left { opacity: 0; transform: translateX(-80px) rotateY(-15deg); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
-  .scroll-reveal-left.revealed { opacity: 1; transform: translateX(0) rotateY(0deg); }
-  .scroll-reveal-right { opacity: 0; transform: translateX(80px) rotateY(15deg); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
-  .scroll-reveal-right.revealed { opacity: 1; transform: translateX(0) rotateY(0deg); }
-  .scroll-reveal-scale { opacity: 0; transform: scale(0.85); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
-  .scroll-reveal-scale.revealed { opacity: 1; transform: scale(1); }
-
-  .card-3d { transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-  .card-3d:hover { transform: translateY(-10px) rotateX(5deg) rotateY(5deg) scale(1.02); }
-  .glass-effect { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.3); }
-  .text-gradient { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-`;
-
-// --- PARTICLE BACKGROUND ---
-const ParticleBackground: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const particles: any[] = [];
-    for (let i = 0; i < 50; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 2 + 1
-      });
-    }
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
-      ctx.strokeStyle = 'rgba(59, 130, 246, 0.05)';
-      particles.forEach((p, i) => {
-        p.x += p.vx; p.y += p.vy;
-        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
-        particles.forEach((p2, j) => {
-          if (i === j) return;
-          const dx = p.x - p2.x; const dy = p.y - p2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 150) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); }
-        });
-      });
-      requestAnimationFrame(animate);
-    };
-    animate();
-    return () => {};
-  }, []);
-  return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />;
+// --- ANIMATION UTILS (Bypassing strict TS errors with 'any') ---
+const fadeUp: any = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
 };
 
-const MagneticButton: React.FC<{ children: React.ReactNode; onClick?: () => void; className?: string; style?: React.CSSProperties; }> = ({ children, onClick, className = '', style }) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    setPosition({ x: x * 0.3, y: y * 0.3 });
-  };
-  const handleMouseLeave = () => setPosition({ x: 0, y: 0 });
+const staggerContainer: any = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+};
+
+// --- SCROLL-TRIGGERED TYPEWRITER COMPONENT ---
+const TypewriterHeading = ({ text, delay = 0, speed = 40, className = "" }: { text: string, delay?: number, speed?: number, className?: string }) => {
+  const [displayText, setDisplayText] = useState('');
+  const [isComplete, setIsComplete] = useState(false);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-10%" });
+
+  useEffect(() => {
+    if (!isInView) return;
+    let i = 0;
+    const timer = setTimeout(() => {
+      const interval = setInterval(() => {
+        setDisplayText(text.slice(0, i + 1));
+        i++;
+        if (i >= text.length) {
+          clearInterval(interval);
+          setIsComplete(true);
+        }
+      }, speed);
+      return () => clearInterval(interval);
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [text, delay, speed, isInView]);
+
   return (
-    <button ref={buttonRef} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} onClick={onClick} className={`magnetic-button ${className}`} style={{ ...style, transform: `translate(${position.x}px, ${position.y}px)` }}>
-      {children}
-    </button>
+    <h2 ref={ref} className={className}>
+      {displayText.split('\n').map((line, idx) => (
+        <React.Fragment key={idx}>
+          {line}
+          {idx < displayText.split('\n').length - 1 && <br />}
+        </React.Fragment>
+      ))}
+      {!isComplete && (
+        <motion.span
+          animate={{ opacity: [1, 0] }}
+          transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+          className="inline-block w-[0.06em] h-[0.9em] bg-slate-900 ml-1 align-middle -translate-y-[0.05em]"
+        />
+      )}
+    </h2>
   );
 };
 
-const NavDropdown: React.FC<{ label: string; items: DropdownItem[]; onItemClick: (id: string) => void }> = ({ label, items, onItemClick }) => {
+// --- ANTIGRAVITY DROPDOWN MENU ---
+const NavDropdown = ({ label, items }: { label: string, items: { label: string, icon: any, to: string }[] }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+
   return (
-    <div className="relative group z-50" onMouseEnter={() => setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
-      <button className="flex items-center gap-1 text-slate-600 hover:text-blue-600 transition-colors py-2 font-semibold text-[14px] uppercase tracking-wider">
+    <div 
+      className="relative group z-50 h-full flex items-center" 
+      onMouseEnter={() => setIsOpen(true)} 
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      <button className="flex items-center gap-1.5 hover:text-slate-900 transition-colors py-2">
         {label}
-        <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      <div className={`absolute top-full right-0 w-64 pt-2 transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-2 invisible'}`}>
-        <div className="glass-effect rounded-2xl shadow-2xl border border-slate-100 p-2 overflow-hidden">
-          {items.map((item, idx) => (
-            <div key={idx} onClick={(e) => { if (item.targetId) { e.preventDefault(); onItemClick(item.targetId); setIsOpen(false); } }} className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50/50 transition-all cursor-pointer group/item">
-              {item.to ? (
-                <Link to={item.to} className="flex items-center gap-3 w-full">
-                  <div className="p-2 bg-slate-50 rounded-lg group-hover/item:bg-white group-hover/item:text-blue-600 shadow-sm transition-all text-slate-400">
-                    {React.cloneElement(item.icon, { size: 18 })}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2"
+          >
+            <div className="bg-white rounded-2xl p-2 w-56 shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-slate-100 relative before:absolute before:-top-4 before:left-0 before:w-full before:h-4">
+              {items.map((item, idx) => (
+                <button 
+                  key={idx} 
+                  onClick={() => navigate(item.to)}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-all cursor-pointer group/item text-left"
+                >
+                  <div className="p-2 bg-slate-100 rounded-lg text-slate-500 group-hover/item:text-blue-600 group-hover/item:bg-blue-50 transition-colors shadow-sm">
+                    {item.icon}
                   </div>
-                  <span className="text-sm font-bold text-slate-700">{item.label}</span>
-                </Link>
-              ) : (
-                <>
-                  <div className="p-2 bg-slate-50 rounded-lg group-hover/item:bg-white group-hover/item:text-blue-600 shadow-sm transition-all text-slate-400">
-                    {React.cloneElement(item.icon, { size: 18 })}
-                  </div>
-                  <span className="text-sm font-bold text-slate-700">{item.label}</span>
-                </>
-              )}
+                  <span className="text-sm font-medium text-slate-700 group-hover/item:text-slate-900 transition-colors">{item.label}</span>
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-const FeatureSection: React.FC<{ title: string; description: string; image: string; align?: 'left' | 'right'; icon: any; label?: string; }> = ({ title, description, image, align = 'left', icon, label }) => (
-  <div className="py-24 border-t border-slate-50 first:border-t-0 overflow-hidden">
-    <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-      <div className={`space-y-8 ${align === 'right' ? 'lg:order-2' : ''} ${align === 'left' ? 'scroll-reveal-left' : 'scroll-reveal-right'}`}>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-black uppercase tracking-widest">
-          <Sparkles size={12} /> {label || "Feature"}
+// --- HERO PARTICLE BACKGROUND (ANTIGRAVITY SWIRL) ---
+const ParticleSwirl = () => {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  
+  const springX = useSpring(mouseX, { stiffness: 50, damping: 20 });
+  const springY = useSpring(mouseY, { stiffness: 50, damping: 20 });
+  
+  const rotateX = useTransform(springY, [-40, 40], [10, -10]);
+  const rotateY = useTransform(springX, [-40, 40], [-10, 10]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = (e.clientY / window.innerHeight) * 2 - 1;
+      mouseX.set(x * 40);
+      mouseY.set(y * 40);
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [mouseX, mouseY]);
+
+  const particles = useMemo(() => {
+    const colors = ['#4285F4', '#EA4335', '#FBBC05', '#34A853', '#8A2BE2'];
+    return Array.from({ length: 450 }).map((_, i) => {
+      const radius = Math.sqrt(Math.random()) * 45 + 5; 
+      const angle = Math.random() * Math.PI * 2;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      const tangent = (angle * 180) / Math.PI + 90;
+      const rotation = tangent + (Math.random() * 40 - 20); 
+
+      return {
+        id: i,
+        x: `${x}vw`,
+        y: `${y}vw`,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        width: `${Math.random() * 12 + 6}px`, 
+        height: `${Math.random() * 2 + 1.5}px`, 
+        rotation: rotation,
+      };
+    });
+  }, []);
+
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden" style={{ perspective: 1000 }}>
+      <motion.div 
+        className="relative w-full h-full flex items-center justify-center opacity-70"
+        style={{ x: springX, y: springY, rotateX, rotateY }}
+      >
+        <motion.div 
+          className="absolute inset-0 flex items-center justify-center"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 180, repeat: Infinity, ease: "linear" }}
+        >
+          {particles.map((p) => (
+            <div
+              key={p.id}
+              className="absolute rounded-full"
+              style={{
+                width: p.width,
+                height: p.height,
+                backgroundColor: p.color,
+                transform: `translate(${p.x}, ${p.y}) rotate(${p.rotation}deg)`,
+              }}
+            />
+          ))}
+        </motion.div>
+      </motion.div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(253,253,253,0.8)_0%,rgba(253,253,253,0.3)_50%,transparent_100%)]" />
+    </div>
+  );
+};
+
+// --- GLOWING IMAGE WRAPPER ---
+const GlowingImage = ({ src, alt }: { src: string, alt: string }) => (
+  <div className="relative group perspective-1000">
+    <div className="absolute -inset-2 bg-gradient-to-tr from-blue-500/40 via-purple-500/40 to-pink-500/40 rounded-3xl blur-2xl opacity-40 group-hover:opacity-70 transition duration-700 pointer-events-none" />
+    <div className="relative p-[1.5px] rounded-2xl bg-gradient-to-tr from-blue-200 via-pink-200 to-orange-200 overflow-hidden transform transition-transform duration-700 hover:scale-[1.02] shadow-2xl shadow-slate-300">
+      <div className="bg-white rounded-2xl overflow-hidden border border-white/50">
+        <div className="bg-slate-50/80 px-4 py-3 flex gap-2 items-center border-b border-slate-100 backdrop-blur-md">
+          <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+          <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+          <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
         </div>
-        <h3 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">{title}</h3>
-        <p className="text-lg text-slate-500 font-medium leading-relaxed">{description}</p>
-        <div className="flex items-center gap-4 pt-2">
-          <div className="p-4 bg-white rounded-2xl text-blue-600 shadow-xl border border-slate-100 animate-float">
-            {React.cloneElement(icon, { size: 28 })}
-          </div>
-          <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent"></div>
-        </div>
-      </div>
-      <div className={`relative ${align === 'right' ? 'lg:order-1' : ''} group ${align === 'left' ? 'scroll-reveal-right' : 'scroll-reveal-left'}`}>
-        <div className="absolute inset-0 bg-blue-100 rounded-[2.5rem] transform rotate-3 scale-105 -z-10 transition-transform group-hover:rotate-1 opacity-50" />
-        <div className="bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden card-3d">
-          <div className="bg-slate-50 border-b border-slate-100 px-4 py-3 flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-slate-200" />
-            <div className="w-3 h-3 rounded-full bg-slate-200" />
-            <div className="w-3 h-3 rounded-full bg-slate-200" />
-          </div>
-          <img src={image} alt={title} className="w-full h-auto opacity-90 transition-opacity group-hover:opacity-100" />
-        </div>
+        <img src={src} alt={alt} className="w-full h-auto object-cover" />
       </div>
     </div>
   </div>
 );
 
-interface DropdownItem { label: string; icon: any; targetId?: string; to?: string; }
-
+// --- MAIN LANDING PAGE ---
 const LandingPage: React.FC = () => {
-  const [session, setSession] = useState<Session | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [navVisible, setNavVisible] = useState(true);
   
-  // FIXED: Implementation of mouse parallax to resolve TS6133
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [activeMode, setActiveMode] = useState<'beginner' | 'advanced'>('beginner');
+  
+  const { scrollY, scrollYProgress } = useScroll();
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
+  const heroY = useTransform(scrollYProgress, [0, 0.15], [0, 50]);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+  // Robust Scroll tracking for Nav Bar hiding/showing
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    // Determine if we've scrolled past the very top (to add shadow/blur)
+    setScrolled(latest > 20);
+
+    // Get previous scroll position
+    const previous = scrollY.getPrevious() || 0;
     
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({
-        x: (e.clientX / window.innerWidth - 0.5) * 2,
-        y: (e.clientY / window.innerHeight - 0.5) * 2
-      });
-    };
-
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('revealed'); });
-      }, { threshold: 0.1 });
-      document.querySelectorAll('.scroll-reveal, .scroll-reveal-left, .scroll-reveal-right, .scroll-reveal-scale').forEach(el => observer.observe(el));
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Initial check
-    
-    return () => {
-      subscription.unsubscribe();
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
+    // If scrolling down AND we are past 150px, hide the navbar
+    if (latest > previous && latest > 150) {
+      setNavVisible(false);
+    } else {
+      // If scrolling up, show the navbar
+      setNavVisible(true);
+    }
+  });
 
   const handleDownload = () => window.open(DOWNLOAD_LINK, '_blank');
-  const scrollToSection = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  // Safety check for session usage (Resolving TS6133)
-  console.debug("Current Session State:", session?.user.id || "Guest");
+  
+  const scrollToSection = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToTop = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-slate-900 font-sans selection:bg-blue-100 scroll-smooth overflow-x-hidden">
-      <style>{animationStyles}</style>
+    <div className="min-h-screen bg-[#FDFDFD] text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
       
-      {/* NAVBAR */}
-      <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled ? 'py-4' : 'py-8'}`}>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className={`glass-effect rounded-[2rem] px-8 flex items-center justify-between h-16 shadow-xl shadow-slate-200/50 transition-all border border-white/50`}>
-            <Link to="/" className="flex items-center gap-3 transition-transform hover:scale-105 active:scale-95">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-                <Code2 className="text-white w-6 h-6" />
+      {/* NAVBAR (SMOOTH AUTO-HIDING) */}
+      <motion.nav 
+        initial={{ y: 0 }}
+        animate={{ y: navVisible ? 0 : "-100%" }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className={`fixed top-0 w-full z-50 transition-colors duration-300 ${
+          scrolled ? 'bg-white/90 backdrop-blur-md border-b border-slate-200 py-3 shadow-sm' : 'bg-transparent py-5'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+          
+          <div className="flex items-center gap-12">
+            {/* Logo ONLY (Clicks to top) */}
+            <a href="/" onClick={scrollToTop} className="flex items-center group cursor-pointer">
+              <img 
+                src="/logo.svg" 
+                alt="Zekodes Logo" 
+                className="h-8 w-auto object-contain transition-transform group-hover:scale-105" 
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement?.querySelector('.fallback-icon')?.classList.remove('hidden');
+                }}
+              />
+              {/* Fallback icon just in case the image path is missing */}
+              <div className="fallback-icon hidden w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white transition-transform group-hover:scale-105">
+                <Code2 size={18} strokeWidth={2.5} />
               </div>
-              <span className="font-black text-xl tracking-tighter text-slate-900 uppercase">ZEKODES</span>
-            </Link>
-
-            <div className="hidden lg:flex items-center space-x-10">
-              <button onClick={() => scrollToSection('problem')} className="text-xs font-black text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-[0.2em]">The Problem</button>
-              <button onClick={() => scrollToSection('features')} className="text-xs font-black text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-[0.2em]">Features</button>
-              <NavDropdown label="Resources" onItemClick={scrollToSection} items={[
-                { label: 'Documentation', icon: <BookOpen />, to: '/docs' }, 
-                { label: 'Academy', icon: <Rocket />, to: '/tutorial' }, 
-                { label: 'Support', icon: <LifeBuoy />, targetId: 'footer' }
-              ]} />
-            </div>
+            </a>
             
-            <MagneticButton onClick={handleDownload} className="bg-slate-900 text-white px-8 py-3 rounded-2xl text-xs font-black hover:bg-blue-600 transition-all shadow-xl active:scale-95 tracking-widest">
-              DOWNLOAD
-            </MagneticButton>
+            {/* Center Links */}
+            <div className="hidden md:flex items-center gap-8 text-[15px] font-medium text-slate-500 h-10">
+              <button onClick={() => scrollToSection('product')} className="hover:text-slate-900 transition-colors h-full flex items-center">Product</button>
+              <button onClick={() => scrollToSection('how-it-works')} className="hover:text-slate-900 transition-colors h-full flex items-center">How it Works</button>
+              <button onClick={() => scrollToSection('faq')} className="hover:text-slate-900 transition-colors h-full flex items-center">FAQ</button>
+              <NavDropdown 
+                label="Resources" 
+                items={[
+                  { label: 'Documentation', icon: <BookOpen size={16} />, to: '/docs' },
+                  { label: 'Academy', icon: <Rocket size={16} />, to: '/tutorial' }
+                ]} 
+              />
+            </div>
+          </div>
+
+          {/* Right Button */}
+          <button onClick={handleDownload} className="bg-[#111111] hover:bg-black text-white px-6 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5">
+             <Download size={16} /> Download
+          </button>
+
+        </div>
+      </motion.nav>
+
+      {/* SECTION 1: HERO */}
+      <section className="relative min-h-[100svh] flex flex-col items-center justify-center px-6 overflow-hidden pt-16">
+        <ParticleSwirl />
+        
+        <motion.div 
+          style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
+          className="max-w-4xl mx-auto text-center mt-10 relative z-10"
+        >
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
+            className="inline-flex items-center justify-center gap-2 mb-8"
+          >
+            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+              <Code2 size={12} />
+            </div>
+            <span className="text-sm font-semibold tracking-wide text-slate-600 uppercase">Zekodes Visual IDE</span>
+          </motion.div>
+
+          <TypewriterHeading 
+            text={"Think in Logic.\nCode in Reality."} 
+            delay={200} 
+            speed={50} 
+            className="text-6xl md:text-8xl font-medium tracking-tighter text-slate-900 mb-8 leading-[1.05] min-h-[2.2em]"
+          />
+
+          <motion.p 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.8 }}
+            className="text-xl md:text-2xl text-slate-500 font-normal leading-relaxed max-w-2xl mx-auto mb-8"
+          >
+            Zekodes is a logic-first programming IDE that lets you build structured programs visually while generating real C and Python code in real time.
+          </motion.p>
+
+          <motion.p 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 2.1 }}
+            className="text-base text-slate-400 max-w-xl mx-auto mb-12"
+          >
+            Designed for beginners and serious learners, Zekodes removes setup friction and helps you focus on how programs work before worrying about syntax details.
+          </motion.p>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 2.4 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          >
+            <button onClick={handleDownload} className="w-full sm:w-auto px-8 py-4 bg-[#111111] text-white rounded-full font-medium text-lg hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-xl shadow-slate-200">
+              <Download size={20} /> Download Desktop App
+            </button>
+            <Link to="/docs" className="w-full sm:w-auto px-8 py-4 bg-white text-slate-900 border border-slate-200 rounded-full font-medium text-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 shadow-sm">
+              View Documentation
+            </Link>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* SECTION 2: THE PROBLEM */}
+      <section className="py-32 px-6 bg-white border-t border-slate-100">
+        <div className="max-w-6xl mx-auto text-center">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}>
+            <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-slate-900 mb-6">Why Most Beginners Quit Programming</h2>
+            <p className="text-xl md:text-2xl text-slate-500 mb-16">The difficulty is not intelligence. It is <span className="text-slate-900 font-medium">cognitive overload</span>.</p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-12 text-left mb-16">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="bg-slate-50 p-10 rounded-3xl border border-slate-100">
+              <p className="text-lg text-slate-600 leading-relaxed">Traditional coding environments require learners to manage logic, syntax, environment setup, and debugging all at once.</p>
+            </motion.div>
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="bg-slate-50 p-10 rounded-3xl border border-slate-100">
+              <p className="text-lg text-slate-600 leading-relaxed">This leads to frustration, confusion, and early abandonment before foundational thinking skills are built.</p>
+            </motion.div>
+          </div>
+
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="grid md:grid-cols-3 gap-6 text-left">
+            {[
+              "Syntax errors appear before logic is understood",
+              "Compiler installation blocks early momentum",
+              "Small mistakes feel like major failures"
+            ].map((point, i) => (
+              <motion.div key={i} variants={fadeUp} className="flex items-start gap-4 p-6 border border-slate-100 rounded-2xl shadow-sm">
+                <div className="mt-1 w-6 h-6 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
+                  <span className="text-xs font-bold">✕</span>
+                </div>
+                <p className="font-medium text-slate-700">{point}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* SECTION 3: THE SHIFT */}
+      <section className="py-32 px-6 bg-slate-900 text-white overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none translate-x-1/2 -translate-y-1/2" />
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="space-y-8">
+              <motion.h2 variants={fadeUp} className="text-5xl md:text-7xl font-medium tracking-tight">Separate Logic<br/>from Syntax.</motion.h2>
+              <motion.p variants={fadeUp} className="text-2xl text-slate-400">Learn structure first. Let syntax follow.</motion.p>
+              <motion.p variants={fadeUp} className="text-lg text-slate-300 leading-relaxed">
+                Zekodes changes the order of learning. Instead of typing code blindly, you construct programs using structured logic blocks. The system translates your logic into real C and Python code instantly.
+              </motion.p>
+            </motion.div>
+            
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="space-y-6">
+              {[
+                "Visual blocks represent real programming structures",
+                "Generated code is industry-standard and exportable",
+                "Execution happens locally without dependency setup"
+              ].map((point, i) => (
+                <motion.div key={i} variants={fadeUp} className="flex items-center gap-4 bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-md">
+                  <CheckCircle2 className="text-blue-400 shrink-0" size={24} />
+                  <span className="text-lg font-medium">{point}</span>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </div>
-      </nav>
+      </section>
 
-      {/* HERO SECTION */}
-      <section className="pt-60 pb-32 px-6 relative">
-        <ParticleBackground />
-        <div className="max-w-7xl mx-auto text-center relative z-10">
-          <div className="animate-slide-in-down">
-            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white border border-slate-200 text-blue-600 text-xs font-black uppercase tracking-widest mb-10 shadow-sm animate-glow-pulse">
-              <Sparkles size={14} className="animate-pulse" /> v2.0 Now Available for Windows
+      {/* SECTION 4: PRODUCT EXPERIENCE */}
+      <section id="product" className="py-32 px-6 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-24 min-h-[140px]">
+            <TypewriterHeading 
+              text="A Structured Programming Workspace" 
+              delay={100} 
+              speed={40} 
+              className="text-4xl md:text-6xl font-medium tracking-tight text-slate-900 mb-6"
+            />
+            <motion.p 
+              initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ delay: 1.5 }} viewport={{ once: true }}
+              className="text-xl text-slate-500"
+            >
+              Everything you need. Nothing to configure.
+            </motion.p>
+          </div>
+
+          <div className="space-y-32">
+            {/* Feature 1 */}
+            <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="space-y-6">
+                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6"><Layout size={24}/></div>
+                <h3 className="text-3xl md:text-4xl font-medium tracking-tight">Visual Logic Builder</h3>
+                <p className="text-lg text-slate-500 leading-relaxed">Drag and arrange structured blocks for variables, conditionals, loops, functions, and input/output.</p>
+              </motion.div>
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}>
+                <GlowingImage src="/editor-blocks.png" alt="Visual Logic Builder" />
+              </motion.div>
             </div>
-            <h1 className="text-6xl md:text-9xl font-black text-slate-900 tracking-tighter leading-[0.85] mb-12">
-              <span className="animate-reveal-text inline-block">Code without</span><br />
-              <span className="text-gradient animate-reveal-text delay-200 inline-block italic">The Config.</span>
-            </h1>
-            <p className="text-xl text-slate-500 font-medium mb-14 max-w-2xl mx-auto leading-relaxed animate-reveal-text delay-400">
-              Forget about GCC paths or Python SDKs. Zekodes is a logic-first environment that comes with everything pre-installed.
-            </p>
-          </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-20 animate-zoom-in delay-600">
-            <MagneticButton onClick={handleDownload} className="h-16 px-12 rounded-3xl bg-blue-600 text-white flex items-center justify-center gap-3 text-lg font-black hover:bg-slate-900 transition-all shadow-2xl shadow-blue-200 group relative overflow-hidden">
-              <Download className="group-hover:animate-bounce" /> GET ZEKODES FREE
-            </MagneticButton>
-          </div>
+            {/* Feature 2 */}
+            <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="lg:order-2 space-y-6">
+                <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-6"><Code2 size={24}/></div>
+                <h3 className="text-3xl md:text-4xl font-medium tracking-tight">Live Code Generation</h3>
+                <p className="text-lg text-slate-500 leading-relaxed">Watch clean, readable C and Python code update instantly as you build logic.</p>
+              </motion.div>
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="lg:order-1">
+                <GlowingImage src="/editor-code.png" alt="Live Code Generation" />
+              </motion.div>
+            </div>
 
-          {/* Interactive Mockup */}
-          <div className="mt-20 relative animate-slide-in-up delay-800 perspective-container"
-               style={{ transform: `translateY(${mousePos.y * 15}px) rotateX(${mousePos.y * 3}deg) rotateY(${mousePos.x * 3}deg)` }}>
-            <div className="rounded-[3rem] bg-white p-4 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] ring-1 ring-slate-200">
-              <div className="rounded-[2.2rem] overflow-hidden border border-slate-100 shadow-inner">
-                <img src="/editor-code.png" alt="Zekodes Environment" className="w-full h-auto opacity-95 transition-transform duration-1000 hover:scale-[1.02]" />
-              </div>
+            {/* Feature 3 */}
+            <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="space-y-6">
+                <div className="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center mb-6"><Terminal size={24}/></div>
+                <h3 className="text-3xl md:text-4xl font-medium tracking-tight">Local Execution Terminal</h3>
+                <p className="text-lg text-slate-500 leading-relaxed">Run programs directly inside the app with full input and output support.</p>
+              </motion.div>
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}>
+                <GlowingImage src="/editor-terminal.png" alt="Local Execution Terminal" />
+              </motion.div>
+            </div>
+
+            {/* Feature 4: Interactive Modes */}
+            <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="lg:order-2 space-y-6">
+                <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center mb-6"><Layers size={24}/></div>
+                <h3 className="text-3xl md:text-4xl font-medium tracking-tight">Beginner and Advanced Modes</h3>
+                <p className="text-lg text-slate-500 leading-relaxed">Choose structured constraints for guided learning or switch to full control when ready.</p>
+              </motion.div>
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="lg:order-1">
+                
+                {/* INTERACTIVE TOGGLE UI */}
+                <div className="bg-slate-50 rounded-[2rem] p-10 border border-slate-200 shadow-inner relative overflow-hidden h-[400px] flex flex-col">
+                  
+                  {/* Toggle Buttons */}
+                  <div className="flex justify-center gap-4 mb-10 relative z-10">
+                    <button 
+                      onClick={() => setActiveMode('beginner')}
+                      className={`px-8 py-3 rounded-full font-semibold transition-all ${activeMode === 'beginner' ? 'bg-blue-100 text-blue-700 shadow-sm' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-100'}`}
+                    >
+                      Beginner
+                    </button>
+                    <button 
+                      onClick={() => setActiveMode('advanced')}
+                      className={`px-8 py-3 rounded-full font-semibold transition-all ${activeMode === 'advanced' ? 'bg-blue-100 text-blue-700 shadow-sm' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-100'}`}
+                    >
+                      Advanced
+                    </button>
+                  </div>
+
+                  {/* Dynamic Content Area */}
+                  <div className="flex-1 relative">
+                    <AnimatePresence mode="wait">
+                      {activeMode === 'beginner' ? (
+                        <motion.div 
+                          key="beginner"
+                          initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}
+                          className="absolute inset-0 flex flex-col items-center text-center"
+                        >
+                          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6"><Box size={32} /></div>
+                          <h4 className="text-xl font-bold text-slate-900 mb-4">Structured Constraints</h4>
+                          <ul className="text-slate-600 space-y-3 font-medium text-left">
+                            <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-blue-500"/> Snap-to-grid visual logic</li>
+                            <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-blue-500"/> Syntax error prevention</li>
+                            <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-blue-500"/> Step-by-step logic validation</li>
+                          </ul>
+                        </motion.div>
+                      ) : (
+                        <motion.div 
+                          key="advanced"
+                          initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}
+                          className="absolute inset-0 flex flex-col items-center text-center"
+                        >
+                          <div className="w-16 h-16 bg-slate-800 text-white rounded-2xl flex items-center justify-center mb-6"><Terminal size={32} /></div>
+                          <h4 className="text-xl font-bold text-slate-900 mb-4">Full Control</h4>
+                          <ul className="text-slate-600 space-y-3 font-medium text-left">
+                            <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-slate-800"/> Direct code editing</li>
+                            <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-slate-800"/> Advanced compiler flags</li>
+                            <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-slate-800"/> Native terminal access</li>
+                          </ul>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+              </motion.div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* PROBLEM SECTION */}
-      <section id="problem" className="py-40 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-24 scroll-reveal">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-600 text-xs font-black uppercase tracking-widest mb-6 border border-red-100">
-              <XCircle size={14} /> The Status Quo
-            </div>
-            <h2 className="text-4xl md:text-7xl font-black text-slate-900 tracking-tighter">Why is coding <span className="text-red-500">so painful?</span></h2>
+      {/* SECTION 5: HOW IT WORKS */}
+      <section id="how-it-works" className="py-32 px-6 bg-slate-50 border-y border-slate-100">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-medium tracking-tight text-slate-900 mb-6">From Idea to Execution in Three Steps</h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-10 stagger-children">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="grid md:grid-cols-3 gap-8">
             {[
-              { icon: <Box />, title: "Dependency Hell", desc: "Beginners spend hours downloading Python and GCC separately just to run 'Hello World'." },
-              { icon: <Layers />, title: "Extension Fatigue", desc: "Configuring complex professional tools like VS Code is a nightmare for newcomers." },
-              { icon: <XCircle />, title: "Setup Errors", desc: "Command line errors and missing paths kill the excitement of building logic." }
-            ].map((item, i) => (
-              <div key={i} className="scroll-reveal-scale glass-effect p-12 rounded-[3.5rem] border border-slate-100 hover:shadow-2xl transition-all duration-500 card-3d group" style={{'--index': i} as React.CSSProperties}>
-                <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-8 shadow-inner group-hover:bg-red-500 group-hover:text-white transition-all duration-500 transform group-hover:rotate-12">
-                  {React.cloneElement(item.icon, { size: 36 })}
-                </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-4">{item.title}</h3>
-                <p className="text-slate-500 font-medium leading-relaxed">{item.desc}</p>
+              { step: "01", title: "Build Logic", body: "Assemble structured blocks that represent real programming concepts." },
+              { step: "02", title: "Review Generated Code", body: "Understand how your logic translates into proper C or Python syntax." },
+              { step: "03", title: "Run Locally", body: "Execute your program instantly without installing separate compilers." }
+            ].map((s, i) => (
+              <motion.div key={i} variants={fadeUp} className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group hover:-translate-y-1 transition-transform">
+                <div className="text-6xl font-black text-slate-100 mb-6 group-hover:text-blue-50 transition-colors">{s.step}</div>
+                <h3 className="text-2xl font-semibold text-slate-900 mb-4">{s.title}</h3>
+                <p className="text-slate-600 leading-relaxed">{s.body}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* SECTION 6: WHY ZEKODES */}
+      <section className="py-32 px-6 bg-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+            <h2 className="text-4xl md:text-6xl font-medium tracking-tight text-slate-900 mb-6">Built for Real Learning</h2>
+            <p className="text-xl text-slate-500 mb-12">Not a toy editor. Not a simplified abstraction.</p>
+            <p className="text-lg md:text-xl text-slate-600 leading-relaxed mb-16">
+              Zekodes produces real code that developers can recognize and reuse. The goal is not to hide programming complexity, but to introduce it in a structured and understandable way.
+            </p>
+          </motion.div>
+
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="flex flex-wrap justify-center gap-4">
+            {[
+              "Reduces early frustration",
+              "Strengthens logical reasoning",
+              "Produces transferable programming skills",
+              "Works without external setup"
+            ].map((point, i) => (
+              <motion.div key={i} variants={fadeUp} className="bg-blue-50 text-blue-700 px-6 py-3 rounded-full font-medium text-sm md:text-base border border-blue-100">
+                {point}
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* SECTION 7: CTA - NO DEPENDENCIES */}
+      <section className="py-32 px-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-purple-50/80 to-orange-50/80 pointer-events-none" />
+        
+        <div className="max-w-4xl mx-auto text-center relative z-10 bg-white/60 backdrop-blur-xl p-16 md:p-24 rounded-[3rem] shadow-2xl border border-white">
+          <h2 className="text-5xl md:text-7xl font-medium tracking-tight text-slate-900 mb-8">Start Coding Instantly</h2>
+          <p className="text-xl text-slate-600 mb-12 leading-relaxed max-w-2xl mx-auto">
+            Download Zekodes and begin building real programs immediately. No separate compiler installations. No environment configuration. No setup tutorials.
+          </p>
+          <button onClick={handleDownload} className="px-10 py-5 bg-[#111111] text-white rounded-full font-medium text-xl hover:scale-105 transition-transform flex items-center justify-center gap-3 mx-auto shadow-2xl shadow-slate-300">
+            <Download size={24} /> Download Desktop App
+          </button>
+        </div>
+      </section>
+
+      {/* SECTION 8: FAQ */}
+      <section id="faq" className="py-32 px-6 bg-slate-50 border-t border-slate-200">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-medium tracking-tight text-slate-900 mb-16 text-center">Frequently Asked Questions</h2>
+          
+          <div className="space-y-4">
+            {[
+              { q: "What is Zekodes?", a: "Zekodes is a logic-first visual programming IDE that generates real C and Python code as users build structured logic blocks." },
+              { q: "Do I need to install compilers separately?", a: "No. Zekodes includes embedded runtimes, so programs can be executed locally without additional setup." },
+              { q: "Is this only for beginners?", a: "No. Zekodes supports both beginner mode with structural constraints and advanced mode with full flexibility." },
+              { q: "Can I export my code?", a: "Yes. The generated source code can be copied or exported for use in other environments." },
+              { q: "Does Zekodes require internet access?", a: "Core coding and execution features run locally after installation." },
+              { q: "What languages are supported?", a: "Currently C and Python are supported, with expansion planned." },
+              { q: "How are projects saved?", a: "User accounts and projects are securely managed using Supabase authentication and database services." },
+              { q: "Is Zekodes free?", a: "Zekodes offers a free tier with core functionality available to all users." }
+            ].map((faq, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all duration-300 shadow-sm">
+                <button 
+                  onClick={() => setActiveFaq(activeFaq === i ? null : i)}
+                  className="w-full px-8 py-6 flex items-center justify-between text-left hover:bg-slate-50 transition-colors"
+                >
+                  <span className="font-semibold text-slate-900 text-lg">{faq.q}</span>
+                  {activeFaq === i ? <Minus className="text-blue-500 shrink-0" /> : <Plus className="text-slate-400 shrink-0" />}
+                </button>
+                <AnimatePresence>
+                  {activeFaq === i && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="px-8 pb-6 text-slate-600 leading-relaxed border-t border-slate-50 pt-4">
+                        {faq.a}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* SOLUTION SECTION */}
-      <section className="py-40 bg-slate-50 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-24 items-center">
-            <div className="scroll-reveal-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 text-green-600 text-xs font-black uppercase tracking-widest mb-6 border border-green-100">
-                <CheckCircle2 size={14} /> The Zekodes Way
-              </div>
-              <h2 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 tracking-tighter leading-[0.9]">One Click. <br /><span className="text-blue-600">Zero Config.</span></h2>
-              <p className="text-xl text-slate-600 font-medium leading-relaxed mb-12">
-                We bundle everything inside. From the GCC compiler to the Python runtime, everything is pre-configured for instant execution.
-              </p>
-              <div className="grid grid-cols-2 gap-6">
-                {[
-                  { icon: <Download />, label: "LIGHTWEIGHT" },
-                  { icon: <Zap />, label: "INSTANT" },
-                  { icon: <Terminal />, label: "LOCAL" },
-                  { icon: <Rocket />, label: "FREE" }
-                ].map((step, i) => (
-                  <div key={i} className="bg-white p-6 rounded-3xl shadow-lg shadow-slate-200/50 flex flex-col items-center gap-4 border border-white">
-                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                      {step.icon}
-                    </div>
-                    <span className="font-black text-[10px] tracking-[0.2em] text-slate-400">{step.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="scroll-reveal-right glass-effect p-12 rounded-[4rem] border border-white shadow-2xl relative">
-               <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-400/20 blur-3xl rounded-full" />
-               <h3 className="text-3xl font-black mb-8">Integrated Runtimes</h3>
-               <div className="space-y-6">
-                 {['Internal GCC v14', 'Python 3.12 Engine', 'Pre-configured System Paths', 'Offline Execution Support'].map((t, i) => (
-                   <div key={i} className="flex items-center gap-4 text-slate-700 font-bold">
-                     <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white">
-                       <CheckCircle2 size={14} />
-                     </div>
-                     {t}
-                   </div>
-                 ))}
-               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section id="features" className="py-40 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <FeatureSection label="Visual Engine" title="Logic-First Block Editor" description="Start by building logic structures visually. Perfect for understanding concepts without syntax errors." image="/editor-blocks.png" icon={<Layout />} />
-          <FeatureSection label="Pro Bridge" title="Instant Code Translation" description="Watch as your visual blocks turn into professional C or Python code in real-time." image="/editor-code.png" align="right" icon={<Code2 />} />
-          <FeatureSection label="Local Execution" title="High Performance Terminal" description="No external downloads required. Execute code locally with our built-in high-speed runtimes." image="/editor-terminal.png" icon={<Terminal />} />
-        </div>
-      </section>
-
-      {/* CTA SECTION */}
-      <section className="py-40 px-6">
-        <div className="max-w-6xl mx-auto glass-effect rounded-[5rem] p-16 md:p-32 text-center relative overflow-hidden shadow-2xl border-blue-100 shadow-blue-200/50 scroll-reveal-scale">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-40 -z-10" />
-          <div className="w-24 h-24 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center mx-auto mb-12 shadow-2xl animate-float">
-            <Download size={48} />
-          </div>
-          <h2 className="text-5xl md:text-8xl font-black text-slate-900 mb-8 tracking-tighter leading-none">Stop configuring. <br /><span className="text-blue-600">Start building.</span></h2>
-          <p className="text-2xl text-slate-500 font-medium mb-14">Get the standalone v2.0 for Windows today.</p>
-          <MagneticButton onClick={handleDownload} className="h-20 px-16 rounded-[2.5rem] bg-slate-900 text-white text-xl font-black hover:bg-blue-600 transition-all shadow-2xl active:scale-95 group">
-            DOWNLOAD STANDALONE <ArrowRight className="inline-block ml-2 group-hover:translate-x-2 transition-transform" />
-          </MagneticButton>
-        </div>
-      </section>
-
       {/* FOOTER */}
-      <footer id="footer" className="py-24 bg-white border-t border-slate-100 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
-          <div className="flex items-center gap-4 transition-transform hover:scale-110">
-            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg">
-              <Code2 className="text-white w-6 h-6" />
-            </div>
-            <span className="text-2xl font-black tracking-tighter uppercase">ZEKODES</span>
+      <footer className="py-16 bg-white border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Code2 className="text-blue-600" size={24} />
+            <span className="font-medium text-lg text-slate-900">Zekodes</span>
           </div>
-          <div className="flex gap-16 text-xs font-black text-slate-400 uppercase tracking-[0.3em]">
-            <Link to="/privacy" className="hover:text-blue-600 transition-colors">Privacy</Link>
-            <Link to="/terms" className="hover:text-blue-600 transition-colors">Terms</Link>
-            <a href="#" className="hover:text-blue-600 transition-colors">GitHub</a>
+          <div className="flex gap-8 text-sm font-medium text-slate-500">
+            <Link to="/privacy" className="hover:text-slate-900 transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-slate-900 transition-colors">Terms</Link>
+            <Link to="/docs" className="hover:text-slate-900 transition-colors">Documentation</Link>
           </div>
-        </div>
-        <div className="mt-20 pt-10 border-t border-slate-50 text-center text-[10px] font-black text-slate-300 tracking-[0.5em] uppercase">
-          © 2026 ZEKODES LABS • BENGALURU, INDIA
+          <div className="text-sm text-slate-400">
+            © 2026 Zekodes. Built in Bengaluru.
+          </div>
         </div>
       </footer>
+
     </div>
   );
 };

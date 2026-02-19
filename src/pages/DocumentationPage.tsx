@@ -1,392 +1,625 @@
-import React, {  } from 'react';
+import React, { useCallback, memo } from 'react';
 import { 
-  Book, MonitorPlay, 
-  ArrowLeft
+  Book, MonitorPlay, ArrowLeft, Terminal, Layers, 
+  Cpu, Shield, AlertTriangle, Scale, HelpCircle, 
+  FileCode, Zap, Lock, Eye, Database, Globe, 
+  CheckCircle2, Info
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+// ============================================================================
+// ⚡ PERFORMANCE OPTIMIZATION
+// ============================================================================
+const DocSection = memo(({ id, title, icon: Icon, children }: { id: string, title: string, icon?: any, children: React.ReactNode }) => (
+  <section id={id} className="scroll-mt-32 mb-20 border-b border-[#2b2b2b] pb-16 last:border-0 relative">
+    
+    {/* Section Header */}
+    <div className="flex items-center gap-5 mb-10">
+      {Icon && (
+        <div className="flex-shrink-0 p-3 bg-[#252526] text-blue-400 rounded-xl border border-[#2b2b2b] shadow-sm">
+          <Icon className="w-6 h-6" strokeWidth={2} />
+        </div>
+      )}
+      <h2 className="text-3xl font-bold text-gray-100 tracking-tight">{title}</h2>
+    </div>
+
+    {/* Section Content - Dark Mode Typography */}
+    <div className="prose prose-lg prose-invert max-w-none 
+      
+      /* Text Base */
+      text-gray-400 leading-relaxed font-normal
+
+      /* Headings */
+      prose-headings:text-gray-100 prose-headings:font-semibold prose-headings:tracking-tight
+      prose-h3:text-xl prose-h3:mt-10 prose-h3:mb-4 prose-h3:text-blue-400
+      prose-h4:text-lg prose-h4:text-gray-200 prose-h4:mt-6 prose-h4:mb-2 prose-h4:font-semibold
+
+      /* Links */
+      prose-a:text-blue-400 prose-a:font-medium prose-a:no-underline hover:prose-a:text-blue-300 hover:prose-a:underline
+
+      /* Code Inline */
+      prose-code:text-[#ce9178] prose-code:bg-[#2d2d2d] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-mono prose-code:text-[0.9em] prose-code:border prose-code:border-[#3e3e3e]
+
+      /* Code Blocks */
+      prose-pre:bg-[#1e1e1e] prose-pre:text-gray-300 prose-pre:shadow-none prose-pre:rounded-lg prose-pre:border prose-pre:border-[#2b2b2b]
+
+      /* Lists */
+      prose-li:marker:text-blue-500 prose-ul:my-6 prose-ol:my-6
+      
+      /* Blockquotes */
+      prose-blockquote:border-l-blue-500 prose-blockquote:bg-[#252526] prose-blockquote:py-2 prose-blockquote:px-6 prose-blockquote:rounded-r-lg prose-blockquote:text-gray-300 prose-blockquote:not-italic">
+      
+      {children}
+    </div>
+  </section>
+));
+
 const DocumentationPage: React.FC = () => {
   
-  const scrollToSection = (id: string) => {
+  const scrollToSection = useCallback((id: string) => {
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  };
+  }, []);
 
   return (
-    <div className="flex h-screen bg-white text-gray-600 font-sans overflow-hidden selection:bg-blue-100 selection:text-blue-900">
+    <div className="flex h-full bg-[#1e1e1e] text-gray-300 font-sans overflow-hidden selection:bg-blue-500/30 selection:text-blue-200">
       
-      {/* --- Sidebar Navigation --- */}
-      <aside className="w-80 flex-shrink-0 bg-gray-50 border-r border-gray-200 overflow-y-auto hidden lg:block">
-        <div className="p-6 border-b border-gray-200 sticky top-0 bg-white/80 backdrop-blur-md z-10">
+      {/* ============================================================================
+          SIDEBAR NAVIGATION (Matches EditorPage Sidebar)
+      ============================================================================ */}
+      <aside className="w-72 flex-shrink-0 bg-[#252526] border-r border-[#2b2b2b] overflow-y-auto hidden lg:block custom-scrollbar">
+        <div className="p-4 border-b border-[#2b2b2b] sticky top-0 bg-[#252526]/95 backdrop-blur-sm z-20">
            <div className="flex items-center justify-between">
-             <div className="flex items-center space-x-2">
-               <div className="bg-blue-600 p-1.5 rounded-lg text-white">
-                 <Book className="w-5 h-5" />
-               </div>
-               <span className="font-bold text-gray-900 text-lg tracking-tight">Zekodes Docs</span>
+             <div className="flex items-center gap-3">
+               <span className="font-bold text-gray-100 text-sm tracking-wider uppercase">Contents</span>
              </div>
-             <Link to="/editor" className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all" title="Back to Editor">
-               <ArrowLeft size={18} />
+             <Link to="/editor" className="p-1.5 text-gray-400 hover:text-white hover:bg-[#333] rounded-md transition-all" title="Back to Editor">
+               <ArrowLeft size={16} />
              </Link>
            </div>
         </div>
 
-        <nav className="p-6 space-y-8 text-sm">
-          {/* Foundation */}
-          <div>
-            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div> Foundation
-            </div>
-            <div className="space-y-1 mt-2">
-                <NavButton label="Introduction to Zekodes" id="overview" onClick={scrollToSection} />
-                <NavButton label="Design Philosophy" id="philosophy" onClick={scrollToSection} />
-                <NavButton label="Platform & Requirements" id="platform" onClick={scrollToSection} />
-                <NavButton label="Onboarding Experience" id="onboarding" onClick={scrollToSection} />
-                <NavButton label="Zekodes Academy" id="academy" onClick={scrollToSection} />
-            </div>
-          </div>
+        <nav className="p-4 space-y-8 text-sm pb-32">
+          <NavGroup label="Foundation" color="bg-blue-500">
+            <NavButton label="Introduction" id="overview" onClick={scrollToSection} />
+            <NavButton label="Design Philosophy" id="philosophy" onClick={scrollToSection} />
+            <NavButton label="Platform Specs" id="platform" onClick={scrollToSection} />
+            <NavButton label="Onboarding" id="onboarding" onClick={scrollToSection} />
+            <NavButton label="Zekodes Academy" id="academy" onClick={scrollToSection} />
+          </NavGroup>
 
-          {/* Workspace & Interface */}
-          <div>
-            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> Workspace & Interface
-            </div>
-            <div className="space-y-1 mt-2">
-                <NavButton label="Dual-Pane Workspace" id="dual-pane" onClick={scrollToSection} />
-                <NavButton label="Navigation and Controls" id="nav-controls" onClick={scrollToSection} />
-                <NavButton label="File Management" id="file-mgmt" onClick={scrollToSection} />
-                <NavButton label="Integrated Terminal" id="terminal" onClick={scrollToSection} />
-            </div>
-          </div>
+          <NavGroup label="Workspace" color="bg-emerald-500">
+            <NavButton label="Dual-Pane UI" id="dual-pane" onClick={scrollToSection} />
+            <NavButton label="Controls" id="nav-controls" onClick={scrollToSection} />
+            <NavButton label="File Manager" id="file-mgmt" onClick={scrollToSection} />
+            <NavButton label="Terminal" id="terminal" onClick={scrollToSection} />
+          </NavGroup>
 
-          {/* Programming Concepts */}
-          <div>
-            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-yellow-500"></div> Programming Concepts
-            </div>
-            <div className="space-y-1 mt-2">
-                <NavButton label="Data Types & Variables" id="data-types" onClick={scrollToSection} />
-                <NavButton label="Control Flow" id="control-flow" onClick={scrollToSection} />
-                <NavButton label="Loops & Iteration" id="loops" onClick={scrollToSection} />
-                <NavButton label="Functions & Scope" id="functions" onClick={scrollToSection} />
-                <NavButton label="Nesting & Child Logic" id="nesting" onClick={scrollToSection} />
-            </div>
-          </div>
+          <NavGroup label="Concepts" color="bg-amber-500">
+            <NavButton label="Data & Variables" id="data-types" onClick={scrollToSection} />
+            <NavButton label="Control Flow" id="control-flow" onClick={scrollToSection} />
+            <NavButton label="Loops" id="loops" onClick={scrollToSection} />
+            <NavButton label="Functions" id="functions" onClick={scrollToSection} />
+            <NavButton label="Nesting Logic" id="nesting" onClick={scrollToSection} />
+          </NavGroup>
 
-          {/* Execution & Compilation */}
-          <div>
-            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div> Execution & Compilation
-            </div>
-            <div className="space-y-1 mt-2">
-                <NavButton label="Local Code Execution" id="local-exec" onClick={scrollToSection} />
-                <NavButton label="C Compilation Workflow" id="c-compilation" onClick={scrollToSection} />
-                <NavButton label="Python Execution Workflow" id="python-exec" onClick={scrollToSection} />
-                <NavButton label="Standard Input & Output" id="io" onClick={scrollToSection} />
-            </div>
-          </div>
+          <NavGroup label="Rules & Constraints" color="bg-rose-600">
+             <NavButton label="Strict Necessity" id="strict-necessity" onClick={scrollToSection} />
+             <NavButton label="C Constraints" id="c-constraints" onClick={scrollToSection} />
+             <NavButton label="Python Constraints" id="python-constraints" onClick={scrollToSection} />
+             <NavButton label="User Modes" id="modes" onClick={scrollToSection} />
+          </NavGroup>
 
-          {/* Error Handling */}
-          <div>
-            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> Error Handling
-            </div>
-            <div className="space-y-1 mt-2">
-                <NavButton label="Compilation Errors" id="comp-errors" onClick={scrollToSection} />
-                <NavButton label="Runtime Errors" id="runtime-errors" onClick={scrollToSection} />
-                <NavButton label="Debugging Output" id="debug-output" onClick={scrollToSection} />
-            </div>
-          </div>
+          <NavGroup label="Execution" color="bg-orange-500">
+            <NavButton label="How It Works" id="local-exec" onClick={scrollToSection} />
+            <NavButton label="C Compilation" id="c-compilation" onClick={scrollToSection} />
+            <NavButton label="Python Runtime" id="python-exec" onClick={scrollToSection} />
+            <NavButton label="Input / Output" id="io" onClick={scrollToSection} />
+          </NavGroup>
 
-          {/* Security & Privacy */}
-          <div>
-            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div> Security & Privacy
-            </div>
-            <div className="space-y-1 mt-2">
-                <NavButton label="Local Execution Model" id="local-model" onClick={scrollToSection} />
-                <NavButton label="Data Privacy" id="privacy" onClick={scrollToSection} />
-            </div>
-          </div>
+          <NavGroup label="Troubleshooting" color="bg-red-500">
+            <NavButton label="Compile Errors" id="comp-errors" onClick={scrollToSection} />
+            <NavButton label="Runtime Errors" id="runtime-errors" onClick={scrollToSection} />
+            <NavButton label="Debugging" id="debug-output" onClick={scrollToSection} />
+          </NavGroup>
 
-          {/* Support & Community */}
-          <div>
-            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div> Support & Community
-            </div>
-            <div className="space-y-1 mt-2">
-                <NavButton label="Documentation" id="doc-support" onClick={scrollToSection} />
-                <NavButton label="Academy" id="academy-support" onClick={scrollToSection} />
-                <NavButton label="Support & Contact" id="contact" onClick={scrollToSection} />
-            </div>
-          </div>
+          <NavGroup label="Security" color="bg-purple-600">
+            <NavButton label="Security Model" id="local-model" onClick={scrollToSection} />
+            <NavButton label="Privacy Policy" id="privacy" onClick={scrollToSection} />
+          </NavGroup>
 
-          {/* Legal */}
-          <div>
-            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div> Legal
-            </div>
-            <div className="space-y-1 mt-2">
-                <NavButton label="Licensing" id="licensing" onClick={scrollToSection} />
-                <NavButton label="Terms of Use" id="terms" onClick={scrollToSection} />
-            </div>
-          </div>
+          <NavGroup label="Help" color="bg-gray-500">
+            <NavButton label="Support" id="contact" onClick={scrollToSection} />
+            <NavButton label="Licensing" id="terms" onClick={scrollToSection} />
+          </NavGroup>
         </nav>
       </aside>
 
-      {/* --- Main Content Area --- */}
-      <main className="flex-1 overflow-y-auto scroll-smooth bg-white">
-        <div className="max-w-4xl mx-auto px-10 py-16 space-y-24 pb-40">
+      {/* ============================================================================
+          MAIN CONTENT AREA
+      ============================================================================ */}
+      <main className="flex-1 overflow-y-auto scroll-smooth bg-[#1e1e1e] custom-scrollbar">
+        <div className="max-w-5xl mx-auto px-12 py-20 pb-48">
           
-          {/* 1. FOUNDATION */}
-          <section id="overview" className="scroll-mt-20">
-            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">Foundation</h2>
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Introduction to Zekodes</h1>
-            <div className="prose max-w-none text-gray-600 space-y-6 leading-relaxed">
-              <p>Zekodes is a desktop‑first, logic‑driven integrated development environment (IDE) designed to help beginners learn programming by understanding logic before syntax. It combines visual logic building with a professional code editor, allowing users to transition naturally from drag‑and‑drop programming to real‑world development.</p>
-              <p>Unlike traditional IDEs that require users to manage syntax rules, compiler setup, and environment configuration from the start, Zekodes removes early friction by letting users focus on problem‑solving and program structure. Real C and Python code is generated in real time, ensuring that users build transferable programming skills.</p>
+          {/* Header */}
+          <div className="mb-20">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#252526] border border-[#333] text-blue-400 text-xs font-bold uppercase tracking-widest mb-6">
+              <Book size={14} /> Official Documentation
             </div>
-          </section>
+            <h1 className="text-5xl font-black text-gray-100 mb-6 tracking-tight">
+              Zekodes <span className="text-blue-500">Manual</span>
+            </h1>
+            <p className="text-xl text-gray-400 leading-relaxed font-light max-w-3xl">
+              The definitive guide to architecture, logic constraints, and compilation workflows for the Zekodes IDE.
+            </p>
+          </div>
 
-          <section id="philosophy" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Design Philosophy</h1>
-            <div className="prose max-w-none text-gray-600 space-y-6">
-              <p className="text-xl italic text-gray-800 font-serif border-l-4 border-blue-600 pl-6 my-8 bg-gray-50 py-4 rounded-r-lg">Logic First. Syntax Follows.</p>
-              <p>Programming is fundamentally about reasoning, decision‑making, and structure. Zekodes prioritizes these foundations by enabling users to design programs visually using structured logic blocks. Syntax is not hidden; instead, it is revealed live in the code editor as logic is built.</p>
-              <p>This approach reduces cognitive overload, accelerates learning, and creates a smooth transition from visual programming to professional software development tools.</p>
-            </div>
-          </section>
-
-          <section id="platform" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Platform & Requirements</h1>
-            <div className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm mb-8">
-              <h4 className="text-gray-900 font-bold mb-3 flex items-center gap-2"><MonitorPlay size={18} className="text-blue-600" /> Desktop Application (Windows)</h4>
-              <p className="text-sm text-gray-600">Zekodes runs as a native desktop application optimized for performance and long coding sessions.</p>
-            </div>
-            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-200 space-y-4 text-sm text-gray-600">
-              <h4 className="text-gray-900 font-bold">System Requirements</h4>
-              <ul className="list-disc pl-5 space-y-1 marker:text-blue-500">
-                <li>Windows 10 or 11</li>
-                <li>No external compiler or interpreter installation required</li>
-                <li>Works fully offline after installation</li>
-              </ul>
-              <p className="pt-2 text-xs text-gray-500 font-medium">Zekodes ships with embedded runtimes for supported languages.</p>
-            </div>
-          </section>
-
-          <section id="onboarding" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Onboarding Experience</h1>
-            <div className="prose max-w-none text-gray-600">
-              <p>First‑time users are guided through a short onboarding flow that explains the core interaction model:</p>
-              <div className="my-6 text-center">
-                 <span className="text-gray-900 bg-blue-50 px-4 py-2 rounded-lg font-bold text-lg border border-blue-100">Build Logic → View Code → Run Program</span>
-              </div>
-              <p>This ensures users understand how visual blocks, generated code, and execution are connected before building their first program.</p>
-            </div>
-          </section>
-
-          <section id="academy" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Zekodes Academy</h1>
-            <div className="prose max-w-none text-gray-600 space-y-4">
-              <p>Zekodes Academy is an integrated learning hub designed to help users progress from beginner to confident programmer.</p>
-              <ul className="list-disc pl-5 space-y-2 marker:text-blue-500">
-                <li>Short, focused video lessons</li>
-                <li>Step‑by‑step logic‑building demonstrations</li>
-                <li>Side‑by‑side logic and code explanations</li>
-              </ul>
-              <p>The Academy follows a <strong className="text-gray-900">Watch → Build → Run</strong> learning model to encourage hands‑on practice.</p>
-            </div>
-          </section>
-
-          {/* 2. WORKSPACE */}
-          <section id="dual-pane" className="scroll-mt-20">
-            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">Workspace & Interface</h2>
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Dual-Pane Workspace</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="p-6 rounded-2xl border border-gray-200 bg-white shadow-sm">
-                <h4 className="text-gray-900 font-bold mb-2">Visual Canvas</h4>
-                <p className="text-sm text-gray-600">An infinite grid where users assemble programs using drag‑and‑drop logic blocks. Structural constraints ensure only valid program logic can be built.</p>
-              </div>
-              <div className="p-6 rounded-2xl border border-gray-200 bg-white shadow-sm">
-                <h4 className="text-gray-900 font-bold mb-2">Code Editor</h4>
-                <p className="text-sm text-gray-600">A professional text editor that displays the live translation of visual logic into real C or Python code.</p>
+          {/* ====================================================================================
+              1. FOUNDATION
+          ==================================================================================== */}
+          
+          <DocSection id="overview" title="Introduction to Zekodes" icon={Book}>
+            <p>
+              <strong>Zekodes</strong> is a desktop-first Integrated Development Environment (IDE) built to bridge the gap between block-based learning (Visual Programming) and syntax-based development (Textual Programming). 
+            </p>
+            <p>
+              It solves a specific problem in Computer Science education: the <strong>"Syntax Cliff."</strong> Learners often master logic in tools like Scratch but fail when moving to C or Python because syntax errors (missing semicolons, indentation issues) distract them from algorithmic thinking.
+            </p>
+            <div className="bg-[#252526] border-l-4 border-blue-500 rounded-r-lg p-6 my-6 flex gap-4 items-start">
+              <CheckCircle2 className="w-6 h-6 text-blue-500 flex-shrink-0 mt-1" />
+              <div>
+                <h4 className="text-gray-100 font-bold m-0 text-lg">The Hybrid Approach</h4>
+                <p className="text-gray-400 m-0 mt-2 text-base leading-relaxed">
+                  Zekodes provides a unique environment where <strong>Visual Logic Blocks</strong> drive a real-time, read-only <strong>Code Editor</strong>. Users manipulate blocks to build logic, while simultaneously reading the valid C or Python code being generated instantly.
+                </p>
               </div>
             </div>
-          </section>
+          </DocSection>
 
-          <section id="nav-controls" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Navigation and Controls</h1>
-            <div className="space-y-4 text-gray-600">
-              <p><strong className="text-gray-900">Activity Bar:</strong> Access editor, academy, documentation, and profile</p>
-              <p><strong className="text-gray-900">Top Toolbar:</strong> Language selection, run, save, and file actions</p>
-            </div>
-          </section>
+          <DocSection id="philosophy" title="Design Philosophy" icon={Zap}>
+            <h3>1. Logic is Universal, Syntax is Local</h3>
+            <p>
+              The core philosophy of Zekodes is that a <code>While Loop</code> is conceptually identical in C, Python, Java, and JavaScript. Only the grammar changes. Zekodes forces users to think in "Atomic Logic Units" (Blocks) rather than characters.
+            </p>
 
-          <section id="file-mgmt" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">File Management</h1>
-            <p className="text-gray-600">Zekodes uses a tab-based system to manage multiple files, operating similarly to traditional IDEs for a familiar workflow.</p>
-          </section>
-
-          <section id="terminal" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Integrated Terminal</h1>
-            <div className="prose max-w-none text-gray-600">
-              <p>Zekodes includes a built‑in terminal similar to VS Code.</p>
-              <div className="bg-gray-900 text-gray-300 p-4 rounded-lg font-mono text-sm mt-4 mb-4">
-                 $ ./program<br/>
-                  Hello World
-              </div>
-              <ul className="list-disc pl-5 space-y-2 marker:text-blue-500">
-                <li>Uses the local operating system shell</li>
-                <li>Displays real stdout and stderr</li>
-                <li>Supports interactive input (stdin)</li>
-                <li>Allows process interruption (Ctrl+C)</li>
-              </ul>
-            </div>
-          </section>
-
-          {/* 3. CONCEPTS */}
-          <section id="data-types" className="scroll-mt-20">
-            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">Programming Concepts</h2>
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Data Types & Variables</h1>
-            <p className="text-gray-600">Understanding how data is stored and manipulated is key. Zekodes introduces variables and data types visually, helping users grasp concepts like integers, strings, and floating-point numbers.</p>
-          </section>
-
-          <section id="control-flow" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Control Flow</h1>
-            <p className="text-gray-600">Learn how programs make decisions. Blocks for If, Else, and Else-If allow users to build logical branching visually.</p>
-          </section>
-
-          <section id="loops" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Loops & Iteration</h1>
-            <p className="text-gray-600">Automate repetitive tasks using For and While loops. Visual nesting clearly shows which parts of the code are repeated.</p>
-          </section>
-
-          <section id="functions" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Functions & Scope</h1>
-            <p className="text-gray-600">Encapsulate logic into reusable blocks. Understand how data is passed into functions and how return values work.</p>
-          </section>
-
-          <section id="nesting" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Nesting & Child Logic</h1>
-            <p className="text-gray-600">Build complex structures by placing blocks inside other blocks. The visual editor enforces correct nesting, preventing common syntax errors.</p>
-          </section>
-
-          {/* 4. EXECUTION */}
-          <section id="local-exec" className="scroll-mt-20">
-            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">Execution & Compilation</h2>
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Local Code Execution</h1>
-            <div className="prose max-w-none text-gray-600">
-              <p>All programs run locally on the user’s machine using embedded runtimes. There is no cloud execution.</p>
-              <p className="font-bold mt-4">Benefits:</p>
-              <ul className="list-disc pl-5 space-y-1 marker:text-green-500">
-                <li>Faster execution</li>
-                <li>Full offline support</li>
-                <li>Complete user control over code</li>
-              </ul>
-            </div>
-          </section>
-
-          <section id="c-compilation" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">C Compilation Workflow</h1>
-            <div className="p-6 bg-gray-50 border border-gray-200 rounded-xl">
-               <ol className="list-decimal pl-5 space-y-2 text-gray-600">
-                 <li>Generated code is saved to a temporary file</li>
-                 <li>Compiled using the embedded GCC toolchain</li>
-                 <li>Executed locally</li>
-                 <li>Output streamed to the terminal</li>
-               </ol>
-            </div>
-          </section>
-
-          <section id="python-exec" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Python Execution Workflow</h1>
-            <div className="p-6 bg-gray-50 border border-gray-200 rounded-xl">
-               <ol className="list-decimal pl-5 space-y-2 text-gray-600">
-                 <li>Generated code is executed using the embedded Python runtime</li>
-                 <li>No virtual environments or setup required</li>
-                 <li>Output streamed to the terminal</li>
-               </ol>
-            </div>
-          </section>
-
-          <section id="io" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Standard Input & Output</h1>
-            <div className="prose max-w-none text-gray-600">
-              <p>Zekodes fully supports:</p>
-              <ul className="list-disc pl-5 space-y-2 marker:text-blue-500">
-                <li>User input via terminal</li>
-                <li>Real‑time output display</li>
-                <li>Error messages and exit codes</li>
-              </ul>
-            </div>
-          </section>
-
-          {/* 5. ERRORS */}
-          <section id="comp-errors" className="scroll-mt-20">
-            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">Error Handling</h2>
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Compilation Errors</h1>
-            <p className="text-gray-600">Errors that occur during the build process (e.g., syntax errors in C) are caught and displayed clearly in the terminal.</p>
-          </section>
-
-          <section id="runtime-errors" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Runtime Errors</h1>
-            <p className="text-gray-600">Errors that happen while the program is running (e.g., division by zero) are reported immediately to help users debug logic.</p>
-          </section>
-
-          <section id="debug-output" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Debugging Output</h1>
-            <p className="text-gray-600">Errors are displayed directly in the terminal to mirror professional development environments, teaching users how to read and interpret standard error logs.</p>
-          </section>
-
-          {/* 6. SECURITY */}
-          <section id="local-model" className="scroll-mt-20">
-            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">Security & Privacy</h2>
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Local Execution Model</h1>
-            <p className="text-gray-600">Since all code runs locally on your machine, you maintain complete control over your environment.</p>
-          </section>
-
-          <section id="privacy" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Data Privacy</h1>
-            <ul className="list-disc pl-5 space-y-2 text-gray-600 marker:text-green-500">
-              <li>No user code is uploaded to any server</li>
-              <li>No telemetry or tracking of source code</li>
-              <li>User projects remain private on the local disk</li>
+            <h3>2. Structural Integrity</h3>
+            <p>
+              In a standard text editor, you can type <code>int x = "hello";</code> and only find out it's wrong when you compile. In Zekodes, the editor prevents invalid state <em>before</em> it happens. 
+            </p>
+            <ul>
+              <li>A String block cannot snap into an Integer socket.</li>
+              <li>A Break statement cannot be placed outside a Loop.</li>
+              <li>A Function definition cannot be nested inside another Function (in C mode).</li>
             </ul>
-          </section>
 
-          {/* 7. SUPPORT */}
-          <section id="doc-support" className="scroll-mt-20">
-            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">Support & Community</h2>
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Documentation</h1>
-            <p className="text-gray-600">Access the built-in docs section anytime for references on blocks and features.</p>
-          </section>
+            <h3>3. Transparency</h3>
+            <p>
+              Zekodes hides nothing. It does not use a proprietary interpreter. It generates standard, compile-ready <strong>ANSI C</strong> and <strong>Python 3</strong> code that you can copy-paste into any professional IDE later.
+            </p>
+          </DocSection>
 
-          <section id="academy-support" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Academy</h1>
-            <p className="text-gray-600">Use the integrated tutorials to master new concepts step-by-step.</p>
-          </section>
+          <DocSection id="platform" title="Platform & Requirements" icon={MonitorPlay}>
+            <h3>Architecture</h3>
+            <p>
+              Zekodes is an <strong>Electron</strong> application. This allows it to:
+            </p>
+            <ul>
+              <li>Access the native file system for saving/loading projects.</li>
+              <li>Spawn child processes for GCC compilation and Python execution.</li>
+              <li>Work entirely offline without cloud dependencies.</li>
+            </ul>
 
-          <section id="contact" className="scroll-mt-20">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Support & Contact</h1>
-            <div className="p-6 bg-gray-50 border border-gray-200 rounded-xl">
-              <p className="text-gray-900 font-medium">Email Support:</p>
-              <a href="mailto:issues.zekodes@gmail.com" className="text-blue-600 hover:underline">issues.zekodes@gmail.com</a>
+            <h3>System Requirements</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
+               <div className="p-6 bg-[#252526] rounded-xl border border-[#2b2b2b]">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Cpu className="w-5 h-5 text-gray-400" />
+                    <h4 className="font-bold text-gray-200 m-0">Minimum Specs</h4>
+                  </div>
+                  <ul className="text-sm space-y-2 pl-0 list-none text-gray-400 m-0">
+                    <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-gray-500"></span> <strong>OS:</strong> Windows 10 (64-bit) or later</li>
+                    <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-gray-500"></span> <strong>CPU:</strong> Intel Core i3 / AMD Ryzen 3</li>
+                    <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-gray-500"></span> <strong>RAM:</strong> 4 GB</li>
+                    <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-gray-500"></span> <strong>Disk:</strong> 1 GB Free Space</li>
+                  </ul>
+               </div>
+               <div className="p-6 bg-[#252526] rounded-xl border border-[#2b2b2b]">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Layers className="w-5 h-5 text-gray-400" />
+                    <h4 className="font-bold text-gray-200 m-0">Bundled Tools</h4>
+                  </div>
+                  <p className="text-sm mb-4 text-gray-500">Zekodes includes portable runtimes, so no external installation is needed:</p>
+                  <ul className="text-sm space-y-2 pl-0 list-none text-gray-400 m-0">
+                    <li className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                        <span><strong>MinGW-w64 (GCC):</strong> For C compilation</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                        <span><strong>Python 3.11 (Embedded):</strong> For Python scripts</span>
+                    </li>
+                  </ul>
+               </div>
             </div>
-          </section>
+          </DocSection>
 
-          {/* 8. LEGAL */}
-          <section id="licensing" className="scroll-mt-20">
-            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">Legal</h2>
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Licensing</h1>
-            <p className="text-gray-600">© 2025 Zekodes Inc. All rights reserved.</p>
-          </section>
+          <DocSection id="onboarding" title="Onboarding Experience" icon={Eye}>
+            <p>
+              When a user first launches Zekodes, a persistent profile is created in the local database. The onboarding flow determines the "Strictness Level" of the IDE.
+            </p>
+            <p><strong>The 3-Step Setup:</strong></p>
+            <ol>
+              <li><strong>Profile Creation:</strong> User provides a nickname and experience level.</li>
+              <li><strong>Language Selection:</strong> User chooses their primary focus (C or Python).</li>
+              <li><strong>Mode Selection:</strong> 
+                <ul>
+                  <li><em>Beginner:</em> Enables all guardrails and tutorials.</li>
+                  <li><em>Advanced:</em> Disables structural locks for faster prototyping.</li>
+                </ul>
+              </li>
+            </ol>
+          </DocSection>
 
-          <section id="terms" className="scroll-mt-20 border-t border-gray-200 pt-10">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-8 tracking-tight">Terms of Use</h1>
-            <p className="text-gray-600 text-sm">By using Zekodes, you agree to the standard terms of use for the desktop application.</p>
-          </section>
+          <DocSection id="academy" title="Zekodes Academy">
+            <p>
+              The Academy is an integrated Learning Management System (LMS) overlay. It allows users to watch concept videos without leaving the application.
+            </p>
+            <p><strong>Workflow:</strong></p>
+            <ol>
+              <li>User opens "Academy" tab.</li>
+              <li>Selects topic (e.g., "Variables in C").</li>
+              <li>Watches video explaining the concept and the specific Zekodes blocks used.</li>
+              <li>Clicks "Try it now" which switches to the Editor and highlights the relevant blocks in the toolbox.</li>
+            </ol>
+          </DocSection>
+
+          {/* ====================================================================================
+              2. WORKSPACE & INTERFACE
+          ==================================================================================== */}
+
+          <DocSection id="dual-pane" title="Dual-Pane Workspace" icon={Layers}>
+            <p>
+              The Editor Page is the heart of Zekodes. It uses a split-screen layout to show Cause (Blocks) and Effect (Code).
+            </p>
+            
+            <h3>Left Pane: The Visual Canvas</h3>
+            <p>
+              An infinite 2D grid where blocks are dropped.
+            </p>
+            <ul>
+                <li><strong>Drag & Drop:</strong> Blocks are dragged from the Sidebar (Toolbox).</li>
+                <li><strong>Snapping:</strong> Blocks have "connectors". A notch on top means it follows previous logic; a bump on bottom means it leads to next logic. C-shaped mouths indicate nesting.</li>
+                <li><strong>Context Actions:</strong> Right-click any block to Delete or Duplicate it.</li>
+            </ul>
+
+            <h3>Right Pane: The Code View</h3>
+            <p>
+              A read-only instance of the <strong>Monaco Editor</strong> (VS Code's core).
+            </p>
+            <ul>
+                <li><strong>Real-time Transpilation:</strong> Every visual change triggers the <code>generateCode()</code> function which rebuilds the text string.</li>
+                <li><strong>Syntax Highlighting:</strong> Proper tokenization for C and Python.</li>
+                <li><strong>Minimap:</strong> Fast scrolling for long programs.</li>
+            </ul>
+          </DocSection>
+
+          <DocSection id="nav-controls" title="Navigation & Controls">
+            <p><strong>The Toolbar (Top):</strong></p>
+            <ul>
+              <li><strong>Language Selector:</strong> Toggles between C and Python mode. <span className="text-red-400 font-bold">Warning:</span> Switching languages clears the canvas as blocks are not compatible.</li>
+              <li><strong>Run Button (Green):</strong> Triggers the compilation/execution pipeline.</li>
+              <li><strong>Save Button (Blue):</strong> Persists the current block state to local JSON storage.</li>
+              <li><strong>Clear Button (Red):</strong> Wipes the canvas (with confirmation).</li>
+            </ul>
+
+            <p><strong>The Activity Bar (Left):</strong> Navigate between Editor, Academy, Documentation, and Settings.</p>
+          </DocSection>
+
+          <DocSection id="file-mgmt" title="File Management" icon={FileCode}>
+            <p>
+              Zekodes uses a "Single Active File" model for simplicity. Projects are saved as <code>.zkd</code> files (internally JSON). This JSON contains:
+            </p>
+            <div className="not-prose">
+                <div className="bg-[#252526] rounded-xl overflow-hidden shadow-lg border border-[#2b2b2b]">
+                    <div className="bg-[#1e1e1e] px-4 py-2 border-b border-[#2b2b2b] text-xs text-gray-500 font-mono">project.zkd</div>
+                    <pre className="p-4 text-sm text-[#9cdcfe] overflow-x-auto"><code>{`{
+  "version": "2.0",
+  "language": "c",
+  "blocks": [
+    { "id": "uuid", "type": "c-main", "params": {}, "children": [...] }
+  ]
+}`}</code></pre>
+                </div>
+            </div>
+            <p className="mt-4">
+              When you load a project, the JSON is parsed to reconstruct the visual block tree.
+            </p>
+          </DocSection>
+
+          <DocSection id="terminal" title="Integrated Terminal" icon={Terminal}>
+            <p>
+              The bottom panel houses a pseudo-terminal component. It is NOT a full OS shell (like PowerShell), but a stream renderer.
+            </p>
+            <ul>
+              <li><strong>Standard Output (stdout):</strong> Normal program output appears in white/grey.</li>
+              <li><strong>Standard Error (stderr):</strong> Compilation errors or runtime crashes appear in red.</li>
+              <li><strong>Standard Input (stdin):</strong> When a program requests input, the terminal unlocks an input field. Pressing Enter sends the data to the running process.</li>
+            </ul>
+          </DocSection>
+
+          {/* ====================================================================================
+              3. PROGRAMMING CONCEPTS
+          ==================================================================================== */}
+
+          <DocSection id="data-types" title="Data Types & Variables" icon={Database}>
+            <p>
+              Zekodes visualizes memory allocation through variable blocks.
+            </p>
+            
+            <h3>Python Mode</h3>
+            <p>
+              Since Python is dynamically typed, you use generic assignment blocks. 
+              <br/><code>Block: Set [variable] to [value]</code>
+              <br/>The type is determined by the value you connect (Number vs String).
+            </p>
+
+            <h3>C Mode</h3>
+            <p>
+              C requires explicit typing. Zekodes provides distinct blocks for:
+            </p>
+            <ul>
+              <li><strong>int:</strong> Integers (4 bytes)</li>
+              <li><strong>float:</strong> Floating point (4 bytes)</li>
+              <li><strong>double:</strong> Double precision (8 bytes)</li>
+              <li><strong>char:</strong> Single character (1 byte)</li>
+            </ul>
+            <div className="bg-[#252526] border border-amber-600/30 rounded-lg p-4 flex gap-3 items-start">
+              <Info className="w-5 h-5 text-amber-500 mt-0.5" />
+              <p className="text-amber-200 text-sm m-0">
+                <strong>Note:</strong> Strings in C are handled as <code>char[]</code> arrays automatically by the "String Declare" block to abstract pointer complexity for beginners.
+              </p>
+            </div>
+          </DocSection>
+
+          <DocSection id="control-flow" title="Control Flow">
+            <p>
+              Logic branching is handled by container blocks.
+            </p>
+            <ul>
+              <li><strong>If Block:</strong> Evaluates a boolean condition. If true, executes blocks nested inside.</li>
+              <li><strong>Else-If:</strong> Attachable to the bottom of an If block.</li>
+              <li><strong>Else:</strong> The catch-all block.</li>
+            </ul>
+            <p>
+              Visually, these blocks have a "C-mouth" shape. If you drag a block out of the mouth, it is removed from the logic flow immediately.
+            </p>
+          </DocSection>
+
+          <DocSection id="loops" title="Loops & Iteration">
+            <h3>For Loops</h3>
+            <p>
+              <strong>Python:</strong> Uses <code>range()</code>. Inputs are Start, Stop, and Step.
+              <br/><strong>C:</strong> Uses standard <code>for(int i=0; i&lt;n; i++)</code> syntax. Zekodes exposes the initializer, condition, and incrementor as editable fields.
+            </p>
+
+            <h3>While Loops</h3>
+            <p>
+              Runs as long as the attached boolean condition is True.
+              <br/><em>Warning:</em> Users must ensure they include logic to break the loop (like incrementing a counter), otherwise Zekodes will run an infinite loop which may freeze the execution runtime.
+            </p>
+          </DocSection>
+
+          <DocSection id="functions" title="Functions & Scope">
+            <p>
+              Functions are independent logic islands.
+            </p>
+            <ul>
+              <li><strong>Definition Block:</strong> Must be placed on the root canvas (Global scope). Cannot be nested inside other blocks (in C).</li>
+              <li><strong>Call Block:</strong> Can be placed anywhere. Triggers the function.</li>
+              <li><strong>Parameters:</strong> Defined as a comma-separated list in the block properties.</li>
+            </ul>
+          </DocSection>
+
+          <DocSection id="nesting" title="Nesting & Logic">
+            <p>
+              Nesting is the act of placing blocks inside other blocks. Zekodes supports infinite depth nesting.
+            </p>
+            <p>
+              <strong>The Indentation Engine:</strong>
+              When generating code, the depth of the block in the visual tree determines the indentation level (Tabs or Spaces).
+            </p>
+            <div className="not-prose bg-[#252526] text-gray-300 p-4 rounded-xl border border-[#2b2b2b] text-sm font-mono">
+{`// Depth 0
+int main() {
+    // Depth 1
+    if (x > 0) {
+        // Depth 2
+        printf("Hello");
+    }
+}`}
+            </div>
+          </DocSection>
+
+          {/* ====================================================================================
+              4. CONSTRAINTS & RULES (CRITICAL)
+          ==================================================================================== */}
+
+          <DocSection id="strict-necessity" title="The Strict Necessity Rule" icon={Scale}>
+            <p>
+              To prevent beginners from feeling overwhelmed or making frustrating syntax errors, Zekodes implements the <strong>Strict Necessity Rule</strong>.
+            </p>
+            <div className="bg-[#252526] p-6 rounded-xl border border-blue-900/30">
+              <h4 className="text-blue-400 font-bold mb-2 text-lg">The Rule:</h4>
+              <p className="text-gray-300 m-0 italic font-medium">
+                "A block cannot be placed on the canvas unless its logical prerequisites are already met."
+              </p>
+            </div>
+            <p className="mt-4">
+              This means the toolbox (sidebar) will actually <strong>disable/grey out</strong> blocks that are not yet valid to use in the current context.
+            </p>
+          </DocSection>
+
+          <DocSection id="c-constraints" title="C Language Constraints">
+            <p>C is highly structural. Zekodes enforces this structure rigidly in Beginner Mode.</p>
+            
+            <h3>1. The Main Mandate</h3>
+            <p>You cannot drag <em>any</em> logic block (print, variable, loop) onto an empty canvas. You <strong>MUST</strong> drag the <code>int main()</code> block first.</p>
+            
+            <h3>2. The Header Mandate</h3>
+            <p>If you try to use `printf` or `scanf`, Zekodes checks for <code>#include &lt;stdio.h&gt;</code>. If missing, the IO category is locked or the block is rejected.</p>
+
+            <h3>3. Scope Lockdown</h3>
+            <p>Logic blocks can only be dropped <strong>inside</strong> functions. You cannot drop a <code>printf</code> in the global scope (outside main), as this is illegal in C.</p>
+          </DocSection>
+
+          <DocSection id="python-constraints" title="Python Constraints">
+            <p>Python is more permissive, so constraints are relaxed, but structure is still encouraged.</p>
+            <h3>1. The Main Guard</h3>
+            <p>Zekodes encourages starting with the <code>if __name__ == "__main__":</code> block. While not strictly required by the interpreter, it is enforced in Beginner Mode to teach modularity.</p>
+            <h3>2. Pass Generation</h3>
+            <p>Python relies on indentation. An empty `if` statement is a syntax error. Zekodes automatically inserts a <code>pass</code> keyword into any container block that has no children, ensuring the code always compiles.</p>
+          </DocSection>
+
+          <DocSection id="modes" title="Beginner vs Advanced Mode">
+            <p>You can toggle constraints in the User Profile.</p>
+            <div className="overflow-hidden border border-[#2b2b2b] rounded-xl mt-6">
+                <table className="w-full text-left border-collapse">
+                <thead className="bg-[#252526]">
+                    <tr>
+                    <th className="p-4 border-b border-[#2b2b2b] font-bold text-gray-200">Feature</th>
+                    <th className="p-4 border-b border-[#2b2b2b] font-bold text-blue-400">Beginner Mode</th>
+                    <th className="p-4 border-b border-[#2b2b2b] font-bold text-red-400">Advanced Mode</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-[#2b2b2b]">
+                    <tr>
+                    <td className="p-4 font-medium text-gray-400">Toolbox Locking</td>
+                    <td className="p-4"><span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-green-900/30 text-green-400 text-sm font-semibold">Active</span></td>
+                    <td className="p-4"><span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#333] text-gray-400 text-sm font-semibold">Disabled</span></td>
+                    </tr>
+                    <tr>
+                    <td className="p-4 font-medium text-gray-400">Drop Validation</td>
+                    <td className="p-4"><span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-green-900/30 text-green-400 text-sm font-semibold">Strict</span></td>
+                    <td className="p-4"><span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#333] text-gray-400 text-sm font-semibold">Permissive</span></td>
+                    </tr>
+                    <tr>
+                    <td className="p-4 font-medium text-gray-400">Error Messages</td>
+                    <td className="p-4"><span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-green-900/30 text-green-400 text-sm font-semibold">Verbose</span></td>
+                    <td className="p-4"><span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#333] text-gray-400 text-sm font-semibold">Silent</span></td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+          </DocSection>
+
+          {/* ====================================================================================
+              5. EXECUTION & COMPILATION
+          ==================================================================================== */}
+
+          <DocSection id="local-exec" title="Local Execution Model" icon={Cpu}>
+            <p>Zekodes does not use cloud servers to run code. Everything happens on your metal.</p>
+            <p><strong>The Pipeline:</strong></p>
+            <ol className="list-decimal pl-6 space-y-3 marker:font-bold marker:text-gray-500">
+              <li><strong>Generation:</strong> React state - String (source code).</li>
+              <li><strong>File I/O:</strong> Node.js writes <code>temp_script.c</code> to the user's OS temp folder.</li>
+              <li><strong>Shell Spawn:</strong> Electron spawns a hidden shell instance.</li>
+              <li><strong>Compilation (C only):</strong> GCC is invoked to build an executable.</li>
+              <li><strong>Execution:</strong> The binary (or Python script) is executed.</li>
+              <li><strong>Cleanup:</strong> Temporary files are deleted.</li>
+            </ol>
+          </DocSection>
+
+          <DocSection id="c-compilation" title="C Compilation (GCC)">
+            <p>We bundle a lightweight version of <strong>MinGW-w64</strong>.</p>
+            <p><strong>Command Used:</strong></p>
+            <pre className="mt-2"><code>gcc "path/to/code.c" -o "path/to/app.exe"</code></pre>
+            <p>If this command returns an Exit Code other than 0, the process aborts, and the GCC error output (stderr) is piped to the Zekodes terminal.</p>
+          </DocSection>
+
+          <DocSection id="python-exec" title="Python Runtime">
+            <p>We bundle an <strong>Embeddable Python Package</strong>. This is a minimal Python environment.</p>
+            <p><strong>Command Used:</strong></p>
+            <pre className="mt-2"><code>python "path/to/script.py"</code></pre>
+            <p><em>Note:</em> The embedded Python does not have pip installed by default to keep the app size small. Standard libraries (math, random, time) are available.</p>
+          </DocSection>
+
+          <DocSection id="io" title="Standard I/O">
+            <p>
+              <strong>Output:</strong> The stdout stream is listened to via `child.stdout.on('data')`. Chunks of data are converted to strings and pushed to the Terminal array.
+            </p>
+            <p>
+              <strong>Input:</strong> When the process waits for stdin (e.g. `scanf`), it pauses. Zekodes does not automatically detect this pause (Node limitation). However, if you type in the terminal and hit Enter, Zekodes writes that string to `child.stdin`.
+            </p>
+          </DocSection>
+
+          {/* ====================================================================================
+              6. ERROR HANDLING
+          ==================================================================================== */}
+
+          <DocSection id="comp-errors" title="Compilation Errors" icon={AlertTriangle}>
+            <p>These occur before the program runs (C Only).</p>
+            <div className="bg-red-900/20 border-l-4 border-red-600 p-4 text-red-200 font-mono text-sm">
+              main.c:5:5: error: expected ';' before 'return'
+            </div>
+            <p className="mt-4">Zekodes parses these errors and attempts to highlight the specific line in the Editor (if line mapping is enabled).</p>
+          </DocSection>
+
+          <DocSection id="runtime-errors" title="Runtime Errors">
+            <p>These occur during execution.</p>
+            <ul>
+              <li><strong>Python:</strong> Tracebacks (NameError, IndexError).</li>
+              <li><strong>C:</strong> Segmentation Faults (Accessing invalid memory).</li>
+            </ul>
+            <p>Runtime errors are displayed in Red text in the console to distinguish them from program output.</p>
+          </DocSection>
+
+          <DocSection id="debug-output" title="Debugging Output">
+            <p>Zekodes supports basic "Print Debugging". Users are encouraged to place Print blocks at various stages of their logic to trace execution flow, as there is no step-through debugger in the current version.</p>
+          </DocSection>
+
+          {/* ====================================================================================
+              7. SECURITY & PRIVACY
+          ==================================================================================== */}
+
+          <DocSection id="local-model" title="Local Execution Security" icon={Shield}>
+            <p>Because Zekodes executes arbitrary code on your machine, security is handled by the OS User Permissions.</p>
+            <ul>
+              <li>Zekodes runs with standard user privileges, NOT Administrator privileges.</li>
+              <li>Generated scripts cannot modify system files unless the user explicitly writes code to do so (which the OS would block).</li>
+            </ul>
+          </DocSection>
+
+          <DocSection id="privacy" title="Data Privacy" icon={Lock}>
+            <p><strong>Zero Telemetry on Code.</strong></p>
+            <p>We do not track, upload, or analyze the code you write.</p>
+            <ul>
+                <li>Your <code>.c</code> and <code>.py</code> files stay on your disk.</li>
+                <li>Your project structure stays in your LocalStorage.</li>
+            </ul>
+          </DocSection>
+
+          {/* ====================================================================================
+              8. SUPPORT & LEGAL
+          ==================================================================================== */}
+
+          <DocSection id="contact" title="Support Channels" icon={HelpCircle}>
+            <p>Need help? Found a bug? Reach out to the team directly.</p>
+            <div className="flex flex-col sm:flex-row gap-4 mt-6">
+               <a href="mailto:issues.zekodes@gmail.com" className="inline-flex items-center justify-center gap-3 px-6 py-4 bg-[#252526] text-white rounded-xl hover:bg-[#333] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 font-medium border border-[#333]">
+                 <span>📧 issues.zekodes@gmail.com</span>
+               </a>
+            </div>
+          </DocSection>
+
+          <DocSection id="terms" title="Terms & Licensing" icon={Globe}>
+            <p><strong>Zekodes Community Edition</strong> is free to use for educational and personal purposes.</p>
+            <p>You own the copyright to any source code generated by the tool. You are free to compile, sell, or distribute software built with Zekodes.</p>
+            <p className="text-sm text-gray-500 mt-12 pt-12 border-t border-[#2b2b2b]">
+              © 2026 Zekodes Inc. All rights reserved. Documentation Version 2.4.
+            </p>
+          </DocSection>
 
         </div>
       </main>
@@ -394,14 +627,27 @@ const DocumentationPage: React.FC = () => {
   );
 };
 
-// --- Helpers ---
+// ============================================================================
+// 🧩 HELPER COMPONENTS
+// ============================================================================
+
+const NavGroup: React.FC<{ label: string; color: string; children: React.ReactNode }> = ({ label, color, children }) => (
+  <div className="mb-8 last:mb-0">
+    <div className="px-3 py-2 text-xs font-extrabold text-gray-500 uppercase tracking-widest flex items-center gap-2 mb-3">
+      <div className={`w-2 h-2 rounded-full shadow-sm ${color}`}></div> {label}
+    </div>
+    <div className="space-y-0.5">
+      {children}
+    </div>
+  </div>
+);
 
 const NavButton: React.FC<{ label: string; id: string; onClick: (id: string) => void }> = ({ label, id, onClick }) => (
     <button 
         onClick={() => onClick(id)}
-        className="w-full text-left px-3 py-2 rounded-lg text-gray-600 hover:bg-white hover:text-blue-600 hover:shadow-sm transition-all flex items-center gap-2 group"
+        className="w-full text-left px-3 py-2.5 rounded-lg text-gray-400 hover:bg-[#333] hover:text-white transition-all duration-200 flex items-center gap-3 group text-sm font-medium"
     >
-        <div className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-blue-600 transition-colors"></div>
+        <span className="w-1.5 h-1.5 rounded-full bg-[#333] group-hover:bg-blue-500 transition-colors"></span>
         {label}
     </button>
 );

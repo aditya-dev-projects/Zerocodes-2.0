@@ -1,4 +1,4 @@
-import type{ BlockDefinition, BlockInstance } from '../types';
+import type { BlockDefinition, BlockInstance } from '../types';
 
 // ==============================================================================
 // 1. BLOCK DEFINITIONS
@@ -14,6 +14,16 @@ export const PYTHON_BLOCKS: BlockDefinition[] = [
     color: 'block-events',
     hasChildren: true
   },
+  {
+    id: 'python-comment',
+    category: 'syntax',
+    label: 'Comment',
+    code: { python: '# {text}' },
+    inputs: [{ name: 'text', placeholder: 'Write comment here', defaultValue: 'comment' }],
+    language: 'python',
+    color: 'block-variables'
+  },
+
   // --- VARIABLES ---
   {
     id: 'python-int-declare',
@@ -63,6 +73,7 @@ export const PYTHON_BLOCKS: BlockDefinition[] = [
     language: 'python',
     color: 'block-variables'
   },
+
   // --- I/O ---
   {
     id: 'python-print',
@@ -109,6 +120,7 @@ export const PYTHON_BLOCKS: BlockDefinition[] = [
     language: 'python',
     color: 'block-sound'
   },
+
   // --- CONDITIONALS ---
   {
     id: 'python-if',
@@ -139,6 +151,7 @@ export const PYTHON_BLOCKS: BlockDefinition[] = [
     color: 'block-control',
     hasChildren: true
   },
+
   // --- LOOPS ---
   {
     id: 'python-for-range',
@@ -180,6 +193,7 @@ export const PYTHON_BLOCKS: BlockDefinition[] = [
     language: 'python',
     color: 'block-motion'
   },
+
   // --- FUNCTIONS ---
   {
     id: 'python-function-define',
@@ -215,6 +229,7 @@ export const PYTHON_BLOCKS: BlockDefinition[] = [
     language: 'python',
     color: 'block-events'
   },
+
   // --- OPERATORS ---
   {
     id: 'python-add',
@@ -276,6 +291,76 @@ export const PYTHON_BLOCKS: BlockDefinition[] = [
     language: 'python',
     color: 'block-operators'
   },
+
+  // --- TYPE CASTING & CHECKING (NEW) ---
+  {
+    id: 'python-type-check',
+    category: 'operators',
+    label: 'type()',
+    code: { python: 'type({value})' },
+    inputs: [
+      { name: 'value', placeholder: 'x', defaultValue: 'x' }
+    ],
+    language: 'python',
+    color: 'block-operators'
+  },
+  {
+    id: 'python-isinstance',
+    category: 'operators',
+    label: 'isinstance()',
+    code: { python: 'isinstance({value}, {type})' },
+    inputs: [
+      { name: 'value', placeholder: 'x', defaultValue: 'x' },
+      { name: 'type', placeholder: 'int', defaultValue: 'int' }
+    ],
+    language: 'python',
+    color: 'block-operators'
+  },
+  {
+    id: 'python-int-cast',
+    category: 'operators',
+    label: 'int()',
+    code: { python: 'int({value})' },
+    inputs: [
+      { name: 'value', placeholder: 'value', defaultValue: 'value' }
+    ],
+    language: 'python',
+    color: 'block-operators'
+  },
+  {
+    id: 'python-float-cast',
+    category: 'operators',
+    label: 'float()',
+    code: { python: 'float({value})' },
+    inputs: [
+      { name: 'value', placeholder: 'value', defaultValue: 'value' }
+    ],
+    language: 'python',
+    color: 'block-operators'
+  },
+  {
+    id: 'python-str-cast',
+    category: 'operators',
+    label: 'str()',
+    code: { python: 'str({value})' },
+    inputs: [
+      { name: 'value', placeholder: 'value', defaultValue: 'value' }
+    ],
+    language: 'python',
+    color: 'block-operators'
+  },
+  {
+    id: 'python-bool-cast',
+    category: 'operators',
+    label: 'bool()',
+    code: { python: 'bool({value})' },
+    inputs: [
+      { name: 'value', placeholder: 'value', defaultValue: 'value' }
+    ],
+    language: 'python',
+    color: 'block-operators'
+  },
+
   // --- LISTS ---
   {
     id: 'python-list-declare',
