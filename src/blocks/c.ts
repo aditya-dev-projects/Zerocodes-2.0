@@ -1,4 +1,4 @@
-import type { BlockDefinition, BlockInstance, Language } from '../types';
+import type { BlockDefinition, BlockInstance } from '../types';
 
 // ==============================================================================
 // 1. BLOCK DEFINITIONS
