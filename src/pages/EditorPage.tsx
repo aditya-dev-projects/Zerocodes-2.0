@@ -118,6 +118,31 @@ const EditorPage: React.FC = () => {
     }
   };
 
+  // --- NEW: Save File Handler ---
+  const handleSave = () => {
+    if (!generatedCode || generatedCode.startsWith("// Switch to 'Blocks' tab")) return;
+
+    // Determine file extension based on language
+    const fileExtension = language === Language.PYTHON ? 'py' : 'c';
+    const fileName = `main.${fileExtension}`;
+
+    // Create a Blob containing the code
+    const blob = new Blob([generatedCode], { type: 'text/plain;charset=utf-8' });
+    
+    // Create a temporary link to trigger the download
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    
+    // Append link, click it, and clean up
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+  // -----------------------------
+
   const handleResetTerminal = () => {
       setResetTrigger(prev => prev + 1);
   };
@@ -218,7 +243,11 @@ const EditorPage: React.FC = () => {
                    <Play className="w-3 h-3 fill-current" /> <span>Run Local</span>
                  </button>
                  <div className="w-px h-4 bg-gray-600 mx-1"></div>
-                 <button className="flex items-center space-x-1.5 bg-[#007acc] hover:bg-[#0062a3] text-white px-3 py-1 rounded-sm text-xs transition-all active:scale-95"><Save className="w-3 h-3" /> <span>Save</span></button>
+                 
+                 {/* ATTACHED handleSave HERE */}
+                 <button onClick={handleSave} className="flex items-center space-x-1.5 bg-[#007acc] hover:bg-[#0062a3] text-white px-3 py-1 rounded-sm text-xs transition-all active:scale-95">
+                   <Save className="w-3 h-3" /> <span>Save</span>
+                 </button>
               </div>
             </div>
 
